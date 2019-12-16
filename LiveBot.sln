@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29609.76
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.API", "LiveBot.API\LiveBot.API.csproj", "{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A7BEBFC2-84F3-4E31-B8D6-001D28DD3892}
+	EndGlobalSection
+EndGlobal
