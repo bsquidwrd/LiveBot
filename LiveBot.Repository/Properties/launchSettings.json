@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LiveBot.Repository": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
