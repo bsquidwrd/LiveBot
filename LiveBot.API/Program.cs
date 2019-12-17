@@ -20,10 +20,7 @@ namespace LiveBot.API
                 .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-            Log.Debug("This is debug");
-            Log.Information("This is information");
-            Log.Warning("This is warning");
-            Log.Error("This is error");
+            Log.Debug("App is starting up");
 
             CreateHostBuilder(args).Build().Run();
 
