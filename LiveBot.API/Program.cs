@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -27,9 +24,9 @@ namespace LiveBot.API
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var bot = new LiveBot.Core.Program();
+                var bot = new LiveBot.Core.BotStart();
 
-                await bot.MainAsync().ConfigureAwait(false);
+                await bot.StartAsync(services).ConfigureAwait(false);
             }
 
             await webHost.RunAsync().ConfigureAwait(false);
