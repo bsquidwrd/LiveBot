@@ -13,8 +13,8 @@ namespace LiveBot.Core
     // DiscordSocketClient instances (or shards) to serve a large number of guilds.
     public class BotStart
     {
-        static void Main(IServiceProvider service, string[] args) => new BotStart().StartAsync(service).GetAwaiter().GetResult();
-        public async Task StartAsync(IServiceProvider service)
+        static void Main(string[] args) => new BotStart().StartAsync().GetAwaiter().GetResult();
+        public async Task StartAsync()
         {
             // You specify the amount of shards you'd like to have with the
             // DiscordSocketConfig. Generally, it's recommended to

@@ -26,7 +26,7 @@ namespace LiveBot.API
                 var services = scope.ServiceProvider;
                 var bot = new LiveBot.Core.BotStart();
 
-                await bot.StartAsync(services).ConfigureAwait(false);
+                await bot.StartAsync().ConfigureAwait(false);
             }
 
             await webHost.RunAsync().ConfigureAwait(false);
