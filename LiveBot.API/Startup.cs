@@ -1,16 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Serilog;
+using System.Threading.Tasks;
+using Discord.Commands;
+using Discord.WebSocket;
+using LiveBot.Core.Services;
 
 namespace LiveBot.API
 {
@@ -26,13 +22,23 @@ namespace LiveBot.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // You specify the amount of shards you'd like to have with the
+            // DiscordSocketConfig. Generally, it's recommended to
+            // have 1 shard per 1500-2000 guilds your bot is in.
+            var config = new DiscordSocketConfig
+            {
+                TotalShards = 1
+            };
+
             services.AddControllers();
+            services.AddSingleton(new DiscordShardedClient(config));
+            services.AddSingleton<CommandService>();
+            services.AddSingleton<CommandHandlingService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            Log.Debug("API Configure was called");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

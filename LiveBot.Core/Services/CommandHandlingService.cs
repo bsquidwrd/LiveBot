@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Serilog;
 
 namespace LiveBot.Core.Services
 {
@@ -27,7 +28,8 @@ namespace LiveBot.Core.Services
 
         public async Task InitializeAsync()
         {
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            Log.Debug("Attempting to load commands");
+            await _commands.AddModulesAsync(Assembly.GetAssembly(this.GetType()), _services);
         }
 
         public async Task MessageReceivedAsync(SocketMessage rawMessage)
@@ -64,7 +66,7 @@ namespace LiveBot.Core.Services
 
         private Task LogAsync(LogMessage log)
         {
-            Console.WriteLine(log.ToString());
+            Log.Information(log.ToString());
 
             return Task.CompletedTask;
         }

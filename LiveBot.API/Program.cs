@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,16 +16,14 @@ namespace LiveBot.API
                 .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-            Log.Debug("App is starting up");
-
             var webHost = CreateHostBuilder(args).Build();
 
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var bot = new LiveBot.Core.BotStart();
+                var bot = new Core.BotStart();
 
-                await bot.StartAsync().ConfigureAwait(false);
+                await bot.StartAsync(services).ConfigureAwait(false);
             }
 
             await webHost.RunAsync().ConfigureAwait(false);
