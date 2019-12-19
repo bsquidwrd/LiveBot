@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using LiveBot.Core.Services;
+using LiveBot.Repository;
 
 namespace LiveBot.API
 {
@@ -34,6 +35,8 @@ namespace LiveBot.API
             services.AddSingleton(new DiscordShardedClient(config));
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
+
+            services.AddSingleton<Class1>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

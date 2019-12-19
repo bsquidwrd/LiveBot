@@ -25,11 +25,12 @@ namespace LiveBot.Core
             // The Sharded Client does not have a Ready event.
             // The ShardReady event is used instead, allowing for individual
             // control per shard.
-            var loadGuildInformation = new LoadGuildInformation();
-
             client.ShardReady += ReadyAsync;
-            client.GuildAvailable += loadGuildInformation.DoGuildInfo;
             client.Log += LogAsync;
+
+            // Load Guild Information
+            var loadGuildInformation = new LoadGuildInformation();
+            client.GuildAvailable += loadGuildInformation.DoGuildInfo;
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
 
