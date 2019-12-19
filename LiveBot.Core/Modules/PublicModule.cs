@@ -13,5 +13,12 @@ namespace LiveBot.Core.Modules
                 This guild is being served by shard number {Context.Client.GetShardFor(Context.Guild).ShardId}";
             await ReplyAsync(msg);
         }
+
+        [Command("test")]
+        public async Task TestAsync()
+        {
+            var msg = $@"Hi, I am a bot: {Context.Client.CurrentUser.IsBot}";
+            await ReplyAsync(msg);
+        }
     }
 }
