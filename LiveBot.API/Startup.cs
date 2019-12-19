@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
+using LiveBot.Core.Repository;
 using LiveBot.Core.Services;
 using LiveBot.Repository;
 
@@ -35,6 +36,7 @@ namespace LiveBot.API
             services.AddSingleton(new DiscordShardedClient(config));
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
+            services.AddTransient<IExampleRepository>(provider => new ExampleRepository());
 
             services.AddSingleton<Class1>();
         }
