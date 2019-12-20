@@ -37,8 +37,6 @@ namespace LiveBot.API
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
             services.AddTransient<IExampleRepository>(provider => new ExampleRepository());
-
-            services.AddSingleton<Class1>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
