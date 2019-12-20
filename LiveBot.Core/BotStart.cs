@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using LiveBot.Core.Services;
 using LiveBot.Core.Modules;
+using LiveBot.Core.Repository;
 
 namespace LiveBot.Core
 {
@@ -29,7 +30,7 @@ namespace LiveBot.Core
             client.Log += LogAsync;
 
             // Load Guild Information
-            var loadGuildInformation = new LoadGuildInformation();
+            var loadGuildInformation = new LoadGuildInformation(services.GetRequiredService<IExampleRepository>());
             client.GuildAvailable += loadGuildInformation.DoGuildInfo;
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
