@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
-using Discord.Commands;
-using LiveBot.Discord.Repository;
+﻿using Discord.Commands;
+using LiveBot.Core.Repository;
+using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {

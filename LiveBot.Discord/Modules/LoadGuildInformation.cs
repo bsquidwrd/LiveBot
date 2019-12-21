@@ -1,17 +1,19 @@
-﻿using System.Threading.Tasks;
-using Discord.WebSocket;
-using LiveBot.Discord.Repository;
+﻿using Discord.WebSocket;
+using LiveBot.Core.Repository;
 using Serilog;
+using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    class LoadGuildInformation
+    internal class LoadGuildInformation
     {
         private readonly IExampleRepository _exampleRepository;
+
         public LoadGuildInformation(IExampleRepository exampleRepository)
         {
             _exampleRepository = exampleRepository;
         }
+
         public Task DoGuildInfo(SocketGuild guild)
         {
             _exampleRepository.TestCall();

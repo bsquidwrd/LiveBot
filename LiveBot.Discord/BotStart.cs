@@ -1,12 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
+using LiveBot.Core.Repository;
+using LiveBot.Discord.Modules;
+using LiveBot.Discord.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using LiveBot.Discord.Services;
-using LiveBot.Discord.Modules;
-using LiveBot.Discord.Repository;
+using System;
+using System.Threading.Tasks;
 
 namespace LiveBot.Discord
 {

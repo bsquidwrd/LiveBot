@@ -1,14 +1,13 @@
+using Discord.Commands;
+using Discord.WebSocket;
+using LiveBot.Core.Repository;
+using LiveBot.Discord.Services;
+using LiveBot.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
-using Discord.Commands;
-using Discord.WebSocket;
-using LiveBot.Discord.Repository;
-using LiveBot.Discord.Services;
-using LiveBot.Repository;
 
 namespace LiveBot.API
 {

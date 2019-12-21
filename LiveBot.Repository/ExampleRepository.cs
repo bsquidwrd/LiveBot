@@ -1,4 +1,4 @@
-﻿using LiveBot.Discord.Repository;
+﻿using LiveBot.Core.Repository;
 using Serilog;
 
 namespace LiveBot.Repository
