@@ -7,7 +7,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Serilog;
 
-namespace LiveBot.Core.Services
+namespace LiveBot.Discord.Services
 {
     public class CommandHandlingService
     {

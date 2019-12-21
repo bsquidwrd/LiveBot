@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
+    <ProjectReference Include="..\LiveBot.Discord\LiveBot.Discord.csproj" />
     <ProjectReference Include="..\LiveBot.Repository\LiveBot.Repository.csproj" />
   </ItemGroup>
 

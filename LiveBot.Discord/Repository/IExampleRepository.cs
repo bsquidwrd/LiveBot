@@ -1,4 +1,4 @@
-﻿namespace LiveBot.Core.Repository
+﻿namespace LiveBot.Discord.Repository
 {
     public interface IExampleRepository
     {

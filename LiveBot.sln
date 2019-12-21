@@ -5,9 +5,11 @@ VisualStudioVersion = 16.0.29609.76
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.API", "LiveBot.API\LiveBot.API.csproj", "{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Core", "LiveBot.Core\LiveBot.Core.csproj", "{AF943DDE-0509-43D1-AEEB-0B984E624390}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Core", "LiveBot.Core\LiveBot.Core.csproj", "{AF943DDE-0509-43D1-AEEB-0B984E624390}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Repository", "LiveBot.Repository\LiveBot.Repository.csproj", "{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Repository", "LiveBot.Repository\LiveBot.Repository.csproj", "{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Discord", "LiveBot.Discord\LiveBot.Discord.csproj", "{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

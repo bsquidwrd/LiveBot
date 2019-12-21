@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Discord.WebSocket;
-using LiveBot.Core.Repository;
+using LiveBot.Discord.Repository;
 using Serilog;
 
-namespace LiveBot.Core.Modules
+namespace LiveBot.Discord.Modules
 {
     class LoadGuildInformation
     {

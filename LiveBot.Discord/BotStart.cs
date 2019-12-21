@@ -4,11 +4,11 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using LiveBot.Core.Services;
-using LiveBot.Core.Modules;
-using LiveBot.Core.Repository;
+using LiveBot.Discord.Services;
+using LiveBot.Discord.Modules;
+using LiveBot.Discord.Repository;
 
-namespace LiveBot.Core
+namespace LiveBot.Discord
 {
     // This is a minimal example of using Discord.Net's Sharded Client
     // The provided DiscordShardedClient class simplifies having multiple

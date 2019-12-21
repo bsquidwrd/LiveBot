@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord.Commands;
 
-namespace LiveBot.Core.Modules
+namespace LiveBot.Discord.Modules
 {
     // Remember to make your module reference the ShardedCommandContext
     public class PublicModule : ModuleBase<ShardedCommandContext>

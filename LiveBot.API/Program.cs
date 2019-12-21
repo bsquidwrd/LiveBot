@@ -21,7 +21,7 @@ namespace LiveBot.API
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var bot = new Core.BotStart();
+                var bot = new Discord.BotStart();
 
                 await bot.StartAsync(services).ConfigureAwait(false);
             }

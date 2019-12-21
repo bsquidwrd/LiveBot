@@ -6,8 +6,8 @@ using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
-using LiveBot.Core.Repository;
-using LiveBot.Core.Services;
+using LiveBot.Discord.Repository;
+using LiveBot.Discord.Services;
 using LiveBot.Repository;
 
 namespace LiveBot.API

@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Discord.Commands;
-using LiveBot.Core.Repository;
+using LiveBot.Discord.Repository;
 
-namespace LiveBot.Core.Modules
+namespace LiveBot.Discord.Modules
 {
     public class ExampleRepoCommand : ModuleBase<ShardedCommandContext>
     {
