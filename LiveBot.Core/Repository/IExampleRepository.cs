@@ -1,8 +1,9 @@
-﻿namespace LiveBot.Discord.Repository
+﻿namespace LiveBot.Core.Repository
 {
     public interface IExampleRepository
     {
         void RepoCall();
+
         void TestCall();
     }
 }

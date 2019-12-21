@@ -9,7 +9,25 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Core", "LiveBot.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Repository", "LiveBot.Repository\LiveBot.Repository.csproj", "{2A3671E5-C0C7-419D-85D4-8407FD3DEED8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Discord", "LiveBot.Discord\LiveBot.Discord.csproj", "{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Discord", "LiveBot.Discord\LiveBot.Discord.csproj", "{A39673D4-3D1C-4CDF-8902-7E42ABCF8447}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00 Solution Items", "00 Solution Items", "{C005824A-AC14-4D25-8F83-29FE3399C486}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00 Tests", "00 Tests", "{230C38C7-3A0E-467E-BCE5-92A32D2A4F04}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01 Api", "01 Api", "{1F5DCE0C-F1A7-4F04-98D0-EE86CB6CC9DA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02.1 Discord", "02.1 Discord", "{709C4AF2-3084-4B28-B42A-6EF4707704A3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03 Core", "03 Core", "{CDA9B861-8EC0-4693-93E9-2F700B9C85DC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04 Repo", "04 Repo", "{F8AD3029-2C6F-4575-A4DC-B84B331AB910}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +54,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A671B3C9-1BB7-4A1E-BD1E-92951E10EC5D} = {1F5DCE0C-F1A7-4F04-98D0-EE86CB6CC9DA}
+		{AF943DDE-0509-43D1-AEEB-0B984E624390} = {CDA9B861-8EC0-4693-93E9-2F700B9C85DC}
+		{2A3671E5-C0C7-419D-85D4-8407FD3DEED8} = {F8AD3029-2C6F-4575-A4DC-B84B331AB910}
+		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447} = {709C4AF2-3084-4B28-B42A-6EF4707704A3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7BEBFC2-84F3-4E31-B8D6-001D28DD3892}
