@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-ENV DiscordToken="Mzc5NDk1NjI1MDg1MTU3Mzc3.Xf8dSQ.Q0gmae5hcWXnaJaTE08xSOtmpx8"
+ENV DiscordToken="replaceme"
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
