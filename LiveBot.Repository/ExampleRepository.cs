@@ -14,10 +14,5 @@ namespace LiveBot.Repository
         {
             Log.Information($"{nameof(RepoCall)} has been executed!");
         }
-
-        public void TestCall()
-        {
-            Log.Information($"We did the thing!");
-        }
     }
 }

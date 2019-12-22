@@ -1,0 +1,16 @@
+﻿using LiveBot.Repository.Models;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+
+namespace LiveBot.Repository
+{
+    public class LiveBotDBContext : DbContext
+    {
+        public LiveBotDBContext(DbContextOptions<LiveBotDBContext> options) : base(options)
+        {
+            Log.Debug("Database initialized");
+        }
+
+        public DbSet<Guild> Guild { get; set; }
+    }
+}

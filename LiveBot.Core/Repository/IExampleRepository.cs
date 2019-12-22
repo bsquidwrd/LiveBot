@@ -3,7 +3,5 @@
     public interface IExampleRepository
     {
         void RepoCall();
-
-        void TestCall();
     }
 }

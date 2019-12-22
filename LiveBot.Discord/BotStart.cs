@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using LiveBot.Core.Repository;
 using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +29,7 @@ namespace LiveBot.Discord
             client.Log += LogAsync;
 
             // Load Guild Information
-            var loadGuildInformation = new LoadGuildInformation(services.GetRequiredService<IExampleRepository>());
+            var loadGuildInformation = new LoadGuildInformation();
             client.GuildAvailable += loadGuildInformation.DoGuildInfo;
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
