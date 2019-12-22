@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LiveBot.Repository.Migrations
 {
     [DbContext(typeof(LiveBotDBContext))]
-    [Migration("20191222234934_Create DiscordGuild")]
+    [Migration("20191222235330_Create DiscordGuild")]
     partial class CreateDiscordGuild
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -22,14 +22,14 @@ namespace LiveBot.Repository.Migrations
 
             modelBuilder.Entity("LiveBot.Repository.Models.DiscordGuild", b =>
                 {
-                    b.Property<decimal>("GuildID")
+                    b.Property<decimal>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<string>("GuildName")
+                    b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.HasKey("GuildID");
+                    b.HasKey("Id");
 
                     b.ToTable("DiscordGuild");
                 });

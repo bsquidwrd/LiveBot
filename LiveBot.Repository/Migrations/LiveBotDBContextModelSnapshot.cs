@@ -20,14 +20,14 @@ namespace LiveBot.Repository.Migrations
 
             modelBuilder.Entity("LiveBot.Repository.Models.DiscordGuild", b =>
                 {
-                    b.Property<decimal>("GuildID")
+                    b.Property<decimal>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<string>("GuildName")
+                    b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.HasKey("GuildID");
+                    b.HasKey("Id");
 
                     b.ToTable("DiscordGuild");
                 });

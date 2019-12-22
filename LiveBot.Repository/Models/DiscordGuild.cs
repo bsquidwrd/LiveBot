@@ -6,7 +6,7 @@ namespace LiveBot.Repository.Models
     public class DiscordGuild
     {
         [Key]
-        public ulong GuildID { get; set; }
-        public string GuildName { get; set; }
+        public ulong Id { get; set; }
+        public string Name { get; set; }
     }
 }

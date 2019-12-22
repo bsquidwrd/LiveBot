@@ -10,12 +10,12 @@ namespace LiveBot.Repository.Migrations
                 name: "DiscordGuild",
                 columns: table => new
                 {
-                    GuildID = table.Column<decimal>(nullable: false),
-                    GuildName = table.Column<string>(nullable: true)
+                    Id = table.Column<decimal>(nullable: false),
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DiscordGuild", x => x.GuildID);
+                    table.PrimaryKey("PK_DiscordGuild", x => x.Id);
                 });
         }
 
