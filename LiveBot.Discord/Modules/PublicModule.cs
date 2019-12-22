@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -9,16 +10,17 @@ namespace LiveBot.Discord.Modules
         [Command("info")]
         public async Task InfoAsync()
         {
-            var msg = $@"Hi {Context.User.Mention}! There are currently {Context.Client.Shards.Count} shards!
-                This guild is being served by shard number {Context.Client.GetShardFor(Context.Guild).ShardId}";
-            await ReplyAsync(msg);
-        }
-
-        [Command("test")]
-        public async Task TestAsync()
-        {
-            var msg = $@"Hi, I am a bot: {Context.Client.CurrentUser.IsBot}";
-            await ReplyAsync(msg);
+            var AppInfo = await Context.Client.GetApplicationInfoAsync();
+            var ReplyEmbed = new EmbedBuilder()
+                .WithTitle($"{AppInfo.Name} Information")
+                //.WithDescription($"")
+                .WithUrl("https://livebot.bsquid.io")
+                .WithColor(Color.DarkPurple)
+                .WithAuthor(AppInfo.Owner)
+                .WithFooter(footer => footer.Text = $"Shard {Context.Client.GetShardFor(Context.Guild).ShardId + 1} / {Context.Client.Shards.Count}")
+                .WithCurrentTimestamp()
+                .Build();
+            await ReplyAsync(null, false, ReplyEmbed);
         }
     }
 }
