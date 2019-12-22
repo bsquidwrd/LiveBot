@@ -2,12 +2,12 @@
 
 namespace LiveBot.Repository.Migrations
 {
-    public partial class InitialGuildCreate : Migration
+    public partial class CreateDiscordGuild : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Guild",
+                name: "DiscordGuild",
                 columns: table => new
                 {
                     GuildID = table.Column<decimal>(nullable: false),
@@ -15,14 +15,14 @@ namespace LiveBot.Repository.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Guild", x => x.GuildID);
+                    table.PrimaryKey("PK_DiscordGuild", x => x.GuildID);
                 });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Guild");
+                name: "DiscordGuild");
         }
     }
 }

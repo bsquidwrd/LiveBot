@@ -18,7 +18,7 @@ namespace LiveBot.Repository.Migrations
                 .HasAnnotation("ProductVersion", "3.1.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("LiveBot.Repository.Models.Guild", b =>
+            modelBuilder.Entity("LiveBot.Repository.Models.DiscordGuild", b =>
                 {
                     b.Property<decimal>("GuildID")
                         .ValueGeneratedOnAdd()
@@ -29,7 +29,7 @@ namespace LiveBot.Repository.Migrations
 
                     b.HasKey("GuildID");
 
-                    b.ToTable("Guild");
+                    b.ToTable("DiscordGuild");
                 });
 #pragma warning restore 612, 618
         }

@@ -11,6 +11,6 @@ namespace LiveBot.Repository
             Log.Debug("Database initialized");
         }
 
-        public DbSet<Guild> Guild { get; set; }
+        public DbSet<DiscordGuild> DiscordGuild { get; set; }
     }
 }
