@@ -1,11 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using LiveBot.Core.Repository.Models;
 
 namespace LiveBot.Repository.Models
 {
-    public class DiscordGuild
+    public class DiscordGuild : IDiscordGuild
     {
-        [Key]
         public ulong Id { get; set; }
         public string Name { get; set; }
     }

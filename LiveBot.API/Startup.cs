@@ -5,7 +5,6 @@ using LiveBot.Discord.Services;
 using LiveBot.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,11 +35,9 @@ namespace LiveBot.API
             services.AddSingleton(new DiscordShardedClient(config));
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
-            services.AddTransient<IExampleRepository>(provider => new ExampleRepository());
-            services.AddTransient<IGuildRepository>(provider => new GuildRepository());
-            services.AddDbContext<LiveBotDBContext>(
-                options => options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"))
-            );
+
+            var factory = new UnitOfWorkFactory(Configuration.GetConnectionString("DefaultConnection"));
+            services.AddSingleton<IUnitOfWorkFactory>(factory);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,12 +1,13 @@
-﻿using LiveBot.Repository.Models;
+﻿using LiveBot.Core.Repository;
+using LiveBot.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace LiveBot.Repository
 {
-    public class LiveBotDBContext : DbContext
+    public class LiveBotDBContext : DbContext, ILiveBotDBContext
     {
-        public LiveBotDBContext(DbContextOptions<LiveBotDBContext> options) : base(options)
+        public LiveBotDBContext(DbContextOptions options) : base(options)
         {
             Log.Debug("Database initialized");
         }

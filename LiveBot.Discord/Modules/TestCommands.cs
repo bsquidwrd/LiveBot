@@ -7,11 +7,11 @@ namespace LiveBot.Discord.Modules
     [Group("test")]
     public class TestCommands : ModuleBase<ShardedCommandContext>
     {
-        private readonly IGuildRepository _guildRepository;
+        private readonly IUnitOfWork _work;
 
-        public TestCommands(IGuildRepository guildRepository)
+        public TestCommands(IUnitOfWorkFactory factory)
         {
-            _guildRepository = guildRepository;
+            _work = factory.Create();
         }
 
         [Command("ping")]
@@ -21,11 +21,11 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync(msg);
         }
 
-        [Command("getguild")]
-        public async Task GetGuildAsync()
+        [Command("retrieve")]
+        public async Task RetrieveAsync()
         {
-            var GuildID = _guildRepository.GetGuild(Context.Guild.Id);
-            await ReplyAsync($"The command made it around the world! Your Guild ID is {GuildID}");
+            var DBGuild = _work.GuildRepository.GetGuild(Context.Guild.Id);
+            await ReplyAsync($"The following name was retrieved from the Database: {DBGuild.Name}");
         }
     }
 }

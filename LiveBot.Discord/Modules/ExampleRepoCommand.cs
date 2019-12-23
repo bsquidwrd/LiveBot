@@ -6,17 +6,17 @@ namespace LiveBot.Discord.Modules
 {
     public class ExampleRepoCommand : ModuleBase<ShardedCommandContext>
     {
-        private readonly IExampleRepository _exampleRepository;
+        private readonly IUnitOfWork _work;
 
-        public ExampleRepoCommand(IExampleRepository exampleRepository)
+        public ExampleRepoCommand(IUnitOfWorkFactory factory)
         {
-            _exampleRepository = exampleRepository;
+            _work = factory.Create();
         }
 
         [Command("RepoExample")]
         public async Task RepoExampleAsync()
         {
-            _exampleRepository.RepoCall();
+            _work.ExampleRepository.RepoCall();
             await ReplyAsync("Re called the repo method! Check the console!");
         }
     }
