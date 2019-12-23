@@ -2,7 +2,6 @@
 using LiveBot.Core.Repository.Models;
 using LiveBot.Repository.Models;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace LiveBot.Repository
 {

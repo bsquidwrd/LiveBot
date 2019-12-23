@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
-using System.Threading.Tasks;
 using LiveBot.Core.Repository;
+using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
