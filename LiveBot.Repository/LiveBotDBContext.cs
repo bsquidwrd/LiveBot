@@ -1,4 +1,4 @@
-﻿using LiveBot.Repository.Models;
+﻿using LiveBot.Core.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 

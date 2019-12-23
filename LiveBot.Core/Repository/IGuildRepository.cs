@@ -2,10 +2,7 @@
 
 namespace LiveBot.Core.Repository
 {
-    public interface IGuildRepository
+    public interface IGuildRepository : IRepository<DiscordGuild>
     {
-        IDiscordGuild GetGuildAsync(ulong GuildID);
-
-        IDiscordGuild UpdateOrCreateGuild(ulong GuildID, string GuildName);
     }
 }

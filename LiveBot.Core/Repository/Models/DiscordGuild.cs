@@ -1,8 +1,7 @@
 ﻿namespace LiveBot.Core.Repository.Models
 {
-    public interface IDiscordGuild
+    public class DiscordGuild : BaseModel<DiscordGuild>
     {
-        public ulong Id { get; set; }
         public string Name { get; set; }
     }
 }

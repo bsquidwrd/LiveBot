@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Models;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -15,7 +16,8 @@ namespace LiveBot.Discord.Modules
 
         public Task DoGuildInfo(SocketGuild guild)
         {
-            _work.GuildRepository.UpdateOrCreateGuild(guild.Id, guild.Name);
+            DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
+            _work.GuildRepository.UpdateAsync(discordGuild);
             return Task.CompletedTask;
         }
     }

@@ -5,17 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Migrations\20191222233820_InitialGuildCreate.cs" />
-    <Compile Remove="Migrations\20191222233820_InitialGuildCreate.Designer.cs" />
-    <Compile Remove="Migrations\20191222234333_Create DiscordGuild.cs" />
-    <Compile Remove="Migrations\20191222234333_Create DiscordGuild.Designer.cs" />
-    <Compile Remove="Migrations\20191222234934_Create DiscordGuild.cs" />
-    <Compile Remove="Migrations\20191222234934_Create DiscordGuild.Designer.cs" />
-    <Compile Remove="Migrations\20191222235246_Change Field Names.cs" />
-    <Compile Remove="Migrations\20191222235246_Change Field Names.Designer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.0">
       <PrivateAssets>all</PrivateAssets>
