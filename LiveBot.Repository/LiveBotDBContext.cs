@@ -5,7 +5,7 @@ using Serilog;
 
 namespace LiveBot.Repository
 {
-    public class LiveBotDBContext : DbContext, ILiveBotDBContext
+    public class LiveBotDBContext : DbContext
     {
         public LiveBotDBContext(DbContextOptions options) : base(options)
         {

@@ -1,35 +1,37 @@
 ﻿using LiveBot.Core.Repository;
 using LiveBot.Core.Repository.Models;
 using LiveBot.Repository.Models;
+using System.Linq;
 
 namespace LiveBot.Repository
 {
     public class GuildRepository : IGuildRepository
     {
-        private readonly ILiveBotDBContext _context;
+        private readonly LiveBotDBContext _context;
 
-        public GuildRepository(ILiveBotDBContext context)
+        public GuildRepository(LiveBotDBContext context)
         {
             this._context = context;
         }
 
-        public IDiscordGuild GetGuild(ulong GuildID)
-        {
-            return _context.DiscordGuild.where(d => d.Id == GuildID);
-        }
+        public IDiscordGuild GetGuild(ulong GuildID) => _context.DiscordGuild.Where(d => d.Id == GuildID).FirstOrDefault();
 
         public IDiscordGuild UpdateOrCreateGuild(ulong GuildID, string GuildName)
         {
-            IDiscordGuild discordGuild = null;
+            DiscordGuild discordGuild = null;
             try
             {
-                discordGuild = _context.DiscordGuild.where(discordGuild => d.Id == GuildID);
+                discordGuild = _context.DiscordGuild.Where(d => d.Id == GuildID).FirstOrDefault();
                 discordGuild.Name = GuildName;
-                discordGuild.SaveChanges();
             }
             catch
             {
                 discordGuild = new DiscordGuild() { Id = GuildID, Name = GuildName };
+                _context.DiscordGuild.Add(discordGuild);
+            }
+            finally
+            {
+                _context.SaveChanges();
             }
             return discordGuild;
         }

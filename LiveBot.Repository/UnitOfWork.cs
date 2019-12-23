@@ -5,7 +5,7 @@ namespace LiveBot.Repository
 {
     public class UnitOfWork : IUnitOfWork
     {
-        public ILiveBotDBContext _context { get; }
+        private readonly LiveBotDBContext _context;
         public IExampleRepository ExampleRepository { get; }
         public IGuildRepository GuildRepository { get; }
 
@@ -14,11 +14,6 @@ namespace LiveBot.Repository
             this._context = context ?? throw new ArgumentNullException(nameof(context));
             ExampleRepository = new ExampleRepository();
             GuildRepository = new GuildRepository(context);
-        }
-
-        public void Create()
-        {
-            throw new NotImplementedException();
         }
     }
 }
