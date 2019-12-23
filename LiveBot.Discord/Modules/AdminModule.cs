@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using LiveBot.Core.Repository;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -8,6 +9,13 @@ namespace LiveBot.Discord.Modules
     [DontAutoLoad]
     public class AdminModule : ModuleBase<ShardedCommandContext>
     {
+        private readonly IUnitOfWork _work;
+
+        public AdminModule(IUnitOfWorkFactory factory)
+        {
+            _work = factory.Create();
+        }
+
         [RequireOwner]
         [Command("restart")]
         public async Task RestartBotAsync()

@@ -1,5 +1,6 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Models;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -24,7 +25,7 @@ namespace LiveBot.Discord.Modules
         [Command("retrieve")]
         public async Task RetrieveAsync()
         {
-            var DBGuild = _work.GuildRepository.GetGuild(Context.Guild.Id);
+            IDiscordGuild DBGuild = _work.GuildRepository.GetGuildAsync(Context.Guild.Id);
             await ReplyAsync($"The following name was retrieved from the Database: {DBGuild.Name}");
         }
     }

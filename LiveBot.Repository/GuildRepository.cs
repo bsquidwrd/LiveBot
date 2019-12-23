@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Models;
 using LiveBot.Repository.Models;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LiveBot.Repository
 {
@@ -14,7 +15,10 @@ namespace LiveBot.Repository
             this._context = context;
         }
 
-        public IDiscordGuild GetGuild(ulong GuildID) => _context.DiscordGuild.Where(d => d.Id == GuildID).FirstOrDefault();
+        public IDiscordGuild GetGuildAsync(ulong GuildID)
+        {
+            return _context.DiscordGuild.Where(d => d.Id == GuildID).FirstOrDefault();
+        }
 
         public IDiscordGuild UpdateOrCreateGuild(ulong GuildID, string GuildName)
         {

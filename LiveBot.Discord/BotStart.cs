@@ -17,15 +17,9 @@ namespace LiveBot.Discord
     {
         public async Task StartAsync(IServiceProvider services)
         {
-            // You should dispose a service provider created using ASP.NET
-            // when you are finished using it, at the end of your app's lifetime.
-            // If you use another dependency injection framework, you should inspect
-            // its documentation for the best way to do this.
             var client = services.GetRequiredService<DiscordShardedClient>();
 
-            // The Sharded Client does not have a Ready event.
-            // The ShardReady event is used instead, allowing for individual
-            // control per shard.
+            // Register Events
             client.ShardReady += ReadyAsync;
             client.Log += LogAsync;
 
@@ -35,7 +29,7 @@ namespace LiveBot.Discord
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
 
-            // Tokens should be considered secret data, and never hard-coded.
+            // Get Bot Toke and Start the Bot
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DiscordToken"));
             await client.StartAsync();
         }
@@ -48,7 +42,6 @@ namespace LiveBot.Discord
 
         private Task LogAsync(LogMessage log)
         {
-            //Console.WriteLine(log.ToString());
             Log.Information(log.ToString());
             return Task.CompletedTask;
         }
