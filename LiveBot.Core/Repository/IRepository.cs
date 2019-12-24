@@ -10,10 +10,10 @@ namespace LiveBot.Core.Repository
     /// <typeparam name="TModel">The BaseModel for this repository.</typeparam>
     public interface IRepository<TModel> where TModel : BaseModel<TModel>
     {
-        /// <summary>Gets an entity based on it's DiscordId.</summary>
-        /// <param name="DiscordId">The DiscordId of the entity.</param>
+        /// <summary>Gets an entity based on it's Id.</summary>
+        /// <param name="Id">The Id of the entity.</param>
         /// <returns><see cref="Task"/>.</returns>
-        Task<TModel> GetAsync(ulong DiscordId);
+        Task<TModel> GetAsync(int Id);
 
         /// <summary>Gets all of the entities in the database.</summary>
         /// <returns><see cref="Task"/>.</returns>
@@ -72,8 +72,8 @@ namespace LiveBot.Core.Repository
         Task AddOrUpdateAsync(TModel entity, Expression<Func<TModel, bool>> predicate);
 
         /// <summary>Removes an entity from the database based on its Id.</summary>
-        /// <param name="DiscordId">The id of the entity to remove.</param>
+        /// <param name="Id">The id of the entity to remove.</param>
         /// <returns>The <see cref="Task"/>.</returns>
-        Task RemoveAsync(ulong DiscordId);
+        Task RemoveAsync(int Id);
     }
 }

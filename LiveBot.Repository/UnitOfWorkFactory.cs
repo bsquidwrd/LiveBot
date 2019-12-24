@@ -8,8 +8,9 @@ namespace LiveBot.Repository
     {
         private readonly DbContextOptions _options;
 
-        public UnitOfWorkFactory(string conString)
+        public UnitOfWorkFactory()
         {
+            string conString = Environment.GetEnvironmentVariable("LiveBotConnectionString");
             if (string.IsNullOrWhiteSpace(conString))
                 throw new ArgumentNullException(nameof(conString));
 
@@ -21,7 +22,8 @@ namespace LiveBot.Repository
 
         public IUnitOfWork Create()
         {
-            return new UnitOfWork(new LiveBotDBContext(_options));
+            //return new UnitOfWork(new LiveBotDBContext(_options));
+            return new UnitOfWork(new LiveBotDBContext());
         }
     }
 }

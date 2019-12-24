@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LiveBot.Core.Repository;
 using LiveBot.Core.Repository.Models;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace LiveBot.Repository
 {
@@ -32,9 +33,9 @@ namespace LiveBot.Repository
         }
 
         /// <inheritdoc />
-        public Task<TEntity> GetAsync(ulong DiscordId)
+        public Task<TEntity> GetAsync(int Id)
         {
-            return DbSet.FindAsync(DiscordId).AsTask();
+            return DbSet.FindAsync(Id).AsTask();
         }
 
         /// <inheritdoc />
@@ -175,12 +176,12 @@ namespace LiveBot.Repository
         /// <inheritdoc />
         /// <exception cref="SemaphoreFullException">The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.</exception>
         /// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
-        public async Task RemoveAsync(ulong DiscordId)
+        public async Task RemoveAsync(int Id)
         {
             try
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.Remove(await DbSet.FindAsync(DiscordId).ConfigureAwait(false));
+                DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
                 await Context.SaveChangesAsync().ConfigureAwait(false);
             }
             finally

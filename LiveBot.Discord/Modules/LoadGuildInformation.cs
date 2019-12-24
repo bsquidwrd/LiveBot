@@ -14,11 +14,10 @@ namespace LiveBot.Discord.Modules
             _work = factory.Create();
         }
 
-        public Task DoGuildInfo(SocketGuild guild)
+        public async Task DoGuildInfo(SocketGuild guild)
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
-            _work.GuildRepository.UpdateAsync(discordGuild);
-            return Task.CompletedTask;
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == guild.Id));
         }
     }
 }

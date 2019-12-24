@@ -7,7 +7,7 @@ namespace LiveBot.Core.Repository.Models
     public abstract class BaseModel<T> : IEquatable<T>
         where T : BaseModel<T>
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
         public ulong DiscordId { get; set; }
 
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;

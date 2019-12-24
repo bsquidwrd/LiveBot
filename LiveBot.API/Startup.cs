@@ -36,7 +36,7 @@ namespace LiveBot.API
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
 
-            var factory = new UnitOfWorkFactory(Configuration.GetConnectionString("DefaultConnection"));
+            var factory = new UnitOfWorkFactory();
             services.AddSingleton<IUnitOfWorkFactory>(factory);
         }
 
