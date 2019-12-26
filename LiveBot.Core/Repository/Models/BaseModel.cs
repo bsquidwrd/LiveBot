@@ -9,6 +9,7 @@ namespace LiveBot.Core.Repository.Models
     {
         public int Id { get; set; }
         public ulong DiscordId { get; set; }
+        public string Name { get; set; }
 
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
 

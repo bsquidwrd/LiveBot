@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using LiveBot.Core.Repository;
 using LiveBot.Core.Repository.Models;
+using Serilog;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -18,6 +19,13 @@ namespace LiveBot.Discord.Modules
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == guild.Id));
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
+
+            foreach (SocketGuildChannel channel in guild.Channels)
+            {
+                DiscordChannel discordChannel = new DiscordChannel() { DiscordGuild = discordGuild, DiscordId = channel.Id, Name = channel.Name };
+                await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, (c => c.DiscordGuild == discordGuild && c.DiscordId == channel.Id));
+            }
         }
     }
 }

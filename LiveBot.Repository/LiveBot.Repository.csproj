@@ -7,6 +7,44 @@
   <ItemGroup>
     <Compile Remove="Migrations\20191224075221_Initial Create.cs" />
     <Compile Remove="Migrations\20191224075221_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20191224080451_Initial Create.cs" />
+    <Compile Remove="Migrations\20191224080451_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20191224231133_Add DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191224231133_Add DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191224233948_Add DiscordChannel, for real.cs" />
+    <Compile Remove="Migrations\20191224233948_Add DiscordChannel, for real.Designer.cs" />
+    <Compile Remove="Migrations\20191224234411_Add DiscordGuild to DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191224234411_Add DiscordGuild to DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191225002506_Add DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191225002506_Add DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191225002537_Add DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191225002537_Add DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191225003135_Add DiscordChannel relationship.cs" />
+    <Compile Remove="Migrations\20191225003135_Add DiscordChannel relationship.Designer.cs" />
+    <Compile Remove="Migrations\20191225003413_Add DiscordChannel inverse.cs" />
+    <Compile Remove="Migrations\20191225003413_Add DiscordChannel inverse.Designer.cs" />
+    <Compile Remove="Migrations\20191225004136_Add DiscordChannel required.cs" />
+    <Compile Remove="Migrations\20191225004136_Add DiscordChannel required.Designer.cs" />
+    <Compile Remove="Migrations\20191225005717_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191225005717_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191225014440_Add one-to-many.cs" />
+    <Compile Remove="Migrations\20191225014440_Add one-to-many.Designer.cs" />
+    <Compile Remove="Migrations\20191226082026_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191226082026_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191226090353_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191226090353_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191226091545_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191226091545_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191226093339_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191226093339_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191226093722_Initial Create.cs" />
+    <Compile Remove="Migrations\20191226093722_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20191226093759_Create DiscordChannel.cs" />
+    <Compile Remove="Migrations\20191226093759_Create DiscordChannel.Designer.cs" />
+    <Compile Remove="Migrations\20191226094513_Initial Create.cs" />
+    <Compile Remove="Migrations\20191226094513_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20191226100845_Initial Create.cs" />
+    <Compile Remove="Migrations\20191226100845_Initial Create.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

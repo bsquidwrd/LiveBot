@@ -9,7 +9,6 @@ namespace LiveBot.Repository
     {
         public LiveBotDBContext() : base()
         {
-            Log.Debug("Parameterless function called");
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -18,5 +17,6 @@ namespace LiveBot.Repository
         }
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }
+        public DbSet<DiscordChannel> DiscordChannel { get; set; }
     }
 }

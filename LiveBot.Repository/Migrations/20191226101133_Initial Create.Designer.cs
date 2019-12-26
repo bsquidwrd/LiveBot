@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LiveBot.Repository.Migrations
 {
     [DbContext(typeof(LiveBotDBContext))]
-    [Migration("20191224080451_Initial Create")]
+    [Migration("20191226101133_Initial Create")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,6 +20,32 @@ namespace LiveBot.Repository.Migrations
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
                 .HasAnnotation("ProductVersion", "3.1.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            modelBuilder.Entity("LiveBot.Core.Repository.Models.DiscordChannel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int?>("DiscordGuildId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DiscordId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscordGuildId");
+
+                    b.ToTable("DiscordChannel");
+                });
 
             modelBuilder.Entity("LiveBot.Core.Repository.Models.DiscordGuild", b =>
                 {
@@ -40,6 +66,13 @@ namespace LiveBot.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DiscordGuild");
+                });
+
+            modelBuilder.Entity("LiveBot.Core.Repository.Models.DiscordChannel", b =>
+                {
+                    b.HasOne("LiveBot.Core.Repository.Models.DiscordGuild", "DiscordGuild")
+                        .WithMany("DiscordChannels")
+                        .HasForeignKey("DiscordGuildId");
                 });
 #pragma warning restore 612, 618
         }
