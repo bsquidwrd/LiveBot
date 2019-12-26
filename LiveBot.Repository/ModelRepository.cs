@@ -1,7 +1,6 @@
 ﻿using LiveBot.Core.Repository;
 using LiveBot.Core.Repository.Models;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,7 +93,6 @@ namespace LiveBot.Repository
             return DbSet
                 .Where(predicate)
                 .FirstOrDefaultAsync();
-
         }
 
         /// <inheritdoc />

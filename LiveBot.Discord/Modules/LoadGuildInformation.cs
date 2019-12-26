@@ -1,7 +1,6 @@
 ﻿using Discord.WebSocket;
 using LiveBot.Core.Repository;
 using LiveBot.Core.Repository.Models;
-using Serilog;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules

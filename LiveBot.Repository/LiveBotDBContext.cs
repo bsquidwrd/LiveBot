@@ -1,6 +1,5 @@
 ﻿using LiveBot.Core.Repository.Models;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System;
 
 namespace LiveBot.Repository

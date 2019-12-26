@@ -23,19 +23,19 @@ namespace LiveBot.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // You specify the amount of shards you'd like to have with the
-            // DiscordSocketConfig. Generally, it's recommended to
-            // have 1 shard per 1500-2000 guilds your bot is in.
+            services.AddControllers();
+
+            // Add DiscordShardedClient
             var config = new DiscordSocketConfig
             {
                 TotalShards = 1
             };
 
-            services.AddControllers();
             services.AddSingleton(new DiscordShardedClient(config));
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
 
+            // Add UnitOfWorkFactory
             var factory = new UnitOfWorkFactory();
             services.AddSingleton<IUnitOfWorkFactory>(factory);
         }
