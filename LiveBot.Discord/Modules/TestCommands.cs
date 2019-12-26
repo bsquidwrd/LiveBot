@@ -25,8 +25,9 @@ namespace LiveBot.Discord.Modules
         [Command("retrieve")]
         public async Task RetrieveAsync()
         {
-            IDiscordGuild DBGuild = _work.GuildRepository.GetGuildAsync(Context.Guild.Id);
-            await ReplyAsync($"The following name was retrieved from the Database: {DBGuild.Name}");
+            DiscordGuild DBGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == Context.Guild.Id));
+            DiscordChannel DBChannel = await _work.ChannelRepository.SingleOrDefaultAsync((c => c.DiscordGuild == DBGuild && c.DiscordId == Context.Channel.Id));
+            await ReplyAsync($"The following names were retrieved from the Database: Channel {DBChannel.Name} in Guild {DBGuild.Name}");
         }
     }
 }

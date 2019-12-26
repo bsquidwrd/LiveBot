@@ -2,7 +2,7 @@
 
 namespace LiveBot.Core.Repository
 {
-    public interface IGuildRepository : IRepository<DiscordGuild>
+    public interface IChannelRepository : IRepository<DiscordChannel>
     {
     }
 }
