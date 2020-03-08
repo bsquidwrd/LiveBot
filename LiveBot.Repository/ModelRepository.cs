@@ -83,7 +83,7 @@ namespace LiveBot.Repository
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public async Task<int> GetPageCountAsync(Expression<Func<TEntity, bool>> predicate, int pageSize)
         {
-            var count = await DbSet.Where(predicate).CountAsync().ConfigureAwait(false);
+            var count = await DbSet.Where(predicate).Where((d => d.Deleted == false)).CountAsync().ConfigureAwait(false);
             if (count <= pageSize)
                 return 1;
 
