@@ -2,7 +2,7 @@
 
 namespace LiveBot.Core.Repository.Models
 {
-    public class DiscordGuild : BaseModel<DiscordGuild>
+    public class DiscordGuild : BaseDiscordModel<DiscordGuild>
     {
         public virtual ICollection<DiscordChannel> DiscordChannels { get; set; }
     }

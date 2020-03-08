@@ -2,8 +2,9 @@
 {
     public interface IUnitOfWork
     {
-        IExampleRepository ExampleRepository { get; }
+        //IExampleRepository ExampleRepository { get; }
         IGuildRepository GuildRepository { get; }
+
         IChannelRepository ChannelRepository { get; }
     }
 }

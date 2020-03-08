@@ -45,6 +45,16 @@
     <Compile Remove="Migrations\20191226094513_Initial Create.Designer.cs" />
     <Compile Remove="Migrations\20191226100845_Initial Create.cs" />
     <Compile Remove="Migrations\20191226100845_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20191226101133_Initial Create.cs" />
+    <Compile Remove="Migrations\20191226101133_Initial Create.Designer.cs" />
+    <Compile Remove="Migrations\20200125170718_Create BaseDiscordModel.cs" />
+    <Compile Remove="Migrations\20200125170718_Create BaseDiscordModel.Designer.cs" />
+    <Compile Remove="Migrations\20200301063622_Added deleted field to base models.cs" />
+    <Compile Remove="Migrations\20200301063622_Added deleted field to base models.Designer.cs" />
+    <Compile Remove="Migrations\20200301064503_Moved deleted field to base model.cs" />
+    <Compile Remove="Migrations\20200301064503_Moved deleted field to base model.Designer.cs" />
+    <Compile Remove="Migrations\20200301064622_Added deleted field to base model.cs" />
+    <Compile Remove="Migrations\20200301064622_Added deleted field to base model.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -62,6 +72,10 @@
   <ItemGroup>
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
     <ProjectReference Include="..\LiveBot.Discord\LiveBot.Discord.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>

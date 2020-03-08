@@ -40,13 +40,15 @@ namespace LiveBot.Repository
         /// <inheritdoc />
         public async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            return await DbSet.ToListAsync().ConfigureAwait(false);
+            return await DbSet.Where((d => d.Deleted == false)).ToListAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         public virtual async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await DbSet.Where(predicate).ToListAsync()
+            return await DbSet.Where(predicate)
+                .Where((d => d.Deleted == false))
+                .ToListAsync()
                 .ConfigureAwait(false);
         }
 
@@ -56,6 +58,7 @@ namespace LiveBot.Repository
         {
             return await DbSet
                 .Where(predicate)
+                .Where((d => d.Deleted == false))
                 .Skip((page * pageSize) - pageSize)
                 .Take(pageSize)
                 .ToListAsync()
@@ -68,6 +71,7 @@ namespace LiveBot.Repository
         {
             return await DbSet
                 .Where(predicate)
+                .Where((d => d.Deleted == false))
                 .OrderByDescending(order)
                 .Skip((page * pageSize) - pageSize)
                 .Take(pageSize)
@@ -92,6 +96,7 @@ namespace LiveBot.Repository
         {
             return DbSet
                 .Where(predicate)
+                .Where((d => d.Deleted == false))
                 .FirstOrDefaultAsync();
         }
 
@@ -179,7 +184,9 @@ namespace LiveBot.Repository
             try
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
+                //DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
+                var exists = await SingleOrDefaultAsync((d => d.Id == Id)).ConfigureAwait(false);
+                exists.Deleted = true;
                 await Context.SaveChangesAsync().ConfigureAwait(false);
             }
             finally

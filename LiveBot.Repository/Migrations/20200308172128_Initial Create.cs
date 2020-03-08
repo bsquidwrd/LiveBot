@@ -14,9 +14,10 @@ namespace LiveBot.Repository.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TimeStamp = table.Column<DateTime>(nullable: false),
+                    Deleted = table.Column<bool>(nullable: false),
                     DiscordId = table.Column<decimal>(nullable: false),
-                    Name = table.Column<string>(nullable: true),
-                    TimeStamp = table.Column<DateTime>(nullable: false)
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,9 +30,10 @@ namespace LiveBot.Repository.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TimeStamp = table.Column<DateTime>(nullable: false),
+                    Deleted = table.Column<bool>(nullable: false),
                     DiscordId = table.Column<decimal>(nullable: false),
                     Name = table.Column<string>(nullable: true),
-                    TimeStamp = table.Column<DateTime>(nullable: false),
                     DiscordGuildId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>

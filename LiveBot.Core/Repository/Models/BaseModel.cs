@@ -8,10 +8,9 @@ namespace LiveBot.Core.Repository.Models
         where T : BaseModel<T>
     {
         public int Id { get; set; }
-        public ulong DiscordId { get; set; }
-        public string Name { get; set; }
 
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
+        public bool Deleted { get; set; }
 
         /// <summary>Allows for the == operator to be used for equality.</summary>
         /// <param name="x">The left side of the operator.</param>
