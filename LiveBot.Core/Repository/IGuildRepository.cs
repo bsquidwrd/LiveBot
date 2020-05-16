@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository.Models;
+﻿using LiveBot.Core.Repository.Models.Discord;
 
 namespace LiveBot.Core.Repository
 {

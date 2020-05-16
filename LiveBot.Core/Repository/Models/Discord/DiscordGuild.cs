@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LiveBot.Core.Repository.Models
+namespace LiveBot.Core.Repository.Models.Discord
 {
     public class DiscordGuild : BaseDiscordModel<DiscordGuild>
     {

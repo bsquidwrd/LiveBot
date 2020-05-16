@@ -25,10 +25,15 @@ namespace LiveBot.Discord
 
             // Load Guild Information
             var loadGuildInformation = new LoadGuildInformation(services.GetRequiredService<IUnitOfWorkFactory>());
-            client.GuildAvailable += loadGuildInformation.GuildAvailable;
-            client.ChannelCreated += loadGuildInformation.ChannelCreated;
-            client.ChannelDestroyed += loadGuildInformation.ChannelDestroyed;
-            client.ChannelUpdated += loadGuildInformation.ChannelUpdated;
+            client.GuildAvailable       += loadGuildInformation.GuildAvailable;
+            client.JoinedGuild          += loadGuildInformation.GuildAvailable;
+            client.LeftGuild            += loadGuildInformation.GuildLeave;
+            client.ChannelCreated       += loadGuildInformation.ChannelCreated;
+            client.ChannelDestroyed     += loadGuildInformation.ChannelDestroyed;
+            client.ChannelUpdated       += loadGuildInformation.ChannelUpdated;
+            client.RoleCreated          += loadGuildInformation.RoleCreated;
+            client.RoleDeleted          += loadGuildInformation.RoleDeleted;
+            client.RoleUpdated          += loadGuildInformation.RoleUpdated;
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
 

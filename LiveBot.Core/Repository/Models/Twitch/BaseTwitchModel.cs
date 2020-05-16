@@ -1,4 +1,4 @@
-﻿namespace LiveBot.Core.Repository.Models
+﻿namespace LiveBot.Core.Repository.Models.Twitch
 {
     public abstract class BaseTwitchModel<T> : BaseModel<T>
         where T : BaseTwitchModel<T>

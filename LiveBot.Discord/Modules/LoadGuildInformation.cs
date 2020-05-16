@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 using LiveBot.Core.Repository;
-using LiveBot.Core.Repository.Models;
+using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,7 +16,31 @@ namespace LiveBot.Discord.Modules
             _work = factory.Create();
         }
 
-        public async Task GuildAvailable(SocketGuild guild)
+        public async Task _PurgeGuild(SocketGuild guild)
+        {
+            DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == guild.Id));
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
+
+            foreach (SocketGuildChannel channel in guild.Channels)
+            {
+                DiscordChannel discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync((d => d.DiscordId == channel.Id));
+                await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
+            }
+
+            try
+            {
+                DiscordChannel guildDefaultChannel = await _work.ChannelRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
+                await _work.ChannelRepository.RemoveAsync(guildDefaultChannel.Id);
+            }
+            catch
+            {
+            }
+
+            await _work.GuildRepository.RemoveAsync(discordGuild.Id);
+        }
+
+        public async Task _UpdateGuildChannels(SocketGuild guild)
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == guild.Id));
@@ -42,6 +66,18 @@ namespace LiveBot.Discord.Modules
                     await _work.ChannelRepository.RemoveAsync(dbChannel.Id);
                 }
             }
+        }
+
+        public async Task GuildAvailable(SocketGuild guild)
+        {
+            Log.Information($@"Guild Available {guild.Name}");
+            await _UpdateGuildChannels(guild);
+        }
+
+        public async Task GuildLeave(SocketGuild guild)
+        {
+            Log.Information($@"Left Guild {guild.Name}");
+            await _PurgeGuild(guild);
         }
 
         public async Task ChannelCreated(SocketChannel channel)
@@ -92,6 +128,24 @@ namespace LiveBot.Discord.Modules
                 Log.Error("Error caught trying to Update channel");
                 return;
             }
+        }
+
+        public async Task RoleCreated(SocketRole socketRole)
+        {
+            Log.Information($@"Role Created {socketRole.Name}");
+            return;
+        }
+
+        public async Task RoleDeleted(SocketRole socketRole)
+        {
+            Log.Information($@"Role Deleted {socketRole.Name}");
+            return;
+        }
+
+        public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
+        {
+            Log.Information($@"Role Updated {beforeRole.Name} to {afterRole.Name}");
+            return;
         }
     }
 }

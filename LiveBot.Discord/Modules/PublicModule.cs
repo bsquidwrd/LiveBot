@@ -30,5 +30,22 @@ namespace LiveBot.Discord.Modules
                 .Build();
             await ReplyAsync(null, false, ReplyEmbed);
         }
+
+        [Command("hello")]
+        public async Task HelloAsync()
+        {
+            var AppInfo = await Context.Client.GetApplicationInfoAsync();
+            var msg = $@"Hello, I am a bot created by {AppInfo.Owner.Username}#{AppInfo.Owner.DiscriminatorValue}";
+            await ReplyAsync(msg);
+        }
+
+
+        [Command("source")]
+        public async Task SourceAsync()
+        {
+            var AppInfo = await Context.Client.GetApplicationInfoAsync();
+            var msg = $@"{Context.Message.Author.Mention} You can find my source code here: https://www.github.com/bsquidwrd/Live-Bot";
+            await ReplyAsync(msg);
+        }
     }
 }

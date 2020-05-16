@@ -1,5 +1,5 @@
 ﻿using LiveBot.Core.Repository;
-using LiveBot.Core.Repository.Models;
+using LiveBot.Core.Repository.Models.Discord;
 
 namespace LiveBot.Repository
 {

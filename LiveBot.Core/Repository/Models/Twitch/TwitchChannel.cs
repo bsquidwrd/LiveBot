@@ -1,4 +1,4 @@
-﻿namespace LiveBot.Core.Repository.Models
+﻿namespace LiveBot.Core.Repository.Models.Twitch
 {
     public class TwitchChannel : BaseTwitchModel<TwitchChannel>
     {
