@@ -29,6 +29,7 @@ namespace LiveBot.Discord.Services
 
             // Add TypeReaders
             _commands.AddTypeReader(typeof(BaseStreamChannel), new StreamChannelTypeReader());
+            _commands.AddTypeReader(typeof(bool), new EnhancedBoolTypeReader());
         }
 
         public async Task InitializeAsync()

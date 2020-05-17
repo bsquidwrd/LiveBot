@@ -1,19 +1,23 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.SiteAPIs;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Discord.Services.LiveBot;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    [RequireOwner]
     [Group("test")]
     public class TestCommands : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly ISiteAPIs _siteAPIs;
 
-        public TestCommands(IUnitOfWorkFactory factory)
+        public TestCommands(IUnitOfWorkFactory factory, ISiteAPIsFactory siteAPIs)
         {
             _work = factory.Create();
+            _siteAPIs = siteAPIs.Create();
         }
 
         [Command("ping")]
@@ -31,10 +35,22 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync($"The following names were retrieved from the Database: Channel {DBChannel.Name} in Guild {DBGuild.Name}");
         }
 
-        [Command("stream")]
-        public async Task StreamAsync(BaseStreamChannel streamChannel)
+        [Command("url")]
+        public async Task URLAsync(BaseStreamChannel streamChannel)
         {
             await ReplyAsync($"Result: {streamChannel.GetUsername()}");
+        }
+
+        [Command("bool")]
+        public async Task BoolAsync(bool input)
+        {
+            await ReplyAsync($"Result: {input}");
+        }
+
+        [Command("api")]
+        public async Task APIAsync()
+        {
+            await ReplyAsync($"Result: {_siteAPIs.TwitchAPI.Value}");
         }
     }
 }

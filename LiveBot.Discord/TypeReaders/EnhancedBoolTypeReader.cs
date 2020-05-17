@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.TypeReaders
 {
-    internal class BoolTypeReader : TypeReader
+    internal class EnhancedBoolTypeReader : TypeReader
     {
         public override Task<TypeReaderResult> ReadAsync(ICommandContext Context, string Input, IServiceProvider Services)
         {
@@ -20,6 +20,18 @@ namespace LiveBot.Discord.TypeReaders
                     return Task.FromResult(TypeReaderResult.FromSuccess(true));
 
                 case "no":
+                    return Task.FromResult(TypeReaderResult.FromSuccess(false));
+
+                case "1":
+                    return Task.FromResult(TypeReaderResult.FromSuccess(true));
+
+                case "0":
+                    return Task.FromResult(TypeReaderResult.FromSuccess(false));
+
+                case "-":
+                    return Task.FromResult(TypeReaderResult.FromSuccess(true));
+
+                case "+":
                     return Task.FromResult(TypeReaderResult.FromSuccess(false));
             }
             bool Result;

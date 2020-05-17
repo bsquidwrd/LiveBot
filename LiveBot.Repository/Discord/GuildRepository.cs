@@ -1,7 +1,7 @@
-﻿using LiveBot.Core.Repository.Interfaces;
+﻿using LiveBot.Core.Repository.Interfaces.Discord;
 using LiveBot.Core.Repository.Models.Discord;
 
-namespace LiveBot.Repository
+namespace LiveBot.Repository.Discord
 {
     public class GuildRepository : ModelRepository<DiscordGuild>, IGuildRepository
     {

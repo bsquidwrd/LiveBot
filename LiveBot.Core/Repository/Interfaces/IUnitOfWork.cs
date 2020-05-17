@@ -1,8 +1,9 @@
-﻿namespace LiveBot.Core.Repository.Interfaces
+﻿using LiveBot.Core.Repository.Interfaces.Discord;
+
+namespace LiveBot.Core.Repository.Interfaces
 {
     public interface IUnitOfWork
     {
-        //IExampleRepository ExampleRepository { get; }
         IGuildRepository GuildRepository { get; }
 
         IChannelRepository ChannelRepository { get; }

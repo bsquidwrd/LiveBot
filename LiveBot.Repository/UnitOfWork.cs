@@ -1,4 +1,6 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Discord;
+using LiveBot.Repository.Discord;
 using System;
 
 namespace LiveBot.Repository
@@ -6,8 +8,6 @@ namespace LiveBot.Repository
     public class UnitOfWork : IUnitOfWork
     {
         private readonly LiveBotDBContext _context;
-
-        //public IExampleRepository ExampleRepository { get; }
         public IGuildRepository GuildRepository { get; }
 
         public IChannelRepository ChannelRepository { get; }

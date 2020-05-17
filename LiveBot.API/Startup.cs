@@ -1,8 +1,10 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.SiteAPIs;
 using LiveBot.Discord.Services;
 using LiveBot.Repository;
+using LiveBot.Repository.SiteAPIs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +40,10 @@ namespace LiveBot.API
             // Add UnitOfWorkFactory
             var factory = new UnitOfWorkFactory();
             services.AddSingleton<IUnitOfWorkFactory>(factory);
+
+            // Add Site APIs
+            var siteAPIs = new SiteAPIsFactory();
+            services.AddSingleton<ISiteAPIsFactory>(siteAPIs);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
