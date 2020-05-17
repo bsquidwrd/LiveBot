@@ -50,7 +50,7 @@ namespace LiveBot.Discord.Modules
         [Command("api")]
         public async Task APIAsync()
         {
-            await ReplyAsync($"Result: {_siteAPIs.TwitchAPI.Value}");
+            await ReplyAsync($"Result: Pong");
         }
     }
 }
