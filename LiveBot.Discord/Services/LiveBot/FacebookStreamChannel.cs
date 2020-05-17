@@ -13,7 +13,7 @@ namespace LiveBot.Discord.Services.LiveBot
         public override bool IsValid()
         {
             return false;
-            return Regex.IsMatch(_StreamURL, _URLPattern);
+            //return Regex.IsMatch(_StreamURL, _URLPattern);
         }
 
         public override string GetUsername()
