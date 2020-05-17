@@ -180,7 +180,7 @@ namespace LiveBot.Discord.Modules
                 return;
             }
             // This will be where we trigger events such as
-            // when a user goes live in Discord to check if 
+            // when a user goes live in Discord to check if
             // the Guild has options enabled that allow notifying
             // when people with a certain role go live and verifying
             // that it's a legit stream etc etc

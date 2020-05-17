@@ -1,6 +1,7 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Discord.Services.LiveBot;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -31,9 +32,9 @@ namespace LiveBot.Discord.Modules
         }
 
         [Command("stream")]
-        public async Task StreamAsync(StreamChannel streamChannel)
+        public async Task StreamAsync(BaseStreamChannel streamChannel)
         {
-            await ReplyAsync($"Result: {streamChannel.Site} {streamChannel.Name}");
+            await ReplyAsync($"Result: {streamChannel.GetUsername()}");
         }
     }
 }

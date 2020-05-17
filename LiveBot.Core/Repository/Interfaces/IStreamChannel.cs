@@ -1,8 +1,16 @@
-﻿namespace LiveBot.Core.Repository.Interfaces
+﻿using System.Text.RegularExpressions;
+
+namespace LiveBot.Core.Repository.Interfaces
 {
     public interface IStreamChannel
     {
-        public string Site { get; }
-        public string Name { get; }
+        string Site { get; }
+        string StreamURL { get; }
+        string URLPattern { get; }
+        Regex URLRegex { get; }
+
+        bool IsValid();
+
+        string GetUsername();
     }
 }
