@@ -1,4 +1,4 @@
-﻿namespace LiveBot.Core.Repository
+﻿namespace LiveBot.Core.Repository.Interfaces
 {
     public interface IExampleRepository
     {

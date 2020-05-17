@@ -1,12 +1,12 @@
 ﻿using Discord.Commands;
-using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Interfaces;
 using Serilog;
 using System;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    [DontAutoLoad]
+    //[DontAutoLoad]
     public class AdminModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;

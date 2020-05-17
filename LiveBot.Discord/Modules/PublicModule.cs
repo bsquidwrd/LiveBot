@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Interfaces;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -38,7 +38,6 @@ namespace LiveBot.Discord.Modules
             var msg = $@"Hello, I am a bot created by {AppInfo.Owner.Username}#{AppInfo.Owner.DiscriminatorValue}";
             await ReplyAsync(msg);
         }
-
 
         [Command("source")]
         public async Task SourceAsync()

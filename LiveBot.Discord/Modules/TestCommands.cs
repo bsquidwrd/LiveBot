@@ -1,5 +1,5 @@
 ﻿using Discord.Commands;
-using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using System.Threading.Tasks;
 
@@ -28,6 +28,12 @@ namespace LiveBot.Discord.Modules
             DiscordGuild DBGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == Context.Guild.Id));
             DiscordChannel DBChannel = await _work.ChannelRepository.SingleOrDefaultAsync((c => c.DiscordGuild == DBGuild && c.DiscordId == Context.Channel.Id));
             await ReplyAsync($"The following names were retrieved from the Database: Channel {DBChannel.Name} in Guild {DBGuild.Name}");
+        }
+
+        [Command("stream")]
+        public async Task StreamAsync(StreamChannel streamChannel)
+        {
+            await ReplyAsync($"Result: {streamChannel.Site} {streamChannel.Name}");
         }
     }
 }

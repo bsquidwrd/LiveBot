@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,16 +24,17 @@ namespace LiveBot.Discord
             client.Log += LogAsync;
 
             // Load Guild Information
-            var loadGuildInformation = new LoadGuildInformation(services.GetRequiredService<IUnitOfWorkFactory>());
-            client.GuildAvailable       += loadGuildInformation.GuildAvailable;
-            client.JoinedGuild          += loadGuildInformation.GuildAvailable;
-            client.LeftGuild            += loadGuildInformation.GuildLeave;
-            client.ChannelCreated       += loadGuildInformation.ChannelCreated;
-            client.ChannelDestroyed     += loadGuildInformation.ChannelDestroyed;
-            client.ChannelUpdated       += loadGuildInformation.ChannelUpdated;
-            client.RoleCreated          += loadGuildInformation.RoleCreated;
-            client.RoleDeleted          += loadGuildInformation.RoleDeleted;
-            client.RoleUpdated          += loadGuildInformation.RoleUpdated;
+            var LiveBotEventHandles = new LiveBotDiscordEventHandlers(services.GetRequiredService<IUnitOfWorkFactory>());
+            client.GuildAvailable += LiveBotEventHandles.GuildAvailable;
+            client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
+            client.LeftGuild += LiveBotEventHandles.GuildLeave;
+            client.ChannelCreated += LiveBotEventHandles.ChannelCreated;
+            client.ChannelDestroyed += LiveBotEventHandles.ChannelDestroyed;
+            client.ChannelUpdated += LiveBotEventHandles.ChannelUpdated;
+            client.RoleCreated += LiveBotEventHandles.RoleCreated;
+            client.RoleDeleted += LiveBotEventHandles.RoleDeleted;
+            client.RoleUpdated += LiveBotEventHandles.RoleUpdated;
+            client.GuildMemberUpdated += LiveBotEventHandles.GuildMemberUpdated;
 
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
 

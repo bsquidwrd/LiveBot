@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository;
+﻿using LiveBot.Core.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 

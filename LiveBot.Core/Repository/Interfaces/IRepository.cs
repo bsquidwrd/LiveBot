@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace LiveBot.Core.Repository
+namespace LiveBot.Core.Repository.Interfaces
 {
     /// <summary>Defines a generic repository that implements the common interactions we would have on entities.</summary>
     /// <typeparam name="TModel">The BaseModel for this repository.</typeparam>

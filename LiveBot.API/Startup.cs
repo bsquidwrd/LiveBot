@@ -1,6 +1,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
-using LiveBot.Core.Repository;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.Services;
 using LiveBot.Repository;
 using Microsoft.AspNetCore.Builder;

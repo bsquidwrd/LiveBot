@@ -13,4 +13,8 @@
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Twitch\" />
+  </ItemGroup>
+
 </Project>

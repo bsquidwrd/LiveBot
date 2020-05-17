@@ -1,5 +1,6 @@
-﻿using Discord.WebSocket;
-using LiveBot.Core.Repository;
+﻿using Discord;
+using Discord.WebSocket;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System.Collections.Generic;
@@ -7,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    internal class LoadGuildInformation
+    internal class LiveBotDiscordEventHandlers
     {
         private readonly IUnitOfWork _work;
 
-        public LoadGuildInformation(IUnitOfWorkFactory factory)
+        public LiveBotDiscordEventHandlers(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
         }
@@ -72,6 +73,26 @@ namespace LiveBot.Discord.Modules
         {
             Log.Information($@"Guild Available {guild.Name}");
             await _UpdateGuildChannels(guild);
+
+            try
+            {
+                SocketGuildUser socketGuildUser = guild.GetUser(131224383640436736);
+                Log.Information($@"--------------------------------------------------");
+                Log.Information($@"Guild {guild.Id} {guild.Name}");
+                Log.Information($@"Roles for {socketGuildUser.Username}#{socketGuildUser.DiscriminatorValue}");
+                foreach (SocketRole role in socketGuildUser.Roles)
+                {
+                    if (role == guild.EveryoneRole)
+                    {
+                        continue;
+                    }
+                    Log.Information($@"{role.Id} {role.Name}");
+                }
+                Log.Information($@"--------------------------------------------------");
+            }
+            catch
+            {
+            }
         }
 
         public async Task GuildLeave(SocketGuild guild)
@@ -132,19 +153,53 @@ namespace LiveBot.Discord.Modules
 
         public async Task RoleCreated(SocketRole socketRole)
         {
+            await Task.Delay(1);
             Log.Information($@"Role Created {socketRole.Name}");
             return;
         }
 
         public async Task RoleDeleted(SocketRole socketRole)
         {
+            await Task.Delay(1);
             Log.Information($@"Role Deleted {socketRole.Name}");
             return;
         }
 
         public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
         {
+            await Task.Delay(1);
             Log.Information($@"Role Updated {beforeRole.Name} to {afterRole.Name}");
+            return;
+        }
+
+        public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
+        {
+            if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
+            {
+                // I don't care about bots going live
+                return;
+            }
+            // This will be where we trigger events such as
+            // when a user goes live in Discord to check if 
+            // the Guild has options enabled that allow notifying
+            // when people with a certain role go live and verifying
+            // that it's a legit stream etc etc
+            await Task.Delay(1);
+            IActivity userActivity = afterGuildUser.Activity;
+            if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame)
+            {
+                StreamingGame userGame = (StreamingGame)userActivity;
+                Log.Information($@"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
+
+                foreach (SocketRole role in afterGuildUser.Roles)
+                {
+                    if (role.Id == afterGuildUser.Guild.Id)
+                    {
+                        continue;
+                    }
+                    Log.Information($@"{role.Id} {role.Name}");
+                }
+            }
             return;
         }
     }

@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Discord.TypeReaders;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -24,6 +26,9 @@ namespace LiveBot.Discord.Services
             _commands.CommandExecuted += CommandExecutedAsync;
             _commands.Log += LogAsync;
             _discord.MessageReceived += MessageReceivedAsync;
+
+            // Add TypeReaders
+            _commands.AddTypeReader(typeof(StreamChannel), new StreamChannelTypeReader());
         }
 
         public async Task InitializeAsync()
