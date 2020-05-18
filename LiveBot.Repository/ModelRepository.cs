@@ -40,7 +40,7 @@ namespace LiveBot.Repository
         /// <inheritdoc />
         public async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            return await DbSet.Where((d => d.Deleted == false)).ToListAsync().ConfigureAwait(false);
+            return await DbSet.AsQueryable().Where((d => d.Deleted == false)).ToListAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />

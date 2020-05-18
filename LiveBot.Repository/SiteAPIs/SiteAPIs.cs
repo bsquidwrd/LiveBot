@@ -8,7 +8,7 @@ namespace LiveBot.Repository.SiteAPIs
 
         public SiteAPIs()
         {
-            TwitchAPI = new TwitchAPI();
+            TwitchAPI = new Twitch();
         }
     }
 }

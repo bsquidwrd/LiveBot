@@ -20,13 +20,6 @@ namespace LiveBot.Discord.Modules
             _siteAPIs = siteAPIs.Create();
         }
 
-        [Command("ping")]
-        public async Task TestAsync()
-        {
-            var msg = $@"Hi, I am a bot: {Context.Client.CurrentUser.IsBot}";
-            await ReplyAsync(msg);
-        }
-
         [Command("retrieve")]
         public async Task RetrieveAsync()
         {

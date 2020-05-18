@@ -42,8 +42,7 @@ namespace LiveBot.API
             services.AddSingleton<IUnitOfWorkFactory>(factory);
 
             // Add Site APIs
-            var siteAPIs = new SiteAPIsFactory();
-            services.AddSingleton<ISiteAPIsFactory>(siteAPIs);
+            services.AddSingleton<ISiteAPIsFactory>(new SiteAPIsFactory());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
