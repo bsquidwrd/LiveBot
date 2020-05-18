@@ -1,6 +1,6 @@
 ﻿namespace LiveBot.Core.Repository.Interfaces.SiteAPIs
 {
-    public interface ITwitchAPI
+    public interface ITwitch
     {
     }
 }

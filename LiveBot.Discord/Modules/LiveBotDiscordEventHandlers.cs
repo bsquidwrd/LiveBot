@@ -71,7 +71,7 @@ namespace LiveBot.Discord.Modules
 
         public async Task GuildAvailable(SocketGuild guild)
         {
-            Log.Information($@"Guild Available {guild.Name}");
+            //Log.Information($@"Guild Available {guild.Name}");
             await _UpdateGuildChannels(guild);
 
             try

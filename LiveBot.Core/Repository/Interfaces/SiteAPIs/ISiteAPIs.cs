@@ -2,6 +2,6 @@
 {
     public interface ISiteAPIs
     {
-        ITwitchAPI TwitchAPI { get; }
+        ITwitch Twitch { get; }
     }
 }

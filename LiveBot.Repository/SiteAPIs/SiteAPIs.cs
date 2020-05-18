@@ -4,11 +4,11 @@ namespace LiveBot.Repository.SiteAPIs
 {
     internal class SiteAPIs : ISiteAPIs
     {
-        public ITwitchAPI TwitchAPI { get; }
+        public ITwitch Twitch { get; }
 
         public SiteAPIs()
         {
-            TwitchAPI = new Twitch();
+            Twitch = new Twitch();
         }
     }
 }

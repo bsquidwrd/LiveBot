@@ -1,18 +1,14 @@
-﻿using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.SiteAPIs;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using LiveBot.Core.Repository.Interfaces.SiteAPIs;
+using Serilog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
 using TwitchLib.Api;
 using TwitchLib.Api.Services;
-using TwitchLib.Api.Services.Events;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
 
 namespace LiveBot.Repository.SiteAPIs
 {
-    internal class Twitch : ITwitchAPI
+    public class Twitch : ITwitch
     {
         private LiveStreamMonitorService Monitor;
         private TwitchAPI API;
@@ -31,46 +27,33 @@ namespace LiveBot.Repository.SiteAPIs
 
             Monitor = new LiveStreamMonitorService(API, 60);
 
-            List<string> lst = new List<string> { "22812120" };
-            Monitor.SetChannelsById(lst);
+            List<string> lst = new List<string> { "" };
+            Monitor.SetChannelsByName(lst);
 
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
             Monitor.OnStreamOffline += Monitor_OnStreamOffline;
             Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
 
-            Monitor.OnServiceStarted += Monitor_OnServiceStarted;
-            Monitor.OnChannelsSet += Monitor_OnChannelsSet;
-
+            Log.Information("Attempting to connect with TwitchAPI and begin Monitoring process");
 
             Monitor.Start(); //Keep at the end!
 
             await Task.Delay(-1);
-
         }
 
         private void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
-            throw new NotImplementedException();
+            Log.Information($@"OnStreamOnline: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
         }
 
         private void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
-            throw new NotImplementedException();
+            Log.Information($@"OnStreamUpdate: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
         }
 
         private void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
-            throw new NotImplementedException();
-        }
-
-        private void Monitor_OnChannelsSet(object sender, OnChannelsSetArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
-        {
-            throw new NotImplementedException();
+            Log.Information($@"OnStreamOffline: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
         }
     }
 }

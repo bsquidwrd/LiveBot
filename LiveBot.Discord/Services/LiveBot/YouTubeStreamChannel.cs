@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace LiveBot.Discord.Services.LiveBot
+﻿namespace LiveBot.Discord.Services.LiveBot
 {
     public class YouTubeStreamChannel : BaseStreamChannel
     {

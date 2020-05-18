@@ -1,6 +1,5 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.SiteAPIs;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Discord.Services.LiveBot;
 using System.Threading.Tasks;
@@ -12,12 +11,10 @@ namespace LiveBot.Discord.Modules
     public class TestCommands : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
-        private readonly ISiteAPIs _siteAPIs;
 
-        public TestCommands(IUnitOfWorkFactory factory, ISiteAPIsFactory siteAPIs)
+        public TestCommands(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
-            _siteAPIs = siteAPIs.Create();
         }
 
         [Command("retrieve")]
@@ -41,7 +38,7 @@ namespace LiveBot.Discord.Modules
         }
 
         [Command("api")]
-        public async Task APIAsync()
+        public async Task APIAsync(string bearerToken)
         {
             await ReplyAsync($"Result: Pong");
         }
