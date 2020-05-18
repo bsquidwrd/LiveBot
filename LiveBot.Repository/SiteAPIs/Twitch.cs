@@ -27,7 +27,7 @@ namespace LiveBot.Repository.SiteAPIs
 
             Monitor = new LiveStreamMonitorService(API, 60);
 
-            List<string> lst = new List<string> { "" };
+            List<string> lst = new List<string> { "bsquidwrd", "Lassiz" };
             Monitor.SetChannelsByName(lst);
 
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
@@ -43,17 +43,26 @@ namespace LiveBot.Repository.SiteAPIs
 
         private void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
-            Log.Information($@"OnStreamOnline: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
+            Log.Information("OnStreamOnline run");
+            foreach (var prop in e.Stream.GetType().GetProperties())
+            {
+                Log.Information("{0} = {1}", prop.Name, prop.GetValue(e.Stream, null));
+            }
         }
 
         private void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
-            Log.Information($@"OnStreamUpdate: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
+            Log.Information("OnStreamUpdate run");
+            // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
+            // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
+            // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+            // Okay I think it's because the stream was previously live on check
+            // So I think it sends this incase something has changed to process on my end
         }
 
         private void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
-            Log.Information($@"OnStreamOffline: {e.Stream.UserName} {e.Stream.Title} {e.Stream.Type.ToString()} {e.Stream.StartedAt.ToShortTimeString()}");
+            Log.Information("OnStreamOffline run");
         }
     }
 }
