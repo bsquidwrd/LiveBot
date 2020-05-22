@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Threading.Tasks;
-using LiveBot.Watcher.Twitch;
-using LiveBot.Core.Repository.Interfaces.Stream;
 
 namespace LiveBot.API
 {
@@ -28,7 +26,6 @@ namespace LiveBot.API
 
                 await bot.StartAsync(services).ConfigureAwait(false);
                 //var twitchMonitor =  new Twitch().StartAsync(services);
-                
             }
 
             await webHost.RunAsync().ConfigureAwait(false);

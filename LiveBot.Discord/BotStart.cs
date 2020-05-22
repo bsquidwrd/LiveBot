@@ -25,6 +25,7 @@ namespace LiveBot.Discord
             };
             return new DiscordShardedClient(config);
         }
+
         public void PopulateServices(IServiceCollection services)
         {
             services.AddSingleton<InteractiveService>();
@@ -32,6 +33,7 @@ namespace LiveBot.Discord
             services.AddSingleton<CommandHandlingService>();
         }
     }
+
     public class BotStart
     {
         public async Task StartAsync(IServiceProvider services)

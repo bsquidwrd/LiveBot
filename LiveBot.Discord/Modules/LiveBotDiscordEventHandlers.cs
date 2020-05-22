@@ -237,7 +237,7 @@ namespace LiveBot.Discord.Modules
 
         public async Task NotifyDiscord(ILiveBotStream stream)
         {
-            //DiscordGuild guild = await 
+            //DiscordGuild guild = await
             await Task.Delay(1);
         }
     }

@@ -2,15 +2,16 @@
 
 namespace LiveBot.Core.Repository.Interfaces.Stream
 {
-    public interface ILiveBotStream
+    public interface ILiveBotStream : ILiveBotBase
     {
-        public string ServiceName { get; }
+        public string BaseURL { get; }
         public ILiveBotUser User { get; }
         public ILiveBotGame Game { get; }
         public string Id { get; }
         public string Title { get; }
         public DateTime StartTime { get; }
-        public string Language { get; }
-        public string Thumbnail { get; }
+        public string ThumbnailURL { get; }
+
+        public string GetStreamURL();
     }
 }

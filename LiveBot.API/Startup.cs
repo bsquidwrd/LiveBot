@@ -1,3 +1,4 @@
+using LiveBot.Core.Repository.Events;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Discord;
@@ -41,6 +42,9 @@ namespace LiveBot.API
                 //,new Twitch()
             };
             services.AddSingleton(monitors);
+
+            // Add Events
+            services.AddSingleton(new LiveBotEvents());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
