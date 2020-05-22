@@ -41,7 +41,7 @@ namespace LiveBot.Watcher.Twitch
 
             API.Settings.ClientId = "";
             API.Settings.Secret = "";
-            Monitor = new LiveStreamMonitorService(API, 30);
+            Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 30, maxStreamRequestCountPerRequest: 100);
 
             List<string> channelList = new List<string> { "" };
             Monitor.SetChannelsById(channelList);
