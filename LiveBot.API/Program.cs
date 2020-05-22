@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Threading.Tasks;
+using LiveBot.Watcher.Twitch;
+using LiveBot.Core.Repository.Interfaces.Stream;
 
 namespace LiveBot.API
 {
@@ -13,9 +15,10 @@ namespace LiveBot.API
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+                .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
                 .CreateLogger();
 
+            Log.Information($@"-------------------------------------------------- Starting services... --------------------------------------------------");
             var webHost = CreateHostBuilder(args).Build();
 
             using (var scope = webHost.Services.CreateScope())
@@ -24,6 +27,8 @@ namespace LiveBot.API
                 var bot = new Discord.BotStart();
 
                 await bot.StartAsync(services).ConfigureAwait(false);
+                //var twitchMonitor =  new Twitch().StartAsync(services);
+                
             }
 
             await webHost.RunAsync().ConfigureAwait(false);

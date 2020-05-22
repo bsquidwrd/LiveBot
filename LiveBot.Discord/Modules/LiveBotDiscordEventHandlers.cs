@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System.Collections.Generic;
@@ -41,11 +42,17 @@ namespace LiveBot.Discord.Modules
             await _work.GuildRepository.RemoveAsync(discordGuild.Id);
         }
 
-        public async Task _UpdateGuildChannels(SocketGuild guild)
+        public async Task<DiscordGuild> _AddOrUpdateGuild(SocketGuild guild)
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == guild.Id));
             discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
+            return discordGuild;
+        }
+
+        public async Task _UpdateGuildChannels(SocketGuild guild)
+        {
+            DiscordGuild discordGuild = await _AddOrUpdateGuild(guild);
 
             foreach (SocketGuildChannel channel in guild.Channels)
             {
@@ -95,9 +102,13 @@ namespace LiveBot.Discord.Modules
             }
         }
 
+        public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
+        {
+            await _AddOrUpdateGuild(afterGuild);
+        }
+
         public async Task GuildLeave(SocketGuild guild)
         {
-            Log.Information($@"Left Guild {guild.Name}");
             await _PurgeGuild(guild);
         }
 
@@ -112,7 +123,7 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error("Error caught trying to Create channel");
+                Log.Error($@"Error caught trying to Create channel. Channel {channel.Id}");
                 return;
             }
         }
@@ -127,7 +138,7 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error("Error caught trying to Destroy channel");
+                Log.Error($@"Error caught trying to Destroy channel. Channel {channel.Id}");
                 return;
             }
         }
@@ -146,29 +157,50 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error("Error caught trying to Update channel");
+                Log.Error($@"Error caught trying to Update channel. Channel {beforeChannel.Id}");
                 return;
             }
         }
 
         public async Task RoleCreated(SocketRole socketRole)
         {
-            await Task.Delay(1);
-            Log.Information($@"Role Created {socketRole.Name}");
+            try
+            {
+                await Task.Delay(1);
+                Log.Information($@"Role Created {socketRole.Id} {socketRole.Name}");
+            }
+            catch
+            {
+                Log.Error($@"Error caught trying to Create role. Guild {socketRole.Guild.Id} {socketRole.Guild.Name}, Role {socketRole.Id} {socketRole.Name}");
+            }
             return;
         }
 
         public async Task RoleDeleted(SocketRole socketRole)
         {
-            await Task.Delay(1);
-            Log.Information($@"Role Deleted {socketRole.Name}");
+            try
+            {
+                await Task.Delay(1);
+                Log.Information($@"Role Deleted {socketRole.Id} {socketRole.Name}");
+            }
+            catch
+            {
+                Log.Error($@"Error caught trying to Delete role. Guild {socketRole.Guild.Id} {socketRole.Guild.Name}, Role {socketRole.Id} {socketRole.Name}");
+            }
             return;
         }
 
         public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
         {
-            await Task.Delay(1);
-            Log.Information($@"Role Updated {beforeRole.Name} to {afterRole.Name}");
+            try
+            {
+                await Task.Delay(1);
+                Log.Information($@"Role Updated {beforeRole.Id} {beforeRole.Name} to {afterRole.Name}");
+            }
+            catch
+            {
+                Log.Error($@"Error caught trying to Update role. Guild {beforeRole.Guild.Id} {beforeRole.Guild.Name}, Role {afterRole.Id} {afterRole.Name}");
+            }
             return;
         }
 
@@ -176,7 +208,7 @@ namespace LiveBot.Discord.Modules
         {
             if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
             {
-                // I don't care about bots going live
+                // I don't care about bots
                 return;
             }
             // This will be where we trigger events such as
@@ -201,6 +233,12 @@ namespace LiveBot.Discord.Modules
                 }
             }
             return;
+        }
+
+        public async Task NotifyDiscord(ILiveBotStream stream)
+        {
+            //DiscordGuild guild = await 
+            await Task.Delay(1);
         }
     }
 }

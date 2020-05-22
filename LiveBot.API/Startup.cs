@@ -1,15 +1,14 @@
-using Discord.Commands;
-using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.SiteAPIs;
-using LiveBot.Discord.Services;
+using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Discord;
 using LiveBot.Repository;
-using LiveBot.Repository.SiteAPIs;
+using LiveBot.Watcher.Twitch;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 
 namespace LiveBot.API
 {
@@ -27,23 +26,21 @@ namespace LiveBot.API
         {
             services.AddControllers();
 
-            // Add DiscordShardedClient
-            var config = new DiscordSocketConfig
-            {
-                TotalShards = 1
-            };
-
-            services.AddSingleton(new DiscordShardedClient(config));
-            services.AddSingleton<CommandService>();
-            services.AddSingleton<CommandHandlingService>();
+            // Add Discord Bot
+            LiveBotDiscord discordBot = new LiveBotDiscord();
+            services.AddSingleton(discordBot.GetBot());
+            discordBot.PopulateServices(services);
 
             // Add UnitOfWorkFactory
             var factory = new UnitOfWorkFactory();
             services.AddSingleton<IUnitOfWorkFactory>(factory);
 
-            // Add Site APIs
-            //services.AddSingleton<ISiteAPIsFactory>(new SiteAPIsFactory());
-            services.AddSingleton<ITwitch>(new Twitch());
+            // Add Monitor Service
+            List<ILiveBotMonitor> monitors = new List<ILiveBotMonitor> {
+                new Twitch()
+                //,new Twitch()
+            };
+            services.AddSingleton(monitors);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
