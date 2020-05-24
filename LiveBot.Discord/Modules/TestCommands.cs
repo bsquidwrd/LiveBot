@@ -1,9 +1,6 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Core.Repository.Models.Discord;
-using LiveBot.Discord.Services.LiveBot;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -25,24 +22,6 @@ namespace LiveBot.Discord.Modules
             DiscordGuild DBGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == Context.Guild.Id));
             DiscordChannel DBChannel = await _work.ChannelRepository.SingleOrDefaultAsync((c => c.DiscordGuild == DBGuild && c.DiscordId == Context.Channel.Id));
             await ReplyAsync($"The following names were retrieved from the Database: Channel {DBChannel.Name} in Guild {DBGuild.Name}");
-        }
-
-        [Command("url")]
-        public async Task URLAsync(BaseStreamChannel streamChannel)
-        {
-            await ReplyAsync($"Result: {streamChannel.GetUsername()}");
-        }
-
-        [Command("bool")]
-        public async Task BoolAsync(bool input)
-        {
-            await ReplyAsync($"Result: {input}");
-        }
-
-        [Command("api")]
-        public async Task APIAsync()
-        {
-            await ReplyAsync($"Result: Pong");
         }
     }
 }
