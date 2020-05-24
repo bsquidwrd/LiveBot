@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Discord.Services.LiveBot;
 using Serilog;
 using System;
@@ -15,11 +16,10 @@ namespace LiveBot.Discord.Modules
     [Summary("Monitor actions for Streams")]
     public class MonitorModule : InteractiveBase<ShardedCommandContext>
     {
-        //private List<ILiveBotMonitor> _monitors;
-        public MonitorModule()
-        //public MonitorModule(List<ILiveBotMonitor> monitors)
+        private List<ILiveBotMonitor> _monitors;
+        public MonitorModule(List<ILiveBotMonitor> monitors)
         {
-            //_monitors = monitors;
+            _monitors = monitors;
         }
 
         private async Task _DeleteMessage(IMessage Message)
@@ -32,7 +32,18 @@ namespace LiveBot.Discord.Modules
             { }
         }
 
+        [Command("services")]
+        [RequireOwner]
+        public async Task MonitorServices()
+        {
+            foreach (ILiveBotMonitor monitor in _monitors)
+            {
+                await ReplyAsync($"{monitor.ServiceType.ToString()}");
+            }
+        }
+
         [Command("test")]
+        [Alias("check", "perms")]
         [Summary(@"
 Have the bot perform a self check of its required Discord permissions in the channel the command is run.
 Don't worry, this won't send any weird messages. It will only send a response with the result.

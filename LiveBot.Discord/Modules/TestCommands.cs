@@ -13,12 +13,10 @@ namespace LiveBot.Discord.Modules
     public class TestCommands : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
-        private readonly List<ILiveBotMonitor> _monitors;
 
-        public TestCommands(IUnitOfWorkFactory factory, List<ILiveBotMonitor> monitors)
+        public TestCommands(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
-            _monitors = monitors;
         }
 
         [Command("retrieve")]
@@ -44,10 +42,6 @@ namespace LiveBot.Discord.Modules
         [Command("api")]
         public async Task APIAsync()
         {
-            foreach(ILiveBotMonitor monitor in _monitors)
-            {
-                await ReplyAsync($"{monitor.ServiceType.ToString()}");
-            }
             await ReplyAsync($"Result: Pong");
         }
     }
