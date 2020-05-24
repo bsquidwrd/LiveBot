@@ -1,6 +1,5 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces.Stream;
-using LiveBot.Discord.Services.LiveBot;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

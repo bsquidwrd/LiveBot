@@ -14,6 +14,7 @@ namespace LiveBot.Discord.Services.LiveBot
             _monitors = monitors;
             this.StreamURL = StreamURL;
         }
+
         public ILiveBotMonitor Check()
         {
             return _monitors.Where(m => m.IsValid(StreamURL)).FirstOrDefault();

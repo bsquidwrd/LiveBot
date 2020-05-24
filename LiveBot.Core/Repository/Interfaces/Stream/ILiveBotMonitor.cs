@@ -13,6 +13,7 @@ namespace LiveBot.Core.Repository.Interfaces.Stream
         public Task<ILiveBotStream> GetStream(ILiveBotUser user);
 
         public Task<ILiveBotGame> GetGame(string gameId);
+
         public bool IsValid(string streamURL);
     }
 }
