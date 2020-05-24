@@ -1,14 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace LiveBot.Core.Repository.Interfaces.Stream
 {
     public interface ILiveBotMonitor : ILiveBotBase
     {
         public string URLPattern { get; set; }
-
-        public Task StartAsync();
-
-        public Task _Stop();
+        public ILiveBotMonitorStart GetStartClass();
 
         public Task<ILiveBotUser> GetUser(string username = null, string userId = null);
 

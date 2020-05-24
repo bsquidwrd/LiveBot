@@ -1,9 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
-using LiveBot.Core.Repository.Interfaces.Stream;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -19,16 +17,10 @@ namespace LiveBot.Discord.Modules
 
         [RequireOwner]
         [Command("restart")]
-        public async Task RestartBotAsync(List<ILiveBotMonitor> monitors)
+        [Remarks("Restart the bot and all attached services")]
+        public async Task RestartBotAsync()
         {
             await Context.Client.SetStatusAsync(UserStatus.Invisible);
-
-            try
-            {
-                monitors?.ForEach(i => i._Stop());
-            }
-            catch
-            { }
 
             var msg = $@"{Context.User.Mention}, I am restarting. Enjoy the silence, you monster!";
             Embed embed = new EmbedBuilder().WithImageUrl("https://i.imgur.com/XSi0zrl.png").Build();

@@ -1,7 +1,9 @@
 ﻿using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Discord.Services.LiveBot;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -11,10 +13,12 @@ namespace LiveBot.Discord.Modules
     public class TestCommands : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly List<ILiveBotMonitor> _monitors;
 
-        public TestCommands(IUnitOfWorkFactory factory)
+        public TestCommands(IUnitOfWorkFactory factory, List<ILiveBotMonitor> monitors)
         {
             _work = factory.Create();
+            _monitors = monitors;
         }
 
         [Command("retrieve")]
@@ -38,8 +42,12 @@ namespace LiveBot.Discord.Modules
         }
 
         [Command("api")]
-        public async Task APIAsync(string bearerToken)
+        public async Task APIAsync()
         {
+            foreach(ILiveBotMonitor monitor in _monitors)
+            {
+                await ReplyAsync($"{monitor.ServiceType.ToString()}");
+            }
             await ReplyAsync($"Result: Pong");
         }
     }

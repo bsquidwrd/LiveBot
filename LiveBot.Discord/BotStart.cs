@@ -2,9 +2,10 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.Modules;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.Services;
+using LiveBot.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -69,8 +70,15 @@ namespace LiveBot.Discord
             // Populate Commands
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
 
-            // Get Bot Toke and Start the Bot
+            // Get Bot Token and Start the Bot
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DiscordToken"));
+
+            int recommendedShards = await client.GetRecommendedShardCountAsync().ConfigureAwait(false);
+            if (client.Shards.Count < recommendedShards)
+            {
+                Log.Warning($"Discord recommends {recommendedShards} shards but there is only {client.Shards.Count}");
+            }
+
             await client.StartAsync();
         }
 

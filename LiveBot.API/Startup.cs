@@ -1,9 +1,8 @@
-using LiveBot.Core.Repository.Events;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Discord;
 using LiveBot.Repository;
-using LiveBot.Watcher.Twitch;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +26,11 @@ namespace LiveBot.API
         {
             services.AddControllers();
 
+            // Add Messaging
+            //var messaging = new Messaging.Messaging();
+            //services.AddSingleton(messaging);
+            //messaging.PopulateServices(services);
+
             // Add Discord Bot
             LiveBotDiscord discordBot = new LiveBotDiscord();
             services.AddSingleton(discordBot.GetBot());
@@ -36,15 +40,13 @@ namespace LiveBot.API
             var factory = new UnitOfWorkFactory();
             services.AddSingleton<IUnitOfWorkFactory>(factory);
 
-            // Add Monitor Service
-            List<ILiveBotMonitor> monitors = new List<ILiveBotMonitor> {
-                new Twitch()
-                //,new Twitch()
+            // Add Monitors
+            //services.AddSingleton(new Watcher.Twitch.TwitchMonitor());
+            List<ILiveBotMonitor> monitorList = new List<ILiveBotMonitor>
+            {
+                new Watcher.Twitch.TwitchMonitor()
             };
-            services.AddSingleton(monitors);
-
-            // Add Events
-            services.AddSingleton(new LiveBotEvents());
+            services.AddSingleton(monitorList);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

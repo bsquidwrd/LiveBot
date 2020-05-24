@@ -33,7 +33,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05 Watcher", "05 Watcher", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05.01 Twitch", "05.01 Twitch", "{5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Watcher.Twitch", "LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj", "{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Watcher.Twitch", "LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj", "{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Messaging", "LiveBot.Messaging\LiveBot.Messaging.csproj", "{A525C38C-2910-442D-A0ED-B033395E1330}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,10 @@ Global
 		{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A525C38C-2910-442D-A0ED-B033395E1330}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A525C38C-2910-442D-A0ED-B033395E1330}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A525C38C-2910-442D-A0ED-B033395E1330}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A525C38C-2910-442D-A0ED-B033395E1330}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +78,7 @@ Global
 		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447} = {709C4AF2-3084-4B28-B42A-6EF4707704A3}
 		{5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1} = {9219EEE8-7C53-4CC9-9940-5C0296092F89}
 		{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49} = {5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1}
+		{A525C38C-2910-442D-A0ED-B033395E1330} = {CDA9B861-8EC0-4693-93E9-2F700B9C85DC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7BEBFC2-84F3-4E31-B8D6-001D28DD3892}

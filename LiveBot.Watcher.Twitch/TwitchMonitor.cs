@@ -1,8 +1,11 @@
 ﻿using LiveBot.Core.Repository.Base.Stream;
 using LiveBot.Core.Repository.Enums;
 using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Messaging;
 using LiveBot.Watcher.Twitch.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,59 +19,40 @@ using TwitchLib.Api.Services.Events.LiveStreamMonitor;
 
 namespace LiveBot.Watcher.Twitch
 {
-    public class Twitch : BaseLiveBotMonitor
+    public class TwitchMonitor : BaseLiveBotMonitor
     {
-        private LiveStreamMonitorService Monitor;
-        private TwitchAPI API;
+        public LiveStreamMonitorService Monitor;
+        public TwitchAPI API;
+        public IServiceProvider services;
 
-        public Twitch()
+        public TwitchMonitor()
         {
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
-            Task.Run(() => StartAsync());
-        }
 
-        public override async Task StartAsync()
-        {
-            Log.Debug("Attempting to connect with TwitchAPI and begin Monitoring process");
-            await ConfigLiveMonitorAsync();
-        }
-
-        private Task<bool> ConfigLiveMonitorAsync()
-        {
             API = new TwitchAPI();
-
-            API.Settings.ClientId = "";
-            API.Settings.Secret = "";
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 30, maxStreamRequestCountPerRequest: 100);
+        }
 
-            List<string> channelList = new List<string> { "" };
-            Monitor.SetChannelsById(channelList);
-
-            Monitor.OnServiceStarted += Monitor_OnServiceStarted;
-            Monitor.OnStreamOnline += Monitor_OnStreamOnline;
-            Monitor.OnStreamOffline += Monitor_OnStreamOffline;
-            //Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
-
-            Monitor.Start();
-            return Task.FromResult(true);
+        public override ILiveBotMonitorStart GetStartClass()
+        {
+            return new TwitchStart();
         }
 
         // Start Events
-        private void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
+        public void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
         }
 
-        private async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
+        public async void Monitor_OnStreamOnline(object sender, TwitchLib.Api.Services.Events.LiveStreamMonitor.OnStreamOnlineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-
             Log.Debug($@"OnStreamOnline: {stream.User} Match: {IsMatch(stream.GetStreamURL())}");
         }
 
-        private async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
+        public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
             Log.Debug($@"OnStreamUpdate: {stream.User}");
@@ -79,7 +63,7 @@ namespace LiveBot.Watcher.Twitch
             // So I think it sends this incase something has changed to process on my end
         }
 
-        private async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
+        public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
             Log.Debug($@"OnStreamOffline: {stream.User}");
@@ -117,13 +101,6 @@ namespace LiveBot.Watcher.Twitch
         }
 
         // Implement Interface Requirements
-        public override async Task _Stop()
-        {
-            Log.Information("MonitorStop was called");
-            await Task.Delay(1);
-            Monitor.Stop();
-        }
-
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
             Game game = await API_GetGame(gameId);

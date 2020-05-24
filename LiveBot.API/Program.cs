@@ -1,7 +1,9 @@
+using LiveBot.Core.Repository.Interfaces.Stream;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LiveBot.API
@@ -22,11 +24,28 @@ namespace LiveBot.API
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var bot = new Discord.BotStart();
 
+                //var messaging = new Messaging.MessagingStart();
+                //await messaging.StartAsync(services).ConfigureAwait(false);
+
+                var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
-                //var twitchMonitor =  new Twitch().StartAsync(services);
+
+                //var twitchMonitor = new Watcher.Twitch.TwitchStart();
+                //await twitchMonitor.StartAsync(services).ConfigureAwait(false);
+                foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
+                {
+                    ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
+                    await monitorStart.StartAsync(services).ConfigureAwait(false);
+                }
             }
+
+            //using (var scope = webHost.Services.CreateScope())
+            //{
+            //    var services = scope.ServiceProvider;
+            //    var twitchMonitor = new Watcher.Twitch.TwitchStart();
+            //    await twitchMonitor.StartAsync(services).ConfigureAwait(false);
+            //}
 
             await webHost.RunAsync().ConfigureAwait(false);
 

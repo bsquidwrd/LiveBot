@@ -4,7 +4,6 @@ namespace LiveBot.Core.Repository.Interfaces.Stream
 {
     public interface ILiveBotStream : ILiveBotBase
     {
-        public string BaseURL { get; }
         public ILiveBotUser User { get; }
         public ILiveBotGame Game { get; }
         public string Id { get; }
