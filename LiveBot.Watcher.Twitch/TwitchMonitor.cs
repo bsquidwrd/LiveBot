@@ -1,9 +1,7 @@
 ﻿using LiveBot.Core.Repository.Base.Stream;
 using LiveBot.Core.Repository.Enums;
 using LiveBot.Core.Repository.Interfaces.Stream;
-using LiveBot.Messaging;
 using LiveBot.Watcher.Twitch.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -46,10 +44,10 @@ namespace LiveBot.Watcher.Twitch
             Log.Debug("Monitor service successfully connected to Twitch!");
         }
 
-        public async void Monitor_OnStreamOnline(object sender, TwitchLib.Api.Services.Events.LiveStreamMonitor.OnStreamOnlineArgs e)
+        public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($@"OnStreamOnline: {stream.User} Match: {IsMatch(stream.GetStreamURL())}");
+            Log.Debug($@"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)

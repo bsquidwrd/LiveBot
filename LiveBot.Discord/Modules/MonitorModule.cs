@@ -1,11 +1,12 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using LiveBot.Core.Repository.Enums;
 using LiveBot.Core.Repository.Interfaces.Stream;
-using LiveBot.Discord.Services.LiveBot;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -17,6 +18,7 @@ namespace LiveBot.Discord.Modules
     public class MonitorModule : InteractiveBase<ShardedCommandContext>
     {
         private List<ILiveBotMonitor> _monitors;
+
         public MonitorModule(List<ILiveBotMonitor> monitors)
         {
             _monitors = monitors;
@@ -34,12 +36,26 @@ namespace LiveBot.Discord.Modules
 
         [Command("services")]
         [RequireOwner]
+        [Summary("Get the list of Stream Services that are loaded")]
         public async Task MonitorServices()
         {
-            foreach (ILiveBotMonitor monitor in _monitors)
+            List<string> loadedServices = new List<string>();
+            foreach (var monitor in _monitors)
             {
-                await ReplyAsync($"{monitor.ServiceType.ToString()}");
+                string monitorName = monitor.ServiceType.ToString();
+                loadedServices.Add(monitorName);
             }
+            await ReplyAsync($"Loaded Services: {string.Join(",", loadedServices)}");
+        }
+
+        [Command("services")]
+        [RequireOwner]
+        [Summary("Check if a particular Stream Service is loaded by name")]
+        public async Task MonitorServices(string serviceName)
+        {
+            ServiceEnum serviceEnum = (ServiceEnum)Enum.Parse(typeof(ServiceEnum), serviceName.ToUpper());
+            ILiveBotMonitor monitor = _monitors.Where(m => m.ServiceType == serviceEnum).First();
+            await ReplyAsync($"Loaded: {monitor.ServiceType.ToString()}");
         }
 
         [Command("test")]
@@ -105,13 +121,13 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             await ReplyAsync($"This command isn't implemented yet");
         }
-        
+
         [Command("start")]
         [Alias("edit", "add")]
         [Summary("Setup a new Stream to monitor for this Discord")]
-        public async Task MonitorStart(BaseStreamChannel streamChannel)
+        public async Task MonitorStart(ILiveBotMonitor monitor)
         {
-            await ReplyAsync($"This command isn't implemented yet, but you input {streamChannel.GetUsername()}");
+            await ReplyAsync($"This command isn't implemented yet, but you input {monitor.ServiceType}");
         }
 
         [Command("stop")]
@@ -125,9 +141,9 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Command("stop")]
         [Alias("end")]
         [Summary("Stop monitoring a Stream for this Discord")]
-        public async Task MonitorStop(BaseStreamChannel streamChannel)
+        public async Task MonitorStop(ILiveBotMonitor monitor)
         {
-            await ReplyAsync($"This command isn't implemented yet, but you input {streamChannel.GetUsername()}");
+            await ReplyAsync($"This command isn't implemented yet, but you input {monitor.ServiceType}");
         }
     }
 }

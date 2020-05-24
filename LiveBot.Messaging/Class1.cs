@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LiveBot.Messaging
+﻿namespace LiveBot.Messaging
 {
-    class Class1
+    internal class Class1
     {
     }
 }
