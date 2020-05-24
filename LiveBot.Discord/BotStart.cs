@@ -2,10 +2,9 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
-using LiveBot.Discord.Modules;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
-using LiveBot.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
