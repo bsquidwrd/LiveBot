@@ -182,7 +182,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             await ReplyAsync($"This command isn't implemented yet");
         }
 
-
         /// <summary>
         /// Runs through the process of Stopping a Stream from being monitored
         /// </summary>

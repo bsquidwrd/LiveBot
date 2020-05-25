@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Stream;
 using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System.Collections.Generic;
@@ -59,7 +58,6 @@ namespace LiveBot.Discord.Modules
             discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
             return discordGuild;
         }
-
 
         /// <summary>
         /// Processes and updates all Discord Channels the bot has access to in the given <paramref name="guild"/>
