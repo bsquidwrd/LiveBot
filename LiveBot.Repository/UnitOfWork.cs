@@ -5,6 +5,7 @@ using System;
 
 namespace LiveBot.Repository
 {
+    /// <inheritdoc/>
     public class UnitOfWork : IUnitOfWork
     {
         private readonly LiveBotDBContext _context;

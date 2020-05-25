@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord
 {
-    // This is a minimal example of using Discord.Net's Sharded Client
-    // The provided DiscordShardedClient class simplifies having multiple
-    // DiscordSocketClient instances (or shards) to serve a large number of guilds.
+    /// <summary>
+    /// Class that represents an instance of <c>DiscordShardedClient</c>
+    /// </summary>
     public class LiveBotDiscord : DiscordShardedClient
     {
         public DiscordShardedClient GetBot()
@@ -26,6 +26,10 @@ namespace LiveBot.Discord
             return new DiscordShardedClient(config);
         }
 
+        /// <summary>
+        /// Populates the required services for the bot to run
+        /// </summary>
+        /// <param name="services"></param>
         public void PopulateServices(IServiceCollection services)
         {
             services.AddSingleton<InteractiveService>();
@@ -34,8 +38,16 @@ namespace LiveBot.Discord
         }
     }
 
+    /// <summary>
+    /// Represents the starting of an instance of <c>DiscordShardedClient</c>
+    /// </summary>
     public class BotStart
     {
+        /// <summary>
+        /// Wrapper to start the <c>DiscordShardedClient</c> instance
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
         public async Task StartAsync(IServiceProvider services)
         {
             var client = services.GetRequiredService<DiscordShardedClient>();
@@ -81,13 +93,19 @@ namespace LiveBot.Discord
             await client.StartAsync();
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a <c>DiscordSocketClient</c> (aka a <paramref name="shard"/> in this instance) is ready
+        /// </summary>
+        /// <param name="shard"></param>
+        /// <returns></returns>
         private Task ReadyAsync(DiscordSocketClient shard)
         {
             Log.Information($"Shard Number {shard.ShardId} is connected and ready!");
-            shard.SetGameAsync(name: $@"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
+            shard.SetGameAsync(name: $"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc/>
         private Task LogAsync(LogMessage log)
         {
             Log.Information(log.ToString());

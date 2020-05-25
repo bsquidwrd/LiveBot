@@ -2,7 +2,9 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using LiveBot.Core.Repository.Enums;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -17,23 +19,39 @@ namespace LiveBot.Discord.Modules
     [Summary("Monitor actions for Streams")]
     public class MonitorModule : InteractiveBase<ShardedCommandContext>
     {
-        private List<ILiveBotMonitor> _monitors;
+        private readonly IUnitOfWork _work;
+        private readonly List<ILiveBotMonitor> _monitors;
 
-        public MonitorModule(List<ILiveBotMonitor> monitors)
+        /// <summary>
+        /// Represents the list of Monitoring Commands available
+        /// </summary>
+        /// <param name="monitors">The loaded Monitoring Services, later used for locating and processing requests</param>
+        /// <param name="factory">The database factory so that the database can be utilized</param>
+        public MonitorModule(List<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
         {
             _monitors = monitors;
+            _work = factory.Create();
         }
 
-        private async Task _DeleteMessage(IMessage Message)
+        /// <summary>
+        /// Simple method to delete a message and not fail
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private async Task _DeleteMessage(IMessage message)
         {
             try
             {
-                await Message.DeleteAsync();
+                await message.DeleteAsync();
             }
             catch
             { }
         }
 
+        /// <summary>
+        /// Gives a list of loaded Monitoring Services
+        /// </summary>
+        /// <returns></returns>
         [Command("services")]
         [RequireOwner]
         [Summary("Get the list of Stream Services that are loaded")]
@@ -48,6 +66,11 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync($"Loaded Services: {string.Join(",", loadedServices)}");
         }
 
+        /// <summary>
+        /// Checks if a particular Monitoring Service is loaded with a given string name (based on <c>ServiceEnum</c>
+        /// </summary>
+        /// <param name="serviceName"></param>
+        /// <returns></returns>
         [Command("services")]
         [RequireOwner]
         [Summary("Check if a particular Stream Service is loaded by name")]
@@ -58,6 +81,10 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync($"Loaded: {monitor.ServiceType.ToString()}");
         }
 
+        /// <summary>
+        /// Runs a test of permissions for the given <c>Context</c>
+        /// </summary>
+        /// <returns></returns>
         [Command("test")]
         [Alias("check", "perms")]
         [Summary(@"
@@ -103,17 +130,24 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 Log.Debug("Missing some permissions");
                 permissionsResult = $"Missing Permissions: {string.Join(", ", missingPermissions)}";
             }
-
-            await _DeleteMessage(Context.Message);
-            await ReplyAndDeleteAsync($"{Context.Message.Author.Mention}, {permissionsResult}", timeout: TimeSpan.FromMinutes(30));
+            await ReplyAsync($"{Context.Message.Author.Mention}, {permissionsResult}");
         }
 
+        /// <summary>
+        /// Gives a list of Streams being monitored for the Discord Service it is run in
+        /// </summary>
+        /// <returns></returns>
         [Command("list")]
         public async Task MonitorList()
         {
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
             await ReplyAsync($"This command isn't implemented yet");
         }
 
+        /// <summary>
+        /// Runs through the process of Starting a Stream from being monitored
+        /// </summary>
+        /// <returns></returns>
         [Command("start")]
         [Alias("edit")]
         [Summary("Setup a new Stream to monitor for this Discord")]
@@ -122,14 +156,24 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             await ReplyAsync($"This command isn't implemented yet");
         }
 
+        /// <summary>
+        /// Runs through the process of Starting a Stream from being monitored
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         [Command("start")]
         [Alias("edit", "add")]
         [Summary("Setup a new Stream to monitor for this Discord")]
-        public async Task MonitorStart(ILiveBotMonitor monitor)
+        public async Task MonitorStart(ILiveBotUser user)
         {
-            await ReplyAsync($"This command isn't implemented yet, but you input {monitor.ServiceType}");
+            ILiveBotMonitor monitor = _GetServiceMonitor(user);
+            await ReplyAsync($"This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
         }
 
+        /// <summary>
+        /// Runs through the process of Stopping a Stream from being monitored
+        /// </summary>
+        /// <returns></returns>
         [Command("stop")]
         [Alias("end", "remove")]
         [Summary("Stop monitoring a Stream for this Discord")]
@@ -138,12 +182,30 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             await ReplyAsync($"This command isn't implemented yet");
         }
 
+
+        /// <summary>
+        /// Runs through the process of Stopping a Stream from being monitored
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         [Command("stop")]
         [Alias("end")]
         [Summary("Stop monitoring a Stream for this Discord")]
-        public async Task MonitorStop(ILiveBotMonitor monitor)
+        public async Task MonitorStop(ILiveBotUser user)
         {
-            await ReplyAsync($"This command isn't implemented yet, but you input {monitor.ServiceType}");
+            ILiveBotMonitor monitor = _GetServiceMonitor(user);
+            await ReplyAsync($"This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
+        }
+
+        // Helper Functions
+        /// <summary>
+        /// Attempts to locate the loaded Monitoring Service for the given <c>ILiveBotBase</c>
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns>ILiveBotMonitor object which represents a loaded Monitoring Service</returns>
+        private ILiveBotMonitor _GetServiceMonitor(ILiveBotBase obj)
+        {
+            return _monitors.Where(o => o.ServiceType == obj.ServiceType).First();
         }
     }
 }

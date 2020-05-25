@@ -4,6 +4,7 @@ using System;
 
 namespace LiveBot.Repository
 {
+    /// <inheritdoc/>
     public class UnitOfWorkFactory : IUnitOfWorkFactory
     {
         private readonly DbContextOptions _options;

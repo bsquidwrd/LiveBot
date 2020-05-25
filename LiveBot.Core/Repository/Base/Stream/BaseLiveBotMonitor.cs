@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Core.Repository.Base.Stream
 {
+    /// <summary>
+    /// Represents a Base implementation of <c>ILiveBotMonitor</c>
+    /// </summary>
     public abstract class BaseLiveBotMonitor : ILiveBotMonitor
     {
         protected BaseLiveBotMonitor()

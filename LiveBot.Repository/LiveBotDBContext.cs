@@ -4,6 +4,7 @@ using System;
 
 namespace LiveBot.Repository
 {
+    /// <inheritdoc/>
     public class LiveBotDBContext : DbContext
     {
         public LiveBotDBContext() : base()

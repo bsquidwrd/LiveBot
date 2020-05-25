@@ -4,6 +4,9 @@ using TwitchLib.Api.Helix.Models.Games;
 
 namespace LiveBot.Watcher.Twitch.Models
 {
+    /// <summary>
+    /// Represents a Twitch Game
+    /// </summary>
     public class TwitchGame : BaseLiveBotGame
     {
         public TwitchGame(string baseURL, ServiceEnum serviceType, Game game) : base(baseURL, serviceType)

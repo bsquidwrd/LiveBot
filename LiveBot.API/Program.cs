@@ -18,7 +18,7 @@ namespace LiveBot.API
                 .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
                 .CreateLogger();
 
-            Log.Information($@"-------------------------------------------------- Starting services... --------------------------------------------------");
+            Log.Information("-------------------------------------------------- Starting services... --------------------------------------------------");
             var webHost = CreateHostBuilder(args).Build();
 
             using (var scope = webHost.Services.CreateScope())

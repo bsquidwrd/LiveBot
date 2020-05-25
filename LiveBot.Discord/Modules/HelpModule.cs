@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    /// <summary>
+    /// Location of all the "Help" commands
+    /// </summary>
     [RequireBotPermission(ChannelPermission.EmbedLinks)]
     public class HelpModule : InteractiveBase<ShardedCommandContext>
     {
@@ -16,6 +19,10 @@ namespace LiveBot.Discord.Modules
             _service = service;
         }
 
+        /// <summary>
+        /// Gives a list of all loaded commands and their full invocations
+        /// </summary>
+        /// <returns></returns>
         [Command("help")]
         public async Task HelpAsync()
         {
@@ -51,6 +58,11 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync("", false, builder.Build());
         }
 
+        /// <summary>
+        /// Gets help for the given <paramref name="command"/>
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
         [Command("help")]
         public async Task HelpAsync(string command)
         {

@@ -9,16 +9,21 @@ namespace LiveBot.Watcher.Twitch
 {
     public class TwitchStart : ILiveBotMonitorStart
     {
-        public async Task StartAsync (IServiceProvider services)
+        /// <summary>
+        /// Starts and runs the Twitch Monitoring Service
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public async Task StartAsync(IServiceProvider services)
         {
-            TwitchMonitor service = (TwitchMonitor) services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
+            TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
 
             service.API.Settings.ClientId = "";
             service.API.Settings.Secret = "";
 
             List<string> channelList = new List<string> { "" };
-            service.Monitor.SetChannelsById(channelList);           
+            service.Monitor.SetChannelsById(channelList);
 
             service.Monitor.OnServiceStarted += service.Monitor_OnServiceStarted;
             service.Monitor.OnStreamOnline += service.Monitor_OnStreamOnline;

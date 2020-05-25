@@ -11,7 +11,7 @@ namespace LiveBot.Discord.TypeReaders
 {
     public class StreamChannelTypeReader : TypeReader
     {
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public override Task<TypeReaderResult> ReadAsync(ICommandContext Context, string Input, IServiceProvider Services)
         {
             ILiveBotMonitor resolvedStreamMonitor;
@@ -30,13 +30,13 @@ namespace LiveBot.Discord.TypeReaders
             else
             {
                 return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed,
-                    $@"{Context.Message.Author.Mention}, you must provide a valid link to the stream you want to monitor."));
+                    $"{Context.Message.Author.Mention}, you must provide a valid link to the stream you want to monitor."));
             }
 
             if (resolvedStreamMonitor == null)
             {
                 return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed,
-                    $@"{Context.Message.Author.Mention}, I couldn't determine what type of stream that was."));
+                    $"{Context.Message.Author.Mention}, I couldn't determine what type of stream that was."));
             }
 
             return Task.FromResult(TypeReaderResult.FromSuccess(resolvedStreamMonitor));

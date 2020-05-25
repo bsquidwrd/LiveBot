@@ -18,6 +18,11 @@ namespace LiveBot.Discord.Modules
             _work = factory.Create();
         }
 
+        /// <summary>
+        /// Finds and deletes all objects from the given <paramref name="guild"/> in the Database
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public async Task _PurgeGuild(SocketGuild guild)
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
@@ -42,6 +47,11 @@ namespace LiveBot.Discord.Modules
             await _work.GuildRepository.RemoveAsync(discordGuild.Id);
         }
 
+        /// <summary>
+        /// Creates or Updates the database for a given <paramref name="guild"/>
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public async Task<DiscordGuild> _AddOrUpdateGuild(SocketGuild guild)
         {
             DiscordGuild discordGuild = new DiscordGuild() { DiscordId = guild.Id, Name = guild.Name };
@@ -50,6 +60,12 @@ namespace LiveBot.Discord.Modules
             return discordGuild;
         }
 
+
+        /// <summary>
+        /// Processes and updates all Discord Channels the bot has access to in the given <paramref name="guild"/>
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public async Task _UpdateGuildChannels(SocketGuild guild)
         {
             DiscordGuild discordGuild = await _AddOrUpdateGuild(guild);
@@ -76,42 +92,63 @@ namespace LiveBot.Discord.Modules
             }
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a <paramref name="guild"/> becomes Available
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public async Task GuildAvailable(SocketGuild guild)
         {
-            //Log.Information($@"Guild Available {guild.Name}");
+            //Log.Information($"Guild Available {guild.Name}");
             await _UpdateGuildChannels(guild);
 
             try
             {
                 SocketGuildUser socketGuildUser = guild.GetUser(131224383640436736);
-                Log.Information($@"--------------------------------------------------");
-                Log.Information($@"Guild {guild.Id} {guild.Name}");
-                Log.Information($@"Roles for {socketGuildUser.Username}#{socketGuildUser.DiscriminatorValue}");
+                Log.Information($"--------------------------------------------------");
+                Log.Information($"Guild {guild.Id} {guild.Name}");
+                Log.Information($"Roles for {socketGuildUser.Username}#{socketGuildUser.DiscriminatorValue}");
                 foreach (SocketRole role in socketGuildUser.Roles)
                 {
                     if (role == guild.EveryoneRole)
                     {
                         continue;
                     }
-                    Log.Information($@"{role.Id} {role.Name}");
+                    Log.Information($"{role.Id} {role.Name}");
                 }
-                Log.Information($@"--------------------------------------------------");
+                Log.Information($"--------------------------------------------------");
             }
             catch
             {
             }
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a Guild is updated from <paramref name="beforeGuild"/> to <paramref name="afterGuild"/>
+        /// </summary>
+        /// <param name="beforeGuild"></param>
+        /// <param name="afterGuild"></param>
+        /// <returns></returns>
         public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
         {
             await _AddOrUpdateGuild(afterGuild);
         }
 
+        /// <summary>
+        /// Discord Event Handler for when the bot leaves a <paramref name="guild"/>
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public async Task GuildLeave(SocketGuild guild)
         {
             await _PurgeGuild(guild);
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a <paramref name="channel"/> is created
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         public async Task ChannelCreated(SocketChannel channel)
         {
             try
@@ -123,11 +160,16 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error($@"Error caught trying to Create channel. Channel {channel.Id}");
+                Log.Error($"Error caught trying to Create channel. Channel {channel.Id}");
                 return;
             }
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a <paramref name="channel"/> is destroyed/deleted
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         public async Task ChannelDestroyed(SocketChannel channel)
         {
             try
@@ -138,11 +180,17 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error($@"Error caught trying to Destroy channel. Channel {channel.Id}");
+                Log.Error($"Error caught trying to Destroy channel. Channel {channel.Id}");
                 return;
             }
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a Channel is updated from <paramref name="beforeChannel"/> to <paramref name="afterChannel"/>
+        /// </summary>
+        /// <param name="beforeChannel"></param>
+        /// <param name="afterChannel"></param>
+        /// <returns></returns>
         public async Task ChannelUpdated(SocketChannel beforeChannel, SocketChannel afterChannel)
         {
             try
@@ -157,53 +205,77 @@ namespace LiveBot.Discord.Modules
             }
             catch
             {
-                Log.Error($@"Error caught trying to Update channel. Channel {beforeChannel.Id}");
+                Log.Error($"Error caught trying to Update channel. Channel {beforeChannel.Id}");
                 return;
             }
         }
 
-        public async Task RoleCreated(SocketRole socketRole)
+        /// <summary>
+        /// Discord Event Handler for when a <paramref name="role"/> is created
+        /// </summary>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        public async Task RoleCreated(SocketRole role)
         {
             try
             {
                 await Task.Delay(1);
-                Log.Information($@"Role Created {socketRole.Id} {socketRole.Name}");
+                Log.Information($"Role Created {role.Id} {role.Name}");
             }
             catch
             {
-                Log.Error($@"Error caught trying to Create role. Guild {socketRole.Guild.Id} {socketRole.Guild.Name}, Role {socketRole.Id} {socketRole.Name}");
+                Log.Error($"Error caught trying to Create role. Guild {role.Guild.Id} {role.Guild.Name}, Role {role.Id} {role.Name}");
             }
             return;
         }
 
-        public async Task RoleDeleted(SocketRole socketRole)
+        /// <summary>
+        /// Discord Event Handler for when a <paramref name="role"/> is deleted
+        /// </summary>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        public async Task RoleDeleted(SocketRole role)
         {
             try
             {
                 await Task.Delay(1);
-                Log.Information($@"Role Deleted {socketRole.Id} {socketRole.Name}");
+                Log.Information($"Role Deleted {role.Id} {role.Name}");
             }
             catch
             {
-                Log.Error($@"Error caught trying to Delete role. Guild {socketRole.Guild.Id} {socketRole.Guild.Name}, Role {socketRole.Id} {socketRole.Name}");
+                Log.Error($"Error caught trying to Delete role. Guild {role.Guild.Id} {role.Guild.Name}, Role {role.Id} {role.Name}");
             }
             return;
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a Role is updated from <paramref name="beforeRole"/> to <paramref name="afterRole"/>
+        /// </summary>
+        /// <param name="beforeRole"></param>
+        /// <param name="afterRole"></param>
+        /// <returns></returns>
         public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
         {
             try
             {
                 await Task.Delay(1);
-                Log.Information($@"Role Updated {beforeRole.Id} {beforeRole.Name} to {afterRole.Name}");
+                Log.Information($"Role Updated {beforeRole.Id} {beforeRole.Name} to {afterRole.Name}");
             }
             catch
             {
-                Log.Error($@"Error caught trying to Update role. Guild {beforeRole.Guild.Id} {beforeRole.Guild.Name}, Role {afterRole.Id} {afterRole.Name}");
+                Log.Error($"Error caught trying to Update role. Guild {beforeRole.Guild.Id} {beforeRole.Guild.Name}, Role {afterRole.Id} {afterRole.Name}");
             }
             return;
         }
 
+        /// <summary>
+        /// Discord Event Handler for when a Guild Member is updated from <paramref name="beforeGuildUser"/> to <paramref name="afterGuildUser"/>.
+        /// This should only be processed for when a Member changes to "Streaming".
+        /// Is used to notify a <c>Guild</c> if someone has a role we have been told to notify for.
+        /// </summary>
+        /// <param name="beforeGuildUser"></param>
+        /// <param name="afterGuildUser"></param>
+        /// <returns></returns>
         public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
         {
             if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
@@ -218,10 +290,14 @@ namespace LiveBot.Discord.Modules
             // that it's a legit stream etc etc
             await Task.Delay(1);
             IActivity userActivity = afterGuildUser.Activity;
+            if (userActivity == null)
+            {
+                return;
+            }
             if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame)
             {
                 StreamingGame userGame = (StreamingGame)userActivity;
-                Log.Information($@"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
+                Log.Information($"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
 
                 foreach (SocketRole role in afterGuildUser.Roles)
                 {
@@ -229,16 +305,10 @@ namespace LiveBot.Discord.Modules
                     {
                         continue;
                     }
-                    Log.Information($@"{role.Id} {role.Name}");
+                    Log.Information($"{role.Id} {role.Name}");
                 }
             }
             return;
-        }
-
-        public async Task NotifyDiscord(ILiveBotStream stream)
-        {
-            //DiscordGuild guild = await
-            await Task.Delay(1);
         }
     }
 }

@@ -2,6 +2,9 @@
 
 namespace LiveBot.Core.Repository.Interfaces.Stream
 {
+    /// <summary>
+    /// Represents a generic Stream for use within the bot, usually returned by a Monitoring Service
+    /// </summary>
     public interface ILiveBotStream : ILiveBotBase
     {
         public ILiveBotUser User { get; }
@@ -11,6 +14,10 @@ namespace LiveBot.Core.Repository.Interfaces.Stream
         public DateTime StartTime { get; }
         public string ThumbnailURL { get; }
 
+        /// <summary>
+        /// Gets the stream URL
+        /// </summary>
+        /// <returns></returns>
         public string GetStreamURL();
     }
 }

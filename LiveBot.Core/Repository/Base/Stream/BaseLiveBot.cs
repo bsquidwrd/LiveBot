@@ -3,6 +3,9 @@ using LiveBot.Core.Repository.Interfaces.Stream;
 
 namespace LiveBot.Core.Repository.Base.Stream
 {
+    /// <summary>
+    /// Base implementation of <c>ILiveBotBase</c>
+    /// </summary>
     public abstract class BaseLiveBot : ILiveBotBase
     {
         public BaseLiveBot(string baseURL, ServiceEnum serviceType)

@@ -23,6 +23,9 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
 
+        /// <summary>
+        /// Represents the whole Service for Twitch Monitoring
+        /// </summary>
         public TwitchMonitor()
         {
             BaseURL = "https://twitch.tv";
@@ -31,11 +34,6 @@ namespace LiveBot.Watcher.Twitch
 
             API = new TwitchAPI();
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 30, maxStreamRequestCountPerRequest: 100);
-        }
-
-        public override ILiveBotMonitorStart GetStartClass()
-        {
-            return new TwitchStart();
         }
 
         // Start Events
@@ -47,13 +45,13 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($@"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
+            Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($@"OnStreamUpdate: {stream.User}");
+            Log.Debug($"OnStreamUpdate: {stream.User}");
             // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
             // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
             // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
@@ -64,7 +62,7 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($@"OnStreamOffline: {stream.User}");
+            Log.Debug($"OnStreamOffline: {stream.User}");
         }
 
         // End Events
@@ -99,12 +97,20 @@ namespace LiveBot.Watcher.Twitch
         }
 
         // Implement Interface Requirements
+        /// <inheritdoc/>
+        public override ILiveBotMonitorStart GetStartClass()
+        {
+            return new TwitchStart();
+        }
+
+        /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
             Game game = await API_GetGame(gameId);
             return new TwitchGame(BaseURL, ServiceType, game);
         }
 
+        /// <inheritdoc/>
         public override async Task<ILiveBotStream> GetStream(ILiveBotUser user)
         {
             List<string> listUserId = new List<string> { user.Id };
@@ -115,6 +121,7 @@ namespace LiveBot.Watcher.Twitch
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
 
+        /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null)
         {
             User apiUser;

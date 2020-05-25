@@ -4,20 +4,23 @@ using TwitchLib.Api.Helix.Models.Users;
 
 namespace LiveBot.Watcher.Twitch.Models
 {
+    /// <summary>
+    /// Represents a Twitch User
+    /// </summary>
     public class TwitchUser : BaseLiveBotUser
     {
         public TwitchUser(string baseURL, ServiceEnum serviceType, User user) : base(baseURL, serviceType)
         {
             Id = user.Id;
             Username = user.Login;
-            Displayname = user.DisplayName;
+            DisplayName = user.DisplayName;
             BroadcasterType = user.BroadcasterType;
             AvatarURL = user.ProfileImageUrl;
         }
 
         public override string GetProfileURL()
         {
-            return $@"{BaseURL}/{Username}";
+            return $"{BaseURL}/{Username}";
         }
     }
 }

@@ -4,6 +4,9 @@ using System;
 
 namespace LiveBot.Core.Repository.Base.Stream
 {
+    /// <summary>
+    /// Base implementation of <c>ILiveBotStream</c>
+    /// </summary>
     public abstract class BaseLiveBotStream : BaseLiveBot, ILiveBotStream
     {
         public BaseLiveBotStream(string baseURL, ServiceEnum serviceType) : base(baseURL, serviceType)
@@ -26,7 +29,7 @@ namespace LiveBot.Core.Repository.Base.Stream
 
         public override string ToString()
         {
-            return $@"{ServiceType.ToString()}: {Title}";
+            return $"{ServiceType.ToString()}: {Title}";
         }
     }
 }

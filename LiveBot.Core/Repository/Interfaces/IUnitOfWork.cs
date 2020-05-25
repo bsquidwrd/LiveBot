@@ -2,6 +2,9 @@
 
 namespace LiveBot.Core.Repository.Interfaces
 {
+    /// <summary>
+    /// Represents an interactable Database Instance
+    /// </summary>
     public interface IUnitOfWork
     {
         IGuildRepository GuildRepository { get; }

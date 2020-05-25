@@ -5,6 +5,9 @@ using TwitchLib.Api.Helix.Models.Streams;
 
 namespace LiveBot.Watcher.Twitch.Models
 {
+    /// <summary>
+    /// Represents a Twitch Stream
+    /// </summary>
     public class TwitchStream : BaseLiveBotStream
     {
         public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(baseURL, serviceType)
@@ -19,7 +22,7 @@ namespace LiveBot.Watcher.Twitch.Models
 
         public override string GetStreamURL()
         {
-            return $@"{User.GetProfileURL()}";
+            return $"{User.GetProfileURL()}";
         }
     }
 }

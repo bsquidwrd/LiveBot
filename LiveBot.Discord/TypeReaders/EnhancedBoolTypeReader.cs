@@ -6,6 +6,7 @@ namespace LiveBot.Discord.TypeReaders
 {
     internal class EnhancedBoolTypeReader : TypeReader
     {
+        /// <inheritdoc/>
         public override Task<TypeReaderResult> ReadAsync(ICommandContext Context, string Input, IServiceProvider Services)
         {
             switch (Input.ToLowerInvariant())
