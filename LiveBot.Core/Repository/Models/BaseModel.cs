@@ -60,11 +60,8 @@ namespace LiveBot.Core.Repository.Models
             if (t != otherType)
                 return false;
 
-            FieldInfo[] fields = t.GetFields(BindingFlags.Instance
-                                             | BindingFlags.NonPublic
-                                             | BindingFlags.Public);
+            IEnumerable<FieldInfo> fields = this.GetFields();
             foreach (FieldInfo field in fields)
-
             {
                 if (field.Name == nameof(this.TimeStamp))
                     continue;
