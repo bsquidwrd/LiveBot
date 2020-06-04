@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository.Base.Stream;
+﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Enums;
 using TwitchLib.Api.Helix.Models.Users;
 
@@ -9,7 +9,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchUser : BaseLiveBotUser
     {
-        public TwitchUser(string baseURL, ServiceEnum serviceType, User user) : base(baseURL, serviceType)
+        public TwitchUser(string serviceName, string baseURL, ServiceEnum serviceType, User user) : base(serviceName, baseURL, serviceType)
         {
             Id = user.Id;
             Username = user.Login;

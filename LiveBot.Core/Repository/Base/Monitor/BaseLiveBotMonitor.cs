@@ -1,9 +1,9 @@
 ﻿using LiveBot.Core.Repository.Enums;
-using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace LiveBot.Core.Repository.Base.Stream
+namespace LiveBot.Core.Repository.Base.Monitor
 {
     /// <summary>
     /// Represents a Base implementation of <c>ILiveBotMonitor</c>
@@ -14,9 +14,15 @@ namespace LiveBot.Core.Repository.Base.Stream
         {
         }
 
+        public string ServiceName { get; set; }
         public string URLPattern { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
+
+        public Regex GetURLRegex(string pattern)
+        {
+            return new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        }
 
         public abstract ILiveBotMonitorStart GetStartClass();
 
@@ -24,7 +30,7 @@ namespace LiveBot.Core.Repository.Base.Stream
 
         public abstract Task<ILiveBotStream> GetStream(ILiveBotUser user);
 
-        public abstract Task<ILiveBotUser> GetUser(string username = null, string userId = null);
+        public abstract Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null);
 
         public bool IsValid(string streamURL)
         {

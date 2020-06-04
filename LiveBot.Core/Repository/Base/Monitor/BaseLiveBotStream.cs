@@ -1,15 +1,15 @@
 ﻿using LiveBot.Core.Repository.Enums;
-using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using System;
 
-namespace LiveBot.Core.Repository.Base.Stream
+namespace LiveBot.Core.Repository.Base.Monitor
 {
     /// <summary>
     /// Base implementation of <c>ILiveBotStream</c>
     /// </summary>
     public abstract class BaseLiveBotStream : BaseLiveBot, ILiveBotStream
     {
-        public BaseLiveBotStream(string baseURL, ServiceEnum serviceType) : base(baseURL, serviceType)
+        public BaseLiveBotStream(string serviceName, string baseURL, ServiceEnum serviceType) : base(serviceName, baseURL, serviceType)
         {
         }
 

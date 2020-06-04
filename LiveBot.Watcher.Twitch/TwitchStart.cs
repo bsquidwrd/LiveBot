@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository.Interfaces.Stream;
+﻿using LiveBot.Core.Repository.Interfaces.Monitor;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

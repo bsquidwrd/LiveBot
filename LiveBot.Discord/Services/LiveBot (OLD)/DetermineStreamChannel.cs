@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository.Interfaces.Stream;
+﻿using LiveBot.Core.Repository.Interfaces.Monitor;
 using System.Collections.Generic;
 using System.Linq;
 

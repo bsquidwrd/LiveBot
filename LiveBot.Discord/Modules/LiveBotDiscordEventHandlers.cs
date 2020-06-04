@@ -34,6 +34,12 @@ namespace LiveBot.Discord.Modules
                 await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
             }
 
+            foreach (SocketRole role in guild.Roles)
+            {
+                DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync((d => d.DiscordId == role.Id));
+                await _work.RoleRepository.RemoveAsync(discordRole.Id);
+            }
+
             try
             {
                 DiscordChannel guildDefaultChannel = await _work.ChannelRepository.SingleOrDefaultAsync((d => d.DiscordId == guild.Id));
@@ -60,6 +66,32 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
+        /// Creates or Updates the database for a given <paramref name="channel"/>
+        /// </summary>
+        /// <param name="discordGuild"></param>
+        /// <param name="channel"></param>
+        /// <returns></returns>
+        public async Task<DiscordChannel> _AddOrUpdateChannel(DiscordGuild discordGuild, SocketGuildChannel channel)
+        {
+            DiscordChannel discordChannel = new DiscordChannel() { DiscordGuild = discordGuild, DiscordId = channel.Id, Name = channel.Name };
+            discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(d => d.DiscordGuild == discordGuild && d.DiscordId == channel.Id);
+            return discordChannel;
+        }
+
+        /// <summary>
+        /// Creates or Updates the database for a given <paramref name="role"/>
+        /// </summary>
+        /// <param name="discordGuild"></param>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        public async Task<DiscordRole> _AddOrUpdateRole(DiscordGuild discordGuild, SocketRole role)
+        {
+            DiscordRole discordRole = new DiscordRole() { DiscordGuild = discordGuild, DiscordId = role.Id, Name = role.Name };
+            discordRole = await _work.RoleRepository.SingleOrDefaultAsync(d => d.DiscordGuild == discordGuild && d.DiscordId == role.Id);
+            return discordRole;
+        }
+
+        /// <summary>
         /// Processes and updates all Discord Channels the bot has access to in the given <paramref name="guild"/>
         /// </summary>
         /// <param name="guild"></param>
@@ -70,8 +102,7 @@ namespace LiveBot.Discord.Modules
 
             foreach (SocketGuildChannel channel in guild.Channels)
             {
-                DiscordChannel discordChannel = new DiscordChannel() { DiscordGuild = discordGuild, DiscordId = channel.Id, Name = channel.Name };
-                await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, (c => c.DiscordGuild == discordGuild && c.DiscordId == channel.Id));
+                await _AddOrUpdateChannel(discordGuild, channel);
             }
 
             List<ulong> channelIDs = new List<ulong>();
@@ -91,6 +122,42 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
+        /// Processes and updates all Discord Roles the bot has access to in the given <paramref name="guild"/>
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
+        public async Task _UpdateRoles(SocketGuild guild)
+        {
+            DiscordGuild discordGuild = await _AddOrUpdateGuild(guild);
+
+            foreach (SocketRole role in guild.Roles)
+            {
+                if (role.IsEveryone)
+                {
+                    continue;
+                }
+                DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync(d => d.DiscordGuild == discordGuild && d.DiscordId == role.Id);
+                await _work.RoleRepository.AddOrUpdateAsync(discordRole, (d => d.DiscordGuild == discordGuild && d.DiscordId == role.Id));
+            }
+
+            List<ulong> roleIDs = new List<ulong>();
+            foreach (SocketRole role in guild.Roles)
+            {
+                roleIDs.Add(role.Id);
+            }
+
+            IEnumerable<DiscordRole> dbRoles = await _work.RoleRepository.FindAsync((d => d.DiscordGuild == discordGuild));
+            foreach (DiscordRole dbRole in dbRoles)
+            {
+                if (!roleIDs.Contains(dbRole.DiscordId))
+                {
+                    await _work.RoleRepository.RemoveAsync(dbRole.Id);
+                    Log.Debug($"Removed role {dbRole.DiscordId} from {dbRole.DiscordGuild.Name}");
+                }
+            }
+        }
+
+        /// <summary>
         /// Discord Event Handler for when a <paramref name="guild"/> becomes Available
         /// </summary>
         /// <param name="guild"></param>
@@ -98,7 +165,9 @@ namespace LiveBot.Discord.Modules
         public async Task GuildAvailable(SocketGuild guild)
         {
             //Log.Information($"Guild Available {guild.Name}");
+            await _AddOrUpdateGuild(guild);
             await _UpdateGuildChannels(guild);
+            await _UpdateRoles(guild);
 
             try
             {
@@ -153,8 +222,10 @@ namespace LiveBot.Discord.Modules
             {
                 SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
                 DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == socketGuildChannel.Guild.Id));
-                DiscordChannel discordChannel = new DiscordChannel() { DiscordGuild = discordGuild, DiscordId = socketGuildChannel.Id, Name = socketGuildChannel.Name };
-                await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, (c => c.DiscordGuild == discordGuild && c.DiscordId == socketGuildChannel.Id));
+                //DiscordChannel discordChannel = new DiscordChannel() { DiscordGuild = discordGuild, DiscordId = socketGuildChannel.Id, Name = socketGuildChannel.Name };
+                //await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, (c => c.DiscordGuild == discordGuild && c.DiscordId == socketGuildChannel.Id));
+
+                await _AddOrUpdateChannel(discordGuild, socketGuildChannel);
             }
             catch
             {
@@ -196,10 +267,11 @@ namespace LiveBot.Discord.Modules
                 SocketGuildChannel beforeGuildChannel = (SocketGuildChannel)beforeChannel;
                 SocketGuildChannel afterGuildChannel = (SocketGuildChannel)afterChannel;
                 DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == beforeGuildChannel.Guild.Id));
-                DiscordChannel discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync((d => d.DiscordId == beforeChannel.Id));
-                discordChannel.Name = afterGuildChannel.Name;
+                //DiscordChannel discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync((d => d.DiscordGuild == discordGuild && d.DiscordId == beforeChannel.Id));
+                //discordChannel.Name = afterGuildChannel.Name;
+                //await _work.ChannelRepository.UpdateAsync(discordChannel);
 
-                await _work.ChannelRepository.UpdateAsync(discordChannel);
+                await _AddOrUpdateChannel(discordGuild, afterGuildChannel);
             }
             catch
             {
@@ -217,8 +289,10 @@ namespace LiveBot.Discord.Modules
         {
             try
             {
-                await Task.Delay(1);
-                Log.Information($"Role Created {role.Id} {role.Name}");
+                DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == role.Guild.Id));
+                //DiscordRole discordRole = new DiscordRole() { DiscordGuild = discordGuild, DiscordId = role.Id, Name = role.Name };
+                //await _work.RoleRepository.AddOrUpdateAsync(discordRole, (d => d.DiscordGuild == discordGuild && d.DiscordId == role.Id));
+                await _AddOrUpdateRole(discordGuild, role);
             }
             catch
             {
@@ -236,8 +310,8 @@ namespace LiveBot.Discord.Modules
         {
             try
             {
-                await Task.Delay(1);
-                Log.Information($"Role Deleted {role.Id} {role.Name}");
+                DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync((d => d.DiscordId == role.Id));
+                await _work.RoleRepository.RemoveAsync(discordRole.Id);
             }
             catch
             {
@@ -256,8 +330,12 @@ namespace LiveBot.Discord.Modules
         {
             try
             {
-                await Task.Delay(1);
-                Log.Information($"Role Updated {beforeRole.Id} {beforeRole.Name} to {afterRole.Name}");
+                DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((d => d.DiscordId == beforeRole.Guild.Id));
+                //DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync((d => d.DiscordGuild == discordGuild && d.DiscordId == beforeRole.Id));
+                //discordRole.Name = afterRole.Name;
+                //await _work.RoleRepository.UpdateAsync(discordRole);
+
+                await _AddOrUpdateRole(discordGuild, afterRole);
             }
             catch
             {

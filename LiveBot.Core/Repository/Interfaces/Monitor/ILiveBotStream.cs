@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LiveBot.Core.Repository.Interfaces.Stream
+namespace LiveBot.Core.Repository.Interfaces.Monitor
 {
     /// <summary>
     /// Represents a generic Stream for use within the bot, usually returned by a Monitoring Service

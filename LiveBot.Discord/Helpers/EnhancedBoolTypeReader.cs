@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace LiveBot.Discord.TypeReaders
+namespace LiveBot.Discord.Helpers
 {
     internal class EnhancedBoolTypeReader : TypeReader
     {

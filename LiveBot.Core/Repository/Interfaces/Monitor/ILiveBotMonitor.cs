@@ -1,6 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
-namespace LiveBot.Core.Repository.Interfaces.Stream
+namespace LiveBot.Core.Repository.Interfaces.Monitor
 {
     /// <summary>
     /// Represents a Monitoring Service that the bot can notify about
@@ -8,6 +9,13 @@ namespace LiveBot.Core.Repository.Interfaces.Stream
     public interface ILiveBotMonitor : ILiveBotBase
     {
         public string URLPattern { get; set; }
+
+        /// <summary>
+        /// Gets the basic Regex object based on URLPattern
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <returns></returns>
+        public Regex GetURLRegex(string pattern);
 
         /// <summary>
         /// Represents the Starting class for a Monitoring Service to function
@@ -21,7 +29,7 @@ namespace LiveBot.Core.Repository.Interfaces.Stream
         /// <param name="username"></param>
         /// <param name="userId"></param>
         /// <returns></returns>
-        public Task<ILiveBotUser> GetUser(string username = null, string userId = null);
+        public Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null);
 
         /// <summary>
         /// Returns a <c>ILiveBotStream</c> based on the given <paramref name="user"/>

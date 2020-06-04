@@ -1,6 +1,6 @@
-﻿using LiveBot.Core.Repository.Base.Stream;
+﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Enums;
-using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using TwitchLib.Api.Helix.Models.Streams;
 
 namespace LiveBot.Watcher.Twitch.Models
@@ -10,7 +10,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchStream : BaseLiveBotStream
     {
-        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(baseURL, serviceType)
+        public TwitchStream(string serviceName, string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(serviceName, baseURL, serviceType)
         {
             User = user;
             Id = stream.Id;

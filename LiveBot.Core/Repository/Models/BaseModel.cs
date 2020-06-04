@@ -8,7 +8,6 @@ namespace LiveBot.Core.Repository.Models
         where T : BaseModel<T>
     {
         public int Id { get; set; }
-
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
         public bool Deleted { get; set; }
 

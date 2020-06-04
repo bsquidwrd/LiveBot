@@ -1,5 +1,5 @@
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord;
 using LiveBot.Repository;
 using Microsoft.AspNetCore.Builder;

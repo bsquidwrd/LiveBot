@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace LiveBot.Core.Repository.Interfaces.Stream
+namespace LiveBot.Core.Repository.Interfaces.Monitor
 {
     /// <summary>
     /// Generic interface for a start class within a Monitoring Service

@@ -12,6 +12,7 @@ namespace LiveBot.Repository
         public IGuildRepository GuildRepository { get; }
 
         public IChannelRepository ChannelRepository { get; }
+        public IRoleRepository RoleRepository { get; }
 
         public UnitOfWork(LiveBotDBContext context)
         {
@@ -19,6 +20,7 @@ namespace LiveBot.Repository
             //ExampleRepository = new ExampleRepository();
             GuildRepository = new GuildRepository(context);
             ChannelRepository = new ChannelRepository(context);
+            RoleRepository = new RoleRepository(context);
         }
     }
 }

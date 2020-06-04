@@ -1,6 +1,6 @@
-﻿using LiveBot.Core.Repository.Base.Stream;
+﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Enums;
-using LiveBot.Core.Repository.Interfaces.Stream;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Watcher.Twitch.Models;
 using Serilog;
 using System;
@@ -28,6 +28,7 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
         public TwitchMonitor()
         {
+            ServiceName = "Twitch";
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
@@ -67,33 +68,38 @@ namespace LiveBot.Watcher.Twitch
 
         // End Events
 
-        public async Task<Game> API_GetGame(string gameId)
+        private async Task<Game> API_GetGame(string gameId)
         {
             List<string> gameIDs = new List<string> { gameId };
             GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
             return games.Games.FirstOrDefault(i => i.Id == gameId);
         }
 
-        public async Task<User> API_GetUserByLogin(string username)
+        private async Task<User> API_GetUserByLogin(string username)
         {
             List<string> usernameList = new List<string> { username };
             GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
             return apiUser.Users.FirstOrDefault(i => i.Login == username);
         }
 
-        public async Task<User> API_GetUserById(string userId)
+        private async Task<User> API_GetUserById(string userId)
         {
             List<string> userIdList = new List<string> { userId };
             GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
             return apiUser.Users.FirstOrDefault(i => i.Id == userId);
         }
 
+        private async Task<User> API_GetUserByURL(string url)
+        {
+            string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString();
+            return await API_GetUserByLogin(username: username);
+        }
+
         public async Task<ILiveBotStream> GetStream(Stream stream)
         {
-            Game game = await API_GetGame(stream.GameId);
             ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
-            ILiveBotGame liveBotGame = new TwitchGame(BaseURL, ServiceType, game);
-            return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
+            ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
+            return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
         }
 
         // Implement Interface Requirements
@@ -107,7 +113,7 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
             Game game = await API_GetGame(gameId);
-            return new TwitchGame(BaseURL, ServiceType, game);
+            return new TwitchGame(ServiceName, BaseURL, ServiceType, game);
         }
 
         /// <inheritdoc/>
@@ -116,13 +122,12 @@ namespace LiveBot.Watcher.Twitch
             List<string> listUserId = new List<string> { user.Id };
             GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: listUserId);
             Stream stream = streams.Streams.FirstOrDefault(i => i.UserId == user.Id);
-
             ILiveBotGame game = await GetGame(stream.GameId);
-            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
+            return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, user, game);
         }
 
         /// <inheritdoc/>
-        public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null)
+        public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
 
@@ -130,11 +135,19 @@ namespace LiveBot.Watcher.Twitch
             {
                 apiUser = await API_GetUserByLogin(username: username);
             }
-            else
+            else if (userId != null)
             {
                 apiUser = await API_GetUserById(userId: userId);
             }
-            return new TwitchUser(BaseURL, ServiceType, apiUser);
+            else if (profileURL != null)
+            {
+                apiUser = await API_GetUserByURL(url: profileURL);
+            }
+            else
+            {
+                return null;
+            }
+            return new TwitchUser(ServiceName, BaseURL, ServiceType, apiUser);
         }
     }
 }
