@@ -285,7 +285,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Stop monitoring a Stream for this Discord")]
         public async Task MonitorStop(ILiveBotUser user)
         {
-            // TODO: Implement Monitor Stop
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
