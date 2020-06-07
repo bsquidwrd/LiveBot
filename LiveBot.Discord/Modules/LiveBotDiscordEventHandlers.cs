@@ -168,26 +168,6 @@ namespace LiveBot.Discord.Modules
             await _AddOrUpdateGuild(guild);
             await _UpdateGuildChannels(guild);
             await _UpdateRoles(guild);
-
-            try
-            {
-                SocketGuildUser socketGuildUser = guild.GetUser(131224383640436736);
-                Log.Information($"--------------------------------------------------");
-                Log.Information($"Guild {guild.Id} {guild.Name}");
-                Log.Information($"Roles for {socketGuildUser.Username}#{socketGuildUser.DiscriminatorValue}");
-                foreach (SocketRole role in socketGuildUser.Roles)
-                {
-                    if (role == guild.EveryoneRole)
-                    {
-                        continue;
-                    }
-                    Log.Information($"{role.Id} {role.Name}");
-                }
-                Log.Information($"--------------------------------------------------");
-            }
-            catch
-            {
-            }
         }
 
         /// <summary>
