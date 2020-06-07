@@ -20,13 +20,13 @@ namespace LiveBot.Watcher.Twitch
         {
             TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
-            service.Work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
+            service._work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
 
             service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
             service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");
 
-            var subscriptions = await service.Work.StreamSubscriptionRepository.FindAsync(i => i.ServiceType == service.ServiceType);
-            List<string> channelList = new List<string>(subscriptions.Select(i => i.SourceID).Distinct());
+            var streamUsers = await service._work.StreamUserRepository.FindAsync(i => i.ServiceType == service.ServiceType);
+            List<string> channelList = new List<string>(streamUsers.Select(i => i.SourceID).Distinct());
             service.Monitor.SetChannelsById(channelList);
 
             await Task.Run(service.Monitor.Start);

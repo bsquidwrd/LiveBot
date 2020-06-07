@@ -9,7 +9,7 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
     public interface ILiveBotMonitor : ILiveBotBase
     {
         public string URLPattern { get; set; }
-        public IUnitOfWork Work { get; set; }
+        public IUnitOfWork _work { get; set; }
 
         /// <summary>
         /// Gets the basic Regex object based on URLPattern
@@ -60,5 +60,12 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="user"></param>
         /// <returns></returns>
         public bool AddChannel(ILiveBotUser user);
+
+        /// <summary>
+        /// Removes a channel from the monitoring service
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool RemoveChannel(ILiveBotUser user);
     }
 }

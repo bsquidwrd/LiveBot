@@ -19,7 +19,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public string URLPattern { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
-        public IUnitOfWork Work { get; set; }
+        public IUnitOfWork _work { get; set; }
 
         public Regex GetURLRegex(string pattern)
         {
@@ -40,5 +40,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         }
 
         public abstract bool AddChannel(ILiveBotUser user);
+
+        public abstract bool RemoveChannel(ILiveBotUser user);
     }
 }

@@ -127,19 +127,19 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <summary>
         /// Gives a list of Streams being monitored for the Discord Service it is run in
         /// </summary>
-        [Command("list")]
+        [Command("list", RunMode = RunMode.Async)]
         [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
-            // TODO: Implement MonitorList
+            // TODO: Implement MonitorList (PagedReplyAsync)
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.Guild == discordGuild);
+            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild);
 
             string combinedStreams = "";
-            combinedStreams = string.Join("\n", streamSubscriptions.Select(i => i.SourceID));
+            combinedStreams = string.Join("\n", streamSubscriptions.Select(i => i.User.SourceID));
             foreach (StreamSubscription streamSubscription in streamSubscriptions)
             {
-                combinedStreams += $"{streamSubscription.SourceID}: {streamSubscription.Message} {streamSubscription.ServiceType}\n";
+                combinedStreams += $"{streamSubscription.User.SourceID}: {streamSubscription.Message} {streamSubscription.User.ServiceType}\n";
             }
             await ReplyAsync($"Stream Subscriptions for this Server:\n{combinedStreams}");
         }
@@ -212,19 +212,28 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == mentionRole.Id);
 
             // Process their answers
+            StreamUser streamUser = new StreamUser()
+            {
+                ServiceType = user.ServiceType,
+                SourceID = user.Id,
+                Username = user.Username,
+                DisplayName = user.DisplayName,
+                AvatarURL = user.AvatarURL,
+                ProfileURL = user.GetProfileURL()
+            };
+            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
-                i.ServiceType == monitor.ServiceType &&
-                i.Guild == discordGuild &&
-                i.SourceID == user.Id
+                i.User == streamUser &&
+                i.DiscordChannel.DiscordGuild == discordGuild
             );
 
             StreamSubscription streamSubscription = new StreamSubscription()
             {
-                ServiceType = monitor.ServiceType,
-                Guild = discordGuild,
-                Channel = discordChannel,
-                Role = discordRole,
-                SourceID = user.Id,
+                User = streamUser,
+                DiscordChannel = discordChannel,
+                DiscordRole = discordRole,
                 Message = notificationMessage
             };
             await _work.StreamSubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
@@ -233,6 +242,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             if (streamSubscription != null)
             {
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
+                monitor.AddChannel(user);
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have setup a subscription for {user.DisplayName} on {user.ServiceType} with message {escapedMessage}");
             }
             else
@@ -277,7 +287,36 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             // TODO: Implement Monitor Stop
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
-            await ReplyAsync($"{Context.Message.Author.Mention} This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
+
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+
+            StreamUser streamUser = new StreamUser()
+            {
+                ServiceType = user.ServiceType,
+                SourceID = user.Id,
+                Username = user.Username,
+                DisplayName = user.DisplayName,
+                AvatarURL = user.AvatarURL,
+                ProfileURL = user.GetProfileURL()
+            };
+            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+
+            Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
+                i.User == streamUser &&
+                i.DiscordChannel.DiscordGuild == discordGuild
+            );
+            StreamSubscription streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+            try
+            {
+                monitor.RemoveChannel(user);
+                await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                await ReplyAsync($"{Context.Message.Author.Mention} This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
+            }
+            catch
+            {
+                await ReplyAsync($"{Context.Message.Author.Mention}, I couldn't remove the Subscription for user {user.DisplayName}. Please try again or contact my owner");
+            }
         }
 
         #endregion Stop Commands
@@ -392,7 +431,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             var questionMessage = await ReplyAsync(question);
             var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            // TODO: Check if "default" is typed and grab Bot default message
             string notificationMessage = responseMessage.Content.Trim();
 
             if (notificationMessage.Equals("default", StringComparison.CurrentCultureIgnoreCase))

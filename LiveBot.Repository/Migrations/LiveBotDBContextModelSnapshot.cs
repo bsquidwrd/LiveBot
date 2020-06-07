@@ -108,20 +108,58 @@ namespace LiveBot.Repository.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("ChannelId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("Deleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("GuildId")
+                    b.Property<int?>("DiscordChannelId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DiscordGuildId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DiscordRoleId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Message")
                         .HasColumnType("text");
 
-                    b.Property<int?>("RoleId")
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("UserId")
                         .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscordChannelId");
+
+                    b.HasIndex("DiscordGuildId");
+
+                    b.HasIndex("DiscordRoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("StreamSubscription");
+                });
+
+            modelBuilder.Entity("LiveBot.Core.Repository.Models.Streams.StreamUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("AvatarURL")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProfileURL")
+                        .HasColumnType("text");
 
                     b.Property<int>("ServiceType")
                         .HasColumnType("integer");
@@ -132,15 +170,12 @@ namespace LiveBot.Repository.Migrations
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("Username")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ChannelId");
-
-                    b.HasIndex("GuildId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("StreamSubscription");
+                    b.ToTable("StreamUser");
                 });
 
             modelBuilder.Entity("LiveBot.Core.Repository.Models.Discord.DiscordChannel", b =>
@@ -159,17 +194,21 @@ namespace LiveBot.Repository.Migrations
 
             modelBuilder.Entity("LiveBot.Core.Repository.Models.Streams.StreamSubscription", b =>
                 {
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordChannel", "Channel")
-                        .WithMany()
-                        .HasForeignKey("ChannelId");
+                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordChannel", "DiscordChannel")
+                        .WithMany("StreamSubscriptions")
+                        .HasForeignKey("DiscordChannelId");
 
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordGuild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId");
+                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordGuild", null)
+                        .WithMany("StreamSubscriptions")
+                        .HasForeignKey("DiscordGuildId");
 
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordRole", "Role")
+                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordRole", "DiscordRole")
                         .WithMany()
-                        .HasForeignKey("RoleId");
+                        .HasForeignKey("DiscordRoleId");
+
+                    b.HasOne("LiveBot.Core.Repository.Models.Streams.StreamUser", "User")
+                        .WithMany("StreamSubscriptions")
+                        .HasForeignKey("UserId");
                 });
 #pragma warning restore 612, 618
         }

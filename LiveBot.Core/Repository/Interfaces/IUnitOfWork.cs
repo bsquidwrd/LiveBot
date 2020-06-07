@@ -12,5 +12,6 @@ namespace LiveBot.Core.Repository.Interfaces
         IChannelRepository ChannelRepository { get; }
         IRoleRepository RoleRepository { get; }
         IStreamSubscriptionRepository StreamSubscriptionRepository { get; }
+        IStreamUserRepository StreamUserRepository { get; }
     }
 }

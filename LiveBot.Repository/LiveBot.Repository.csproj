@@ -55,6 +55,14 @@
     <Compile Remove="Migrations\20200301064503_Moved deleted field to base model.Designer.cs" />
     <Compile Remove="Migrations\20200301064622_Added deleted field to base model.cs" />
     <Compile Remove="Migrations\20200301064622_Added deleted field to base model.Designer.cs" />
+    <Compile Remove="Migrations\20200607024045_Create StreamSubscription.cs" />
+    <Compile Remove="Migrations\20200607024045_Create StreamSubscription.Designer.cs" />
+    <Compile Remove="Migrations\20200607024152_Create DiscordRole and StreamSubscription.cs" />
+    <Compile Remove="Migrations\20200607024152_Create DiscordRole and StreamSubscription.Designer.cs" />
+    <Compile Remove="Migrations\20200607083134_Add StreamUser.cs" />
+    <Compile Remove="Migrations\20200607083134_Add StreamUser.Designer.cs" />
+    <Compile Remove="Migrations\20200607093728_Add StreamSubscription and StreamUser.cs" />
+    <Compile Remove="Migrations\20200607093728_Add StreamSubscription and StreamUser.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

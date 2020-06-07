@@ -1,5 +1,6 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Models;
 using Serilog;
@@ -42,7 +43,8 @@ namespace LiveBot.Watcher.Twitch
             Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
         }
 
-        // Start Events
+        #region Events
+
         public void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
@@ -51,12 +53,14 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
+            await _UpdateUser(stream.User);
             Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
+            await _UpdateUser(stream.User);
             //Log.Debug($"OnStreamUpdate: {stream.User}");
             // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
             // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
@@ -68,10 +72,13 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
+            await _UpdateUser(stream.User);
             Log.Debug($"OnStreamOffline: {stream.User}");
         }
 
-        // End Events
+        #endregion Events
+
+        #region API Calls
 
         private async Task<Game> API_GetGame(string gameId)
         {
@@ -107,7 +114,23 @@ namespace LiveBot.Watcher.Twitch
             return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
         }
 
-        // Implement Interface Requirements
+        #endregion API Calls
+
+        public async Task _UpdateUser(ILiveBotUser user)
+        {
+            StreamUser streamUser = new StreamUser()
+            {
+                ServiceType = ServiceType,
+                SourceID = user.Id,
+                Username = user.Username,
+                DisplayName = user.DisplayName,
+                AvatarURL = user.AvatarURL,
+                ProfileURL = user.GetProfileURL()
+            };
+            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
+        }
+
+        #region Interface Requirements
 
         /// <inheritdoc/>
         public override ILiveBotMonitorStart GetStartClass()
@@ -139,15 +162,15 @@ namespace LiveBot.Watcher.Twitch
         {
             User apiUser;
 
-            if (username != null)
+            if (!string.IsNullOrEmpty(username))
             {
                 apiUser = await API_GetUserByLogin(username: username);
             }
-            else if (userId != null)
+            else if (!string.IsNullOrEmpty(userId))
             {
                 apiUser = await API_GetUserById(userId: userId);
             }
-            else if (profileURL != null)
+            else if (!string.IsNullOrEmpty(profileURL))
             {
                 apiUser = await API_GetUserByURL(url: profileURL);
             }
@@ -172,5 +195,22 @@ namespace LiveBot.Watcher.Twitch
                 return true;
             return false;
         }
+
+        /// <inheritdoc/>
+        public override bool RemoveChannel(ILiveBotUser user)
+        {
+            var channels = Monitor.ChannelsToMonitor;
+            if (channels.Contains(user.Id))
+            {
+                channels.Remove(user.Id);
+                Monitor.SetChannelsById(channels);
+            }
+
+            if (!Monitor.ChannelsToMonitor.Contains(user.Id))
+                return true;
+            return false;
+        }
+
+        #endregion Interface Requirements
     }
 }

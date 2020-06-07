@@ -15,6 +15,7 @@ namespace LiveBot.Repository
         public IChannelRepository ChannelRepository { get; }
         public IRoleRepository RoleRepository { get; }
         public IStreamSubscriptionRepository StreamSubscriptionRepository { get; }
+        public IStreamUserRepository StreamUserRepository { get; }
 
         public UnitOfWork(LiveBotDBContext context)
         {
@@ -23,6 +24,7 @@ namespace LiveBot.Repository
             ChannelRepository = new ChannelRepository(context);
             RoleRepository = new RoleRepository(context);
             StreamSubscriptionRepository = new StreamSubscriptionRepository(context);
+            StreamUserRepository = new StreamUserRepository(context);
         }
     }
 }
