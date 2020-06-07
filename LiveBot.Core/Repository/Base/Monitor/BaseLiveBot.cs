@@ -1,5 +1,5 @@
-﻿using LiveBot.Core.Repository.Enums;
-using LiveBot.Core.Repository.Interfaces.Monitor;
+﻿using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Static;
 
 namespace LiveBot.Core.Repository.Base.Monitor
 {

@@ -1,5 +1,5 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
-using LiveBot.Core.Repository.Enums;
+using LiveBot.Core.Repository.Static;
 using TwitchLib.Api.Helix.Models.Games;
 
 namespace LiveBot.Watcher.Twitch.Models

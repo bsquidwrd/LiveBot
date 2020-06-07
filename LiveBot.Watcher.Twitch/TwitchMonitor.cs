@@ -1,6 +1,6 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
-using LiveBot.Core.Repository.Enums;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Models;
 using Serilog;
 using System;
@@ -35,6 +35,11 @@ namespace LiveBot.Watcher.Twitch
 
             API = new TwitchAPI();
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 30, maxStreamRequestCountPerRequest: 100);
+
+            Monitor.OnServiceStarted += Monitor_OnServiceStarted;
+            Monitor.OnStreamOnline += Monitor_OnStreamOnline;
+            Monitor.OnStreamOffline += Monitor_OnStreamOffline;
+            Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
         }
 
         // Start Events
@@ -52,7 +57,7 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($"OnStreamUpdate: {stream.User}");
+            //Log.Debug($"OnStreamUpdate: {stream.User}");
             // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
             // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
             // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
@@ -103,6 +108,7 @@ namespace LiveBot.Watcher.Twitch
         }
 
         // Implement Interface Requirements
+
         /// <inheritdoc/>
         public override ILiveBotMonitorStart GetStartClass()
         {
@@ -122,6 +128,8 @@ namespace LiveBot.Watcher.Twitch
             List<string> listUserId = new List<string> { user.Id };
             GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: listUserId);
             Stream stream = streams.Streams.FirstOrDefault(i => i.UserId == user.Id);
+            if (stream == null)
+                return null;
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, user, game);
         }
@@ -148,6 +156,21 @@ namespace LiveBot.Watcher.Twitch
                 return null;
             }
             return new TwitchUser(ServiceName, BaseURL, ServiceType, apiUser);
+        }
+
+        /// <inheritdoc/>
+        public override bool AddChannel(ILiveBotUser user)
+        {
+            var channels = Monitor.ChannelsToMonitor;
+            if (!channels.Contains(user.Id))
+            {
+                channels.Add(user.Id);
+                Monitor.SetChannelsById(channels);
+            }
+
+            if (Monitor.ChannelsToMonitor.Contains(user.Id))
+                return true;
+            return false;
         }
     }
 }

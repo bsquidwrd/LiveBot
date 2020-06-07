@@ -1,28 +1,29 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
-using LiveBot.Core.Repository.Enums;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.Helpers;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
     [RequireContext(ContextType.Guild)]
-    [RequireUserPermission(GuildPermission.Administrator | GuildPermission.ManageGuild)]
+    [RequireUserPermission(GuildPermission.ManageGuild)]
     [Group("monitor")]
     [Summary("Monitor actions for Streams")]
     public class MonitorModule : InteractiveBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
         private readonly List<ILiveBotMonitor> _monitors;
-        private readonly FormatStreamMessage formatStreamMessage;
 
         /// <summary>
         /// Represents the list of Monitoring Commands available
@@ -33,8 +34,9 @@ namespace LiveBot.Discord.Modules
         {
             _monitors = monitors;
             _work = factory.Create();
-            formatStreamMessage = new FormatStreamMessage();
         }
+
+        #region Owner Commands
 
         /// <summary>
         /// Gives a list of loaded Monitoring Services
@@ -53,23 +55,6 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync($"Loaded Services: {string.Join(",", loadedServices)}");
         }
 
-        [Command("check")]
-        [RequireOwner]
-        [Summary("Check if Stream is live. Basic debug command")]
-        public async Task CheckStream(ILiveBotUser user)
-        {
-            ILiveBotMonitor monitor = _GetServiceMonitor(user);
-            try
-            {
-                ILiveBotStream stream = await monitor.GetStream(user);
-                await ReplyAsync($"Service: `{stream.ServiceName}`\nDisplay Name: `{stream.User.DisplayName}`\nGame: `{stream.Game.Name}`\nTitle: `{stream.Title}`");
-            }
-            catch
-            {
-                await ReplyAsync($"{user.ServiceName} Doesn't look like the user {user.DisplayName} is live");
-            }
-        }
-
         /// <summary>
         /// Checks if a particular Monitoring Service is loaded with a given string name (based on <c>ServiceEnum</c>
         /// </summary>
@@ -83,6 +68,10 @@ namespace LiveBot.Discord.Modules
             ILiveBotMonitor monitor = _monitors.Where(m => m.ServiceType == serviceEnum).First();
             await ReplyAsync($"Loaded: {monitor.ServiceType.ToString()}");
         }
+
+        #endregion Owner Commands
+
+        #region Misc Commands
 
         /// <summary>
         /// Runs a test of permissions for the given <c>Context</c>
@@ -139,11 +128,48 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// Gives a list of Streams being monitored for the Discord Service it is run in
         /// </summary>
         [Command("list")]
+        [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
+            // TODO: Implement MonitorList
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            await ReplyAsync($"This command isn't implemented yet");
+            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.Guild == discordGuild);
+
+            string combinedStreams = "";
+            combinedStreams = string.Join("\n", streamSubscriptions.Select(i => i.SourceID));
+            foreach (StreamSubscription streamSubscription in streamSubscriptions)
+            {
+                combinedStreams += $"{streamSubscription.SourceID}: {streamSubscription.Message} {streamSubscription.ServiceType}\n";
+            }
+            await ReplyAsync($"Stream Subscriptions for this Server:\n{combinedStreams}");
         }
+
+        /// <summary>
+        /// Checks if a given stream is live, if so returns default notification message and embed
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [Command("check")]
+        [RequireOwner]
+        [Summary("Check if Stream is live. Basic debug command to see if the Bot can locate a stream")]
+        public async Task CheckStream(ILiveBotUser user)
+        {
+            ILiveBotMonitor monitor = _GetServiceMonitor(user);
+            ILiveBotStream stream = await monitor.GetStream(user);
+            if (stream == null)
+            {
+                await ReplyAsync($"{user.ServiceName} Doesn't look like the user {user.DisplayName} is live");
+                return;
+            }
+            Embed streamEmbed = NotificationHelpers.GetStreamEmbed(stream);
+            StreamSubscription bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
+            string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, bogusSubscription);
+            await ReplyAsync(message: $"Service: `{stream.ServiceName}`\n{notificationMessage}", embed: streamEmbed);
+        }
+
+        #endregion Misc Commands
+
+        #region Start Commands
 
         /// <summary>
         /// Runs through the process of Starting a Stream from being monitored
@@ -170,37 +196,59 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Setup a new Stream to monitor for this Discord")]
         public async Task MonitorStart(ILiveBotUser user)
         {
-            TimeSpan defaultTimeout = TimeSpan.FromMinutes(1);
-            IMessage questionMessage;
-            IMessage responseMessage;
-            IRole mentionRole;
-            string notificationMessage;
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
-            IGuildChannel notificationChannel = await _RequestNotificationChannel();
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+
+            // Get Notification Channel
+            IGuildChannel notificationChannel = await _RequestNotificationChannel();
             DiscordChannel discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(c => c.DiscordId == notificationChannel.Id);
 
-            string messageParameters = "";
-            messageParameters += "{name} - Streamers Name\n";
-            messageParameters += "{game} - Game they are playing\n";
-            messageParameters += "{url} - URL to the stream\n";
-            messageParameters += "{title} - Stream Title\n";
+            // Get Notification Message
+            string notificationMessage = await _RequestNotificationMessage();
 
-            questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, What message should I send on notification?");
-            responseMessage = await NextMessageAsync(timeout: defaultTimeout);
-            notificationMessage = responseMessage.Content;
-            await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            // Get Notification Role
+            IRole mentionRole = await _RequestNotificationRole();
+            DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == mentionRole.Id);
 
-            questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, Should I mention a\n`1` Role\n`2` Everyone\n`3` Neither");
-            responseMessage = await NextMessageAsync(timeout: defaultTimeout);
+            // Process their answers
+            Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
+                i.ServiceType == monitor.ServiceType &&
+                i.Guild == discordGuild &&
+                i.SourceID == user.Id
+            );
 
-            ILiveBotStream stream = await monitor.GetStream(user);
-            await ReplyAsync(formatStreamMessage.GetNotificationMessage(stream, notificationMessage));
+            StreamSubscription streamSubscription = new StreamSubscription()
+            {
+                ServiceType = monitor.ServiceType,
+                Guild = discordGuild,
+                Channel = discordChannel,
+                Role = discordRole,
+                SourceID = user.Id,
+                Message = notificationMessage
+            };
+            await _work.StreamSubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
+            streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
-            await ReplyAsync($"{Context.Message.Author.Mention} This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
+            if (streamSubscription != null)
+            {
+                string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
+                await ReplyAsync($"{Context.Message.Author.Mention}, I have setup a subscription for {user.DisplayName} on {user.ServiceType} with message {escapedMessage}");
+            }
+            else
+            {
+                try
+                {
+                    await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                }
+                catch { }
+                await ReplyAsync($"{Context.Message.Author.Mention}, I wasn't able to create a subscription for the user {user.DisplayName} on {user.ServiceType}. Please try again or contact my owner");
+            }
         }
+
+        #endregion Start Commands
+
+        #region Stop Commands
 
         /// <summary>
         /// Runs through the process of Stopping a Stream from being monitored
@@ -227,11 +275,15 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Stop monitoring a Stream for this Discord")]
         public async Task MonitorStop(ILiveBotUser user)
         {
+            // TODO: Implement Monitor Stop
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
             await ReplyAsync($"{Context.Message.Author.Mention} This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
         }
 
-        // Helper Functions
+        #endregion Stop Commands
+
+        #region Helper Functions
+
         /// <summary>
         /// Simple method to delete a message and not fail
         /// </summary>
@@ -273,7 +325,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         private async Task<string> _RequestStreamUser()
         {
             await ReplyAsync($"{Context.Message.Author.Mention}, What is the URL of the stream?");
-            var response = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+            var response = await NextMessageAsync(timeout: Defaults.MessageTimeout);
 
             if (response != null)
             {
@@ -292,12 +344,67 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <returns>Resulting Channel object from the Users input</returns>
         private async Task<IGuildChannel> _RequestNotificationChannel()
         {
-            var questionMessage = await ReplyAsync($"Please mention the Discord Channel you would like to start or stop a notification for. Ex: {MentionUtils.MentionChannel(Context.Channel.Id)}");
-            var responseMessage = await NextMessageAsync(timeout: TimeSpan.FromMinutes(1));
+            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, Please mention the Discord Channel you would like to start or stop a notification for. Ex: {MentionUtils.MentionChannel(Context.Channel.Id)}");
+            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
             IGuildChannel guildChannel = responseMessage.MentionedChannels.FirstOrDefault();
             await _DeleteMessage(questionMessage);
             await _DeleteMessage(responseMessage);
             return guildChannel;
         }
+
+        /// <summary>
+        /// Helper Function to simplify asking for a Role to mention
+        /// </summary>
+        /// <returns></returns>
+        private async Task<IRole> _RequestNotificationRole()
+        {
+            //Context.Guild.
+            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, What is the name of the Role you would like to mention in messages? Ex: {Context.Guild.CurrentUser.Roles.First(d => d.IsEveryone == false).Name}");
+            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            IRole role = responseMessage.MentionedRoles.FirstOrDefault();
+            if (role == null)
+            {
+                string response = responseMessage.Content.Trim();
+                if (response.Equals("everyone", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    role = Context.Guild.EveryoneRole;
+                }
+                else
+                {
+                    role = Context.Guild.Roles.FirstOrDefault(d => d.Name.Equals(response, StringComparison.CurrentCultureIgnoreCase));
+                }
+            }
+            await _DeleteMessage(questionMessage);
+            await _DeleteMessage(responseMessage);
+            return role;
+        }
+
+        private async Task<string> _RequestNotificationMessage()
+        {
+            string question = $"{Context.Message.Author.Mention}, What message should I send on notification?\n";
+            question += "Type \"Default\" for the message to be: {Defaults.NotificationMessage}\n";
+            question += "\nParameters:\n";
+            question += "{role} - Role to ping (if applicable)\n";
+            question += "{name} - Streamers Name\n";
+            question += "{game} - Game they are playing\n";
+            question += "{url} - URL to the stream\n";
+            question += "{title} - Stream Title\n";
+
+            var questionMessage = await ReplyAsync(question);
+            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            // TODO: Check if "default" is typed and grab Bot default message
+            string notificationMessage = responseMessage.Content.Trim();
+
+            if (notificationMessage.Equals("default", StringComparison.CurrentCultureIgnoreCase))
+            {
+                notificationMessage = Defaults.NotificationMessage;
+            }
+
+            await _DeleteMessage(questionMessage);
+            await _DeleteMessage(responseMessage);
+            return notificationMessage;
+        }
+
+        #endregion Helper Functions
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace LiveBot.Core.Repository.Enums
+﻿namespace LiveBot.Core.Repository.Static
 {
     /// <summary>
     /// Represents a Monitoring Service

@@ -134,10 +134,9 @@ namespace LiveBot.Discord.Modules
 
             foreach (SocketRole role in guild.Roles)
             {
-                if (role.IsEveryone)
-                {
-                    continue;
-                }
+                // Include everyone because it is a mentionable role for notifications
+                //if (role.IsEveryone)
+                //    continue;
                 await _AddOrUpdateRole(discordGuild, role);
             }
 

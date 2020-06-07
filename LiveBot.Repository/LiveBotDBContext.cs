@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Models.Streams;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -18,5 +19,7 @@ namespace LiveBot.Repository
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }
         public DbSet<DiscordChannel> DiscordChannel { get; set; }
+        public DbSet<DiscordRole> DiscordRole { get; set; }
+        public DbSet<StreamSubscription> StreamSubscription { get; set; }
     }
 }

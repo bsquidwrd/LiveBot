@@ -1,5 +1,6 @@
-﻿using LiveBot.Core.Repository.Enums;
+﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Static;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public string URLPattern { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
+        public IUnitOfWork Work { get; set; }
 
         public Regex GetURLRegex(string pattern)
         {
@@ -36,5 +38,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         {
             return Regex.IsMatch(streamURL, URLPattern);
         }
+
+        public abstract bool AddChannel(ILiveBotUser user);
     }
 }

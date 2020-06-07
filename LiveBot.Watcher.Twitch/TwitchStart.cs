@@ -1,4 +1,6 @@
-﻿using LiveBot.Core.Repository.Interfaces.Monitor;
+﻿using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Monitor;
+using MassTransit.Initializers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -18,17 +20,14 @@ namespace LiveBot.Watcher.Twitch
         {
             TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
+            service.Work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
 
-            service.API.Settings.ClientId = "";
-            service.API.Settings.Secret = "";
+            service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
+            service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");
 
-            List<string> channelList = new List<string> { "" };
+            var subscriptions = await service.Work.StreamSubscriptionRepository.FindAsync(i => i.ServiceType == service.ServiceType);
+            List<string> channelList = new List<string>(subscriptions.Select(i => i.SourceID).Distinct());
             service.Monitor.SetChannelsById(channelList);
-
-            service.Monitor.OnServiceStarted += service.Monitor_OnServiceStarted;
-            service.Monitor.OnStreamOnline += service.Monitor_OnStreamOnline;
-            service.Monitor.OnStreamOffline += service.Monitor_OnStreamOffline;
-            //service.OnStreamUpdate += Monitor_OnStreamUpdate;
 
             await Task.Run(service.Monitor.Start);
         }

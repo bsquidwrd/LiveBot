@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Interfaces.Discord;
+using LiveBot.Core.Repository.Interfaces.Streams;
 
 namespace LiveBot.Core.Repository.Interfaces
 {
@@ -8,8 +9,8 @@ namespace LiveBot.Core.Repository.Interfaces
     public interface IUnitOfWork
     {
         IGuildRepository GuildRepository { get; }
-
         IChannelRepository ChannelRepository { get; }
         IRoleRepository RoleRepository { get; }
+        IStreamSubscriptionRepository StreamSubscriptionRepository { get; }
     }
 }

@@ -3,15 +3,17 @@ using System;
 using LiveBot.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace LiveBot.Repository.Migrations
 {
     [DbContext(typeof(LiveBotDBContext))]
-    partial class LiveBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20200607024045_Create StreamSubscription")]
+    partial class CreateStreamSubscription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,48 +103,6 @@ namespace LiveBot.Repository.Migrations
                     b.ToTable("DiscordRole");
                 });
 
-            modelBuilder.Entity("LiveBot.Core.Repository.Models.Streams.StreamSubscription", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-
-                    b.Property<int?>("ChannelId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("GuildId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("RoleId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ServiceType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SourceID")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChannelId");
-
-                    b.HasIndex("GuildId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("StreamSubscription");
-                });
-
             modelBuilder.Entity("LiveBot.Core.Repository.Models.Discord.DiscordChannel", b =>
                 {
                     b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordGuild", "DiscordGuild")
@@ -155,21 +115,6 @@ namespace LiveBot.Repository.Migrations
                     b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordGuild", "DiscordGuild")
                         .WithMany("DiscordRoles")
                         .HasForeignKey("DiscordGuildId");
-                });
-
-            modelBuilder.Entity("LiveBot.Core.Repository.Models.Streams.StreamSubscription", b =>
-                {
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordChannel", "Channel")
-                        .WithMany()
-                        .HasForeignKey("ChannelId");
-
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordGuild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId");
-
-                    b.HasOne("LiveBot.Core.Repository.Models.Discord.DiscordRole", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId");
                 });
 #pragma warning restore 612, 618
         }
