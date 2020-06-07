@@ -22,7 +22,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
 
         public override string ToString()
         {
-            return $"{ServiceType.ToString()}: {Username}";
+            return $"{ServiceType}: {Username}";
         }
     }
 }

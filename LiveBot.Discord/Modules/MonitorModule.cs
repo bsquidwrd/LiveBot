@@ -47,13 +47,7 @@ namespace LiveBot.Discord.Modules
         [Summary("Get the list of Stream Services that are loaded")]
         public async Task GetMonitorServices()
         {
-            List<string> loadedServices = new List<string>();
-            foreach (var monitor in _monitors)
-            {
-                string monitorName = monitor.ServiceType.ToString();
-                loadedServices.Add(monitorName);
-            }
-            await ReplyAsync($"Loaded Services: {string.Join(",", loadedServices)}");
+            await ReplyAsync($"Loaded Services: {string.Join(",", _monitors.Select(i => i.ServiceType).Distinct())}");
         }
 
         /// <summary>
@@ -67,7 +61,7 @@ namespace LiveBot.Discord.Modules
         {
             ServiceEnum serviceEnum = (ServiceEnum)Enum.Parse(typeof(ServiceEnum), serviceName.ToUpper());
             ILiveBotMonitor monitor = _monitors.Where(m => m.ServiceType == serviceEnum).First();
-            await ReplyAsync($"Loaded: {monitor.ServiceType.ToString()}");
+            await ReplyAsync($"Loaded: {monitor.ServiceType}");
         }
 
         #endregion Owner Commands
