@@ -29,7 +29,6 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
         public TwitchMonitor()
         {
-            ServiceName = "Twitch";
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
@@ -111,7 +110,7 @@ namespace LiveBot.Watcher.Twitch
         {
             ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
             ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
-            return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
+            return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
         }
 
         #endregion API Calls
@@ -142,7 +141,7 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
             Game game = await API_GetGame(gameId);
-            return new TwitchGame(ServiceName, BaseURL, ServiceType, game);
+            return new TwitchGame(BaseURL, ServiceType, game);
         }
 
         /// <inheritdoc/>
@@ -154,7 +153,7 @@ namespace LiveBot.Watcher.Twitch
             if (stream == null)
                 return null;
             ILiveBotGame game = await GetGame(stream.GameId);
-            return new TwitchStream(ServiceName, BaseURL, ServiceType, stream, user, game);
+            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
 
         /// <inheritdoc/>
@@ -178,7 +177,7 @@ namespace LiveBot.Watcher.Twitch
             {
                 return null;
             }
-            return new TwitchUser(ServiceName, BaseURL, ServiceType, apiUser);
+            return new TwitchUser(BaseURL, ServiceType, apiUser);
         }
 
         /// <inheritdoc/>

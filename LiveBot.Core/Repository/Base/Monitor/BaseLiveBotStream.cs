@@ -9,7 +9,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
     /// </summary>
     public abstract class BaseLiveBotStream : BaseLiveBot, ILiveBotStream
     {
-        public BaseLiveBotStream(string serviceName, string baseURL, ServiceEnum serviceType) : base(serviceName, baseURL, serviceType)
+        public BaseLiveBotStream(string baseURL, ServiceEnum serviceType) : base(baseURL, serviceType)
         {
         }
 

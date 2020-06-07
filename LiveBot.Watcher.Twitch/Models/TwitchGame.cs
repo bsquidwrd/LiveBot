@@ -9,7 +9,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchGame : BaseLiveBotGame
     {
-        public TwitchGame(string serviceName, string baseURL, ServiceEnum serviceType, Game game = null) : base(serviceName, baseURL, serviceType)
+        public TwitchGame(string baseURL, ServiceEnum serviceType, Game game = null) : base(baseURL, serviceType)
         {
             if (game == null)
             {

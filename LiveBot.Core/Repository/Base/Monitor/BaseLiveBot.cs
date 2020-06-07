@@ -8,14 +8,11 @@ namespace LiveBot.Core.Repository.Base.Monitor
     /// </summary>
     public abstract class BaseLiveBot : ILiveBotBase
     {
-        public BaseLiveBot(string serviceName, string baseURL, ServiceEnum serviceType)
+        public BaseLiveBot(string baseURL, ServiceEnum serviceType)
         {
-            ServiceName = serviceName;
             BaseURL = baseURL;
             ServiceType = serviceType;
         }
-
-        public string ServiceName { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
     }

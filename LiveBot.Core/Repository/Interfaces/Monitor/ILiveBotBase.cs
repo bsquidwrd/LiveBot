@@ -7,7 +7,6 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
     /// </summary>
     public interface ILiveBotBase
     {
-        public string ServiceName { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
     }

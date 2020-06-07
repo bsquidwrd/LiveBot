@@ -7,6 +7,7 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.Helpers;
+using MassTransit.Courier.Contracts;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace LiveBot.Discord.Modules
         [Command("services")]
         [RequireOwner]
         [Summary("Get the list of Stream Services that are loaded")]
-        public async Task MonitorServices()
+        public async Task GetMonitorServices()
         {
             List<string> loadedServices = new List<string>();
             foreach (var monitor in _monitors)
@@ -62,7 +63,7 @@ namespace LiveBot.Discord.Modules
         [Command("services")]
         [RequireOwner]
         [Summary("Check if a particular Stream Service is loaded by name")]
-        public async Task MonitorServices(string serviceName)
+        public async Task GetMonitorService(string serviceName)
         {
             ServiceEnum serviceEnum = (ServiceEnum)Enum.Parse(typeof(ServiceEnum), serviceName.ToUpper());
             ILiveBotMonitor monitor = _monitors.Where(m => m.ServiceType == serviceEnum).First();
@@ -131,17 +132,25 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
-            // TODO: Implement MonitorList (PagedReplyAsync)
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild);
+            //int chunkSize = 10;
+            //// TODO: Implement MonitorList (PagedReplyAsync)
+            //DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
+            //IEnumerable<StreamSubscription> streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild);
+            //List<StreamSubscription> subscriptionList = streamSubscriptions.ToList();
+            //List<string> subscribedStreams = new List<string>();
 
-            string combinedStreams = "";
-            combinedStreams = string.Join("\n", streamSubscriptions.Select(i => i.User.SourceID));
-            foreach (StreamSubscription streamSubscription in streamSubscriptions)
-            {
-                combinedStreams += $"{streamSubscription.User.SourceID}: {streamSubscription.Message} {streamSubscription.User.ServiceType}\n";
-            }
-            await ReplyAsync($"Stream Subscriptions for this Server:\n{combinedStreams}");
+            //while (subscriptionList.Count > 0)
+            //{
+            //    int count = subscriptionList.Count > chunkSize ? chunkSize : subscriptionList.Count;
+            //    List<StreamSubscription> subset = subscriptionList.GetRange(0, count);
+            //    subscribedStreams.Add(string.Join("\n", subset.Select(i => i.User.DisplayName).Distinct()));
+            //    subscriptionList.RemoveRange(0, count);
+            //}
+
+            //await PagedReplyAsync(subscribedStreams);
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
+            StreamSubscription test = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(i => i.DiscordChannel.DiscordGuild == discordGuild && i.User.SourceID == "53771810");
+            await ReplyAsync($"{test.User.DisplayName}");
         }
 
         /// <summary>
@@ -158,13 +167,13 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             ILiveBotStream stream = await monitor.GetStream(user);
             if (stream == null)
             {
-                await ReplyAsync($"{user.ServiceName} Doesn't look like the user {user.DisplayName} is live");
+                await ReplyAsync($"{user.ServiceType} Doesn't look like the user {user.DisplayName} is live");
                 return;
             }
             Embed streamEmbed = NotificationHelpers.GetStreamEmbed(stream);
             StreamSubscription bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
             string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, bogusSubscription);
-            await ReplyAsync(message: $"Service: `{stream.ServiceName}`\n{notificationMessage}", embed: streamEmbed);
+            await ReplyAsync(message: $"Service: `{stream.ServiceType}`\n{notificationMessage}", embed: streamEmbed);
         }
 
         #endregion Misc Commands

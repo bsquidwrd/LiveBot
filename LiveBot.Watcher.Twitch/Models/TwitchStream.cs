@@ -10,7 +10,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchStream : BaseLiveBotStream
     {
-        public TwitchStream(string serviceName, string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(serviceName, baseURL, serviceType)
+        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(baseURL, serviceType)
         {
             User = user;
             Id = stream.Id;
