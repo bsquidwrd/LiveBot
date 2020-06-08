@@ -1,7 +1,12 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -10,8 +15,10 @@ namespace LiveBot.Discord.Modules
     [Group("admin")]
     public class AdminModule : ModuleBase<ShardedCommandContext>
     {
-        public AdminModule()
+        private readonly IUnitOfWork _work;
+        public AdminModule(IUnitOfWorkFactory factory)
         {
+            _work = factory.Create();
         }
 
         /// <summary>
@@ -32,6 +39,21 @@ namespace LiveBot.Discord.Modules
 
             await Context.Client.StopAsync();
             Environment.Exit(0);
+        }
+
+        [RequireOwner]
+        [Command("alert", RunMode=RunMode.Async)]
+        [Remarks("Send an alert to all Discord Channels that have an Active Subscription")]
+        public async Task SendAlertAsync(string message)
+        {
+            var discordChannels = (await _work.StreamSubscriptionRepository.GetAllAsync()).Select(i => i.DiscordChannel).Distinct();
+            discordChannels.ToList().ForEach(i => Task.Run(() => _ProcessAlert(i, message)));
+        }
+
+        public async Task _ProcessAlert(DiscordChannel discordChannel, string message)
+        {
+            SocketTextChannel channel = (SocketTextChannel)Context.Client.GetChannel(discordChannel.DiscordId);
+            await channel.SendMessageAsync($"{message}");
         }
     }
 }
