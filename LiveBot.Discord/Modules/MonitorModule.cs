@@ -7,7 +7,6 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.Helpers;
-using MassTransit.Courier.Contracts;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -126,28 +125,10 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
-            //int chunkSize = 10;
-            //// TODO: Implement MonitorList (PagedReplyAsync)
-            //DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            //IEnumerable<StreamSubscription> streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild);
-            //List<StreamSubscription> subscriptionList = streamSubscriptions.ToList();
-            //List<string> subscribedStreams = new List<string>();
-
-            //while (subscriptionList.Count > 0)
-            //{
-            //    int count = subscriptionList.Count > chunkSize ? chunkSize : subscriptionList.Count;
-            //    List<StreamSubscription> subset = subscriptionList.GetRange(0, count);
-            //    subscribedStreams.Add(string.Join("\n", subset.Select(i => i.User.DisplayName).Distinct()));
-            //    subscriptionList.RemoveRange(0, count);
-            //}
-
-            //await PagedReplyAsync(subscribedStreams);
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            IEnumerable<StreamSubscription> test = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild).ConfigureAwait(false);
-            foreach (StreamSubscription sub in test)
-            {
-                Log.Debug($"{sub.User.DisplayName}");
-            }
+            // TODO: Implement MonitorList (PagedReplyAsync)
+            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id);
+            streamSubscriptions.ToList().ForEach(i => Log.Debug($"{i.User.DisplayName}"));
+            //await ReplyAsync($"{test.User.DisplayName}");
         }
 
         /// <summary>
@@ -248,7 +229,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             if (streamSubscription != null)
             {
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
-                monitor.AddChannel(user);
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have setup a subscription for {user.DisplayName} on {user.ServiceType} with message {escapedMessage}");
             }
             else
@@ -311,12 +291,14 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 i.User == streamUser &&
                 i.DiscordChannel.DiscordGuild == discordGuild
             );
-            StreamSubscription streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+            IEnumerable<StreamSubscription> streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(streamSubscriptionPredicate);
             try
             {
-                monitor.RemoveChannel(user);
-                await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                await ReplyAsync($"{Context.Message.Author.Mention} This command isn't implemented yet, but you input {user.DisplayName} in service {monitor.ServiceType}");
+                foreach (StreamSubscription streamSubscription in streamSubscriptions)
+                {
+                    await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                }
+                await ReplyAsync($"{Context.Message.Author.Mention}, I have removed");
             }
             catch
             {

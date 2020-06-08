@@ -14,7 +14,7 @@ namespace LiveBot.Repository
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql(Environment.GetEnvironmentVariable("LiveBotConnectionString"));
+            optionsBuilder.UseLazyLoadingProxies().UseNpgsql(Environment.GetEnvironmentVariable("LiveBotConnectionString"));
         }
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }

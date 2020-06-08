@@ -67,6 +67,8 @@
     <Compile Remove="Migrations\20200608003437_Test.Designer.cs" />
     <Compile Remove="Migrations\20200608030128_Adding Proxies.cs" />
     <Compile Remove="Migrations\20200608030128_Adding Proxies.Designer.cs" />
+    <Compile Remove="Migrations\20200608050136_Added Proxy.cs" />
+    <Compile Remove="Migrations\20200608050136_Added Proxy.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -75,6 +77,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="3.1.4" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
   </ItemGroup>
