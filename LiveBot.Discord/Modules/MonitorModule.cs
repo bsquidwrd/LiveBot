@@ -125,11 +125,30 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
-            // TODO: Implement MonitorList (PagedReplyAsync)
-            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id);
-            List<StreamSubscription> subscriptions = streamSubscriptions.ToList();
-            subscriptions.ForEach(i => Log.Debug($"{i.User.DisplayName}"));
-            //await ReplyAsync($"{test.User.DisplayName}");
+            int pageSize = 10;
+
+            Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
+                i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id
+            );
+            int pageCount = await _work.StreamSubscriptionRepository.GetPageCountAsync(streamSubscriptionPredicate, pageSize);
+            List<string> subscriptions = new List<string>();
+
+            for (int i = 1; i <= pageCount; i++)
+            {
+                var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(streamSubscriptionPredicate, i, pageSize);
+                if (streamSubscriptions.Count() == 0)
+                    continue;
+                subscriptions.Add(string.Join("\n", streamSubscriptions.Select(i => i.User.DisplayName)));
+            }
+
+            PaginatedMessage paginatedMessage = new PaginatedMessage
+            {
+                Color = Color.LightGrey,
+                Title = "Stream Subscriptions",
+                Pages = subscriptions
+            };
+
+            await PagedReplyAsync(paginatedMessage);
         }
 
         /// <summary>
