@@ -26,9 +26,9 @@ namespace LiveBot.API
             services.AddControllers();
 
             // Add Messaging
-            //var messaging = new Messaging.Messaging();
+            var messaging = new Messaging.MessagingStart();
             //services.AddSingleton(messaging);
-            //messaging.PopulateServices(services);
+            messaging.PopulateServices(services);
 
             // Add Discord Bot
             LiveBotDiscord discordBot = new LiveBotDiscord();

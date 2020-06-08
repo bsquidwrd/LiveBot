@@ -1,4 +1,5 @@
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Messaging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,9 +25,6 @@ namespace LiveBot.API
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-
-                //var messaging = new Messaging.MessagingStart();
-                //await messaging.StartAsync(services).ConfigureAwait(false);
 
                 var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
