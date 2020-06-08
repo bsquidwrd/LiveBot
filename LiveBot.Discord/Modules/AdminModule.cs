@@ -41,6 +41,11 @@ namespace LiveBot.Discord.Modules
             Environment.Exit(0);
         }
 
+        /// <summary>
+        /// Process and Send an alert to all distinct channels that have subscriptions
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         [RequireOwner]
         [Command("alert", RunMode=RunMode.Async)]
         [Remarks("Send an alert to all Discord Channels that have an Active Subscription")]
@@ -50,6 +55,12 @@ namespace LiveBot.Discord.Modules
             discordChannels.ToList().ForEach(i => Task.Run(() => _ProcessAlert(i, message)));
         }
 
+        /// <summary>
+        /// Task meant to be spawned from <see cref="SendAlertAsync(string)"/>
+        /// </summary>
+        /// <param name="discordChannel"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public async Task _ProcessAlert(DiscordChannel discordChannel, string message)
         {
             SocketTextChannel channel = (SocketTextChannel)Context.Client.GetChannel(discordChannel.DiscordId);
