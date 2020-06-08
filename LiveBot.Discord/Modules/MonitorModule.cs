@@ -143,8 +143,11 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             //await PagedReplyAsync(subscribedStreams);
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync((g => g.DiscordId == Context.Guild.Id));
-            StreamSubscription test = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(i => i.DiscordChannel.DiscordGuild == discordGuild && i.User.SourceID == "53771810");
-            await ReplyAsync($"{test.User.DisplayName}");
+            IEnumerable<StreamSubscription> test = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild == discordGuild).ConfigureAwait(false);
+            foreach (StreamSubscription sub in test)
+            {
+                Log.Debug($"{sub.User.DisplayName}");
+            }
         }
 
         /// <summary>

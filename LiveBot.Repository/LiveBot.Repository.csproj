@@ -63,6 +63,8 @@
     <Compile Remove="Migrations\20200607083134_Add StreamUser.Designer.cs" />
     <Compile Remove="Migrations\20200607093728_Add StreamSubscription and StreamUser.cs" />
     <Compile Remove="Migrations\20200607093728_Add StreamSubscription and StreamUser.Designer.cs" />
+    <Compile Remove="Migrations\20200608003437_Test.cs" />
+    <Compile Remove="Migrations\20200608003437_Test.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
