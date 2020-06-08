@@ -59,7 +59,6 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            await _UpdateUser(stream.User);
             //Log.Debug($"OnStreamUpdate: {stream.User}");
             // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
             // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
@@ -71,7 +70,6 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            await _UpdateUser(stream.User);
             Log.Debug($"OnStreamOffline: {stream.User}");
         }
 
@@ -177,7 +175,11 @@ namespace LiveBot.Watcher.Twitch
             {
                 return null;
             }
-            return new TwitchUser(BaseURL, ServiceType, apiUser);
+
+            TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
+            await _UpdateUser(twitchUser);
+
+            return twitchUser;
         }
 
         /// <inheritdoc/>
