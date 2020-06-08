@@ -26,7 +26,7 @@ namespace LiveBot.API
             services.AddControllers();
 
             // Add Messaging
-            var messaging = new Messaging.MessagingStart();
+            var messaging = new Messaging.Messaging();
             //services.AddSingleton(messaging);
             messaging.PopulateServices(services);
 

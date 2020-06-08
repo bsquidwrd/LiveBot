@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Messaging
 {
-    public class MessagingStart
+    public class Messaging
     {
         public void PopulateServices(IServiceCollection services)
         {
