@@ -127,7 +127,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             // TODO: Implement MonitorList (PagedReplyAsync)
             var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id);
-            streamSubscriptions.ToList().ForEach(i => Log.Debug($"{i.User.DisplayName}"));
+            List<StreamSubscription> subscriptions = streamSubscriptions.ToList();
+            subscriptions.ForEach(i => Log.Debug($"{i.User.DisplayName}"));
             //await ReplyAsync($"{test.User.DisplayName}");
         }
 
