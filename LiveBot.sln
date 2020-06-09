@@ -36,6 +36,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05.01 Twitch", "05.01 Twitc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Watcher.Twitch", "LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj", "{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{731850A7-AF23-4CDC-843D-BC1943E7B719}"
+	ProjectSection(SolutionItems) = preProject
+		.github\FUNDING.yml = .github\FUNDING.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +78,7 @@ Global
 		{A39673D4-3D1C-4CDF-8902-7E42ABCF8447} = {709C4AF2-3084-4B28-B42A-6EF4707704A3}
 		{5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1} = {9219EEE8-7C53-4CC9-9940-5C0296092F89}
 		{7602DA77-C7AF-4710-A6ED-C9D83D3E6C49} = {5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1}
+		{731850A7-AF23-4CDC-843D-BC1943E7B719} = {C005824A-AC14-4D25-8F83-29FE3399C486}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7BEBFC2-84F3-4E31-B8D6-001D28DD3892}
