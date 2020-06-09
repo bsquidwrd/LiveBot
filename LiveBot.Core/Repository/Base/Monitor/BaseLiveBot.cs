@@ -13,6 +13,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
             BaseURL = baseURL;
             ServiceType = serviceType;
         }
+
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
     }

@@ -6,7 +6,6 @@ using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 
@@ -20,6 +19,7 @@ namespace LiveBot.Discord.Consumers
         //    _client = client;
         //}
         private readonly IServiceProvider _services;
+
         public StreamOnlineConsumer(IServiceProvider services)
         {
             _services = services;

@@ -5,7 +5,6 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,6 +15,7 @@ namespace LiveBot.Discord.Modules
     public class AdminModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+
         public AdminModule(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
@@ -47,7 +47,7 @@ namespace LiveBot.Discord.Modules
         /// <param name="message"></param>
         /// <returns></returns>
         [RequireOwner]
-        [Command("alert", RunMode=RunMode.Async)]
+        [Command("alert", RunMode = RunMode.Async)]
         [Remarks("Send an alert to all Discord Channels that have an Active Subscription")]
         public async Task SendAlertAsync(string message)
         {

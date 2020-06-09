@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LiveBot.Core.Repository.Static
+﻿namespace LiveBot.Core.Repository.Static
 {
     public static class Basic
     {

@@ -3,9 +3,6 @@ using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Core.Repository.Models.Streams;
-using LiveBot.Discord.Helpers;
 using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +21,7 @@ namespace LiveBot.Discord
         {
             TotalShards = 1
         };
+
         public static DiscordShardedClient GetBot()
         {
             return new DiscordShardedClient(config);

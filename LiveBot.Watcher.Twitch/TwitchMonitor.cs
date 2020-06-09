@@ -1,12 +1,10 @@
-﻿using LiveBot.Core.Contracts;
-using LiveBot.Core.Repository.Base.Monitor;
+﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
-using MassTransit.Courier.Contracts;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -136,7 +134,7 @@ namespace LiveBot.Watcher.Twitch
         }
 
         #region Messaging Implementation
-        
+
         public async Task _PublishStreamOnline(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamOnline

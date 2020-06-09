@@ -28,7 +28,7 @@ namespace LiveBot.API
 
                 var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
-                
+
                 foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
                 {
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
