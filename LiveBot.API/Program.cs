@@ -28,21 +28,13 @@ namespace LiveBot.API
 
                 var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
-                //var twitchMonitor = new Watcher.Twitch.TwitchStart();
-                //await twitchMonitor.StartAsync(services).ConfigureAwait(false);
+                
                 foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
                 {
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
                     await monitorStart.StartAsync(services).ConfigureAwait(false);
                 }
             }
-
-            //using (var scope = webHost.Services.CreateScope())
-            //{
-            //    var services = scope.ServiceProvider;
-            //    var twitchMonitor = new Watcher.Twitch.TwitchStart();
-            //    await twitchMonitor.StartAsync(services).ConfigureAwait(false);
-            //}
 
             await webHost.RunAsync().ConfigureAwait(false);
 

@@ -42,7 +42,6 @@ namespace LiveBot.API
             services.AddSingleton<IUnitOfWorkFactory>(factory);
 
             // Add Monitors
-            //services.AddSingleton(new Watcher.Twitch.TwitchMonitor());
             List<ILiveBotMonitor> monitorList = new List<ILiveBotMonitor>
             {
                 new Watcher.Twitch.TwitchMonitor()
