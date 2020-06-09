@@ -59,12 +59,20 @@ namespace LiveBot.Discord.Modules
             await ReplyAndDeleteAsync($"{Context.Message.Author.Mention} You can find my source code here: https://www.github.com/bsquidwrd/Live-Bot", timeout: TimeSpan.FromMinutes(1));
         }
 
+        /// <summary>
+        /// Provides a Discord Server invite to my Support Server
+        /// </summary>
+        /// <returns></returns>
         [Command("support")]
         public async Task SupportAsync()
         {
             await ReplyAndDeleteAsync($"{Context.Message.Author.Mention}, you can find my support server here: https://discord.gg/zXkb4JP", timeout: TimeSpan.FromMinutes(1));
         }
 
+        /// <summary>
+        /// Provides a link on how to support me via PayPal
+        /// </summary>
+        /// <returns></returns>
         [Command("donate")]
         public async Task DonateAsync()
         {
