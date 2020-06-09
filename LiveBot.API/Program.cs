@@ -1,5 +1,5 @@
 using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Messaging;
+using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

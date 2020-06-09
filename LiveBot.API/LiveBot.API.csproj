@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MassTransit.AspNetCore" Version="6.3.2" />
+    <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.3.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="6.3.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -23,7 +26,6 @@
   <ItemGroup>
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
     <ProjectReference Include="..\LiveBot.Discord\LiveBot.Discord.csproj" />
-    <ProjectReference Include="..\LiveBot.Messaging\LiveBot.Messaging.csproj" />
     <ProjectReference Include="..\LiveBot.Repository\LiveBot.Repository.csproj" />
     <ProjectReference Include="..\LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj" />
   </ItemGroup>

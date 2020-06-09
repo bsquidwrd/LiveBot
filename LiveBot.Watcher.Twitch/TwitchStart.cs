@@ -1,5 +1,6 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using MassTransit;
 using MassTransit.Initializers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -21,6 +22,7 @@ namespace LiveBot.Watcher.Twitch
             TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
             service._work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
+            service._bus = services.GetRequiredService<IBus>();
 
             service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
             service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");

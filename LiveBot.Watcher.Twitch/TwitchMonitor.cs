@@ -1,8 +1,12 @@
-﻿using LiveBot.Core.Repository.Base.Monitor;
+﻿using LiveBot.Core.Contracts;
+using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
+using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
+using MassTransit;
+using MassTransit.Courier.Contracts;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -23,6 +27,7 @@ namespace LiveBot.Watcher.Twitch
         public LiveStreamMonitorService Monitor;
         public TwitchAPI API;
         public IServiceProvider services;
+        public IBus _bus;
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -54,6 +59,7 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotStream stream = await GetStream(e.Stream);
             await _UpdateUser(stream.User);
             Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
+            await _PublishStreamOnline(stream);
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
@@ -65,12 +71,14 @@ namespace LiveBot.Watcher.Twitch
             // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
             // Okay I think it's because the stream was previously live on check
             // So I think it sends this incase something has changed to process on my end
+            //await _PublishStreamUpdate(stream);
         }
 
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
             Log.Debug($"OnStreamOffline: {stream.User}");
+            await _PublishStreamOffline(stream);
         }
 
         #endregion Events
@@ -126,6 +134,40 @@ namespace LiveBot.Watcher.Twitch
             };
             await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
         }
+
+        #region Messaging Implementation
+        
+        public async Task _PublishStreamOnline(ILiveBotStream stream)
+        {
+            // TODO: Implement _PublishStreamOnline
+            //Log.Debug("_PublishStreamOnline: NotImplemented");
+            var streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == stream.User.Id);
+            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.User == streamUser);
+
+            foreach (var streamSubscription in streamSubscriptions)
+            {
+                TwitchStreamOnline streamOnlinePayload = new TwitchStreamOnline { Subscription = streamSubscription, Stream = stream };
+                //await sendEndpoint.Send(streamOnlinePayload).ConfigureAwait(false);
+                await _bus.Send<IStreamOnline>(streamOnlinePayload).ConfigureAwait(false);
+            }
+            await Task.Delay(1);
+        }
+
+        public async Task _PublishStreamUpdate(ILiveBotStream stream)
+        {
+            // TODO: Implement _PublishStreamUpdate
+            Log.Debug("_PublishStreamUpdate: NotImplemented");
+            await Task.Delay(1);
+        }
+
+        public async Task _PublishStreamOffline(ILiveBotStream stream)
+        {
+            // TODO: Implement _PublishStreamOffline
+            Log.Debug("_PublishStreamOffline: NotImplemented");
+            await Task.Delay(1);
+        }
+
+        #endregion Messaging Implementation
 
         #region Interface Requirements
 
