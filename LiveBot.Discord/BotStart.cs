@@ -64,6 +64,7 @@ namespace LiveBot.Discord
 
             // Guild Events
             client.GuildAvailable += LiveBotEventHandles.GuildAvailable;
+            client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
             client.GuildUpdated += LiveBotEventHandles.GuildUpdated;
             client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
             client.LeftGuild += LiveBotEventHandles.GuildLeave;

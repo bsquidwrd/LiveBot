@@ -334,6 +334,8 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
         {
+            if (afterGuildUser.Guild.Id != 225471771355250688)
+                return;
             if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
             {
                 // I don't care about bots
@@ -357,7 +359,7 @@ namespace LiveBot.Discord.Modules
 
                 foreach (SocketRole role in afterGuildUser.Roles)
                 {
-                    if (role.Id == afterGuildUser.Guild.Id)
+                    if (role.IsEveryone)
                     {
                         continue;
                     }
