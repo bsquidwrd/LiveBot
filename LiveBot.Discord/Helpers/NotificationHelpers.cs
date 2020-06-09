@@ -63,11 +63,11 @@ namespace LiveBot.Discord.Helpers
             builder.WithThumbnailUrl(stream.User.AvatarURL);
 
             // Add Status Field
-            EmbedFieldBuilder statusBuilder = new EmbedFieldBuilder();
-            statusBuilder.WithIsInline(false);
-            statusBuilder.WithName("Status");
-            statusBuilder.WithValue("");
-            builder.AddField(statusBuilder);
+            //EmbedFieldBuilder statusBuilder = new EmbedFieldBuilder();
+            //statusBuilder.WithIsInline(false);
+            //statusBuilder.WithName("Status");
+            //statusBuilder.WithValue("");
+            //builder.AddField(statusBuilder);
 
             // Add Game field
             EmbedFieldBuilder gameBuilder = new EmbedFieldBuilder();
