@@ -27,7 +27,7 @@ namespace LiveBot.Watcher.Twitch
         public LiveStreamMonitorService Monitor;
         public TwitchAPI API;
         public IServiceProvider services;
-        public IBus _bus;
+        public IBusControl _bus;
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -147,8 +147,9 @@ namespace LiveBot.Watcher.Twitch
             foreach (var streamSubscription in streamSubscriptions)
             {
                 TwitchStreamOnline streamOnlinePayload = new TwitchStreamOnline { Subscription = streamSubscription, Stream = stream };
-                //await sendEndpoint.Send(streamOnlinePayload).ConfigureAwait(false);
-                await _bus.Send<IStreamOnline>(streamOnlinePayload).ConfigureAwait(false);
+                Log.Debug($"Publishing to bus for {streamOnlinePayload.Stream.User.DisplayName}");
+                await _bus.Publish(streamOnlinePayload);
+                Log.Debug($"Published to bus for {streamOnlinePayload.Stream.User.DisplayName}");
             }
             await Task.Delay(1);
         }

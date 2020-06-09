@@ -20,12 +20,12 @@ namespace LiveBot.Discord
     /// </summary>
     public class LiveBotDiscord : DiscordShardedClient
     {
-        public DiscordShardedClient GetBot()
+        private static readonly DiscordSocketConfig config = new DiscordSocketConfig
         {
-            var config = new DiscordSocketConfig
-            {
-                TotalShards = 1
-            };
+            TotalShards = 1
+        };
+        public static DiscordShardedClient GetBot()
+        {
             return new DiscordShardedClient(config);
         }
 

@@ -22,7 +22,7 @@ namespace LiveBot.Watcher.Twitch
             TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
             service._work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
-            service._bus = services.GetRequiredService<IBus>();
+            service._bus = services.GetRequiredService<IBusControl>();
 
             service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
             service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");
