@@ -1,11 +1,13 @@
 ﻿using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using LiveBot.Core.Repository.Interfaces;
+using System;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    public class PublicModule : ModuleBase<ShardedCommandContext>
+    public class PublicModule : InteractiveBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
 
@@ -54,9 +56,20 @@ namespace LiveBot.Discord.Modules
         [Command("source")]
         public async Task SourceAsync()
         {
-            var AppInfo = await Context.Client.GetApplicationInfoAsync();
             var msg = $"{Context.Message.Author.Mention} You can find my source code here: https://www.github.com/bsquidwrd/Live-Bot";
             await ReplyAsync(msg);
+        }
+
+        [Command("support")]
+        public async Task SupportAsync()
+        {
+            await ReplyAsync($"{Context.Message.Author.Mention}, you can find my support server here: https://discord.gg/zXkb4JP");
+        }
+
+        [Command("donate")]
+        public async Task DonateAsync()
+        {
+            await ReplyAndDeleteAsync($"{Context.Message.Author.Mention}, Thank you so much for even considering donating! You can donate here: <https://www.paypal.me/bsquidwrd>", timeout: TimeSpan.FromMinutes(1));
         }
     }
 }
