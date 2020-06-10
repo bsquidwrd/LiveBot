@@ -5,7 +5,6 @@ namespace LiveBot.Core.Contracts
 {
     public interface IStreamOnline
     {
-        public StreamSubscription Subscription { get; set; }
         public ILiveBotStream Stream { get; set; }
     }
 }

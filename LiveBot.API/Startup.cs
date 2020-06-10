@@ -1,3 +1,4 @@
+using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using System;
 using System.Collections.Generic;
 
@@ -82,7 +84,10 @@ namespace LiveBot.API
                 busFactoryConfig.Host(Environment.GetEnvironmentVariable("RabbitMQURL"));
 
                 //busFactoryConfig.Message<IStreamOnline>(x => x.SetEntityName("livebot-streamonline"));
-                busFactoryConfig.ReceiveEndpoint("livebot-streamonline", ep => ep.Consumer<StreamOnlineConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint("livebot-streamonline", ep =>
+                {
+                    ep.Consumer<StreamOnlineConsumer>(provider);
+                });
             });
 
             return serviceBus;

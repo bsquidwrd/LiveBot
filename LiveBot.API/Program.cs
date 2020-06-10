@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -33,6 +34,16 @@ namespace LiveBot.API
                 {
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
                     await monitorStart.StartAsync(services).ConfigureAwait(false);
+                }
+
+                try
+                {
+                    var bus = services.GetRequiredService<IBusControl>();
+                    await bus.StartAsync().ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Error trying to start Bus:\n{e}");
                 }
             }
 

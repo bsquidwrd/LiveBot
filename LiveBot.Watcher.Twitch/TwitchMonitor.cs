@@ -1,14 +1,17 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using TwitchLib.Api;
 using TwitchLib.Api.Helix.Models.Games;
@@ -139,15 +142,15 @@ namespace LiveBot.Watcher.Twitch
         {
             // TODO: Implement _PublishStreamOnline
             //Log.Debug("_PublishStreamOnline: NotImplemented");
-            var streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == stream.User.Id);
-            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.User == streamUser);
-
-            foreach (var streamSubscription in streamSubscriptions)
+            try
             {
-                TwitchStreamOnline streamOnlinePayload = new TwitchStreamOnline { Subscription = streamSubscription, Stream = stream };
-                Log.Debug($"Publishing to bus for {streamOnlinePayload.Stream.User.DisplayName}");
-                await _bus.Publish(streamOnlinePayload);
-                Log.Debug($"Published to bus for {streamOnlinePayload.Stream.User.DisplayName}");
+                Log.Debug($"Publishing to bus for {stream.User.DisplayName}");
+                await _bus.Publish(new TwitchStreamOnline { Stream = stream });
+                Log.Debug($"Published to bus for {stream.User.DisplayName}");
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Error trying to publish StreamOnline:\n{e}");
             }
             await Task.Delay(1);
         }

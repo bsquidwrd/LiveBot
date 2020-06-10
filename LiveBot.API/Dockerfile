@@ -4,12 +4,16 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-ENV DiscordToken="replaceme"
-ENV LiveBotConnectionString="replaceme"
+ENV DiscordToken
+ENV LiveBotConnectionString
+ENV RabbitMQURL
+ENV TwitchClientId
+ENV TwitchClientSecret
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 COPY ["LiveBot.API/LiveBot.API.csproj", "LiveBot.API/"]
+RUN nuget sources add -name foxbot -Source https://www.myget.org/F/foxbot-discord-addons/api/v3/index.json
 RUN dotnet restore "LiveBot.API/LiveBot.API.csproj"
 COPY . .
 WORKDIR "/src/LiveBot.API"

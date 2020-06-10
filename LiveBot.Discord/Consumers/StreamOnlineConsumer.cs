@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
@@ -13,30 +14,37 @@ namespace LiveBot.Discord.Consumers
 {
     public class StreamOnlineConsumer : IConsumer<IStreamOnline>
     {
-        //private readonly IDiscordClient _client;
-        //public StreamOnlineConsumer(IDiscordClient client)
-        //{
-        //    _client = client;
-        //}
-        private readonly IServiceProvider _services;
+        private readonly DiscordShardedClient _client;
+        private readonly IUnitOfWork _work;
 
-        public StreamOnlineConsumer(IServiceProvider services)
+        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory)
         {
-            _services = services;
+            _client = client;
+            _work = factory.Create();
         }
 
         public async Task Consume(ConsumeContext<IStreamOnline> context)
         {
-            DiscordShardedClient _client = _services.GetRequiredService<DiscordShardedClient>();
-            StreamSubscription streamSubscription = context.Message.Subscription;
-
             ILiveBotStream stream = context.Message.Stream;
-            SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+            var streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == stream.User.Id);
+            var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(i => i.User == streamUser);
 
-            string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
-            Embed embed = NotificationHelpers.GetStreamEmbed(stream);
+            foreach (var streamSubscription in streamSubscriptions)
+            {
+                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream);
 
-            await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+                await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+            }
+
+            //StreamSubscription streamSubscription = context.Message.Subscription;
+            //SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+
+            //string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
+            //Embed embed = NotificationHelpers.GetStreamEmbed(stream);
+
+            //await channel.SendMessageAsync(text: notificationMessage, embed: embed);
         }
     }
 }
