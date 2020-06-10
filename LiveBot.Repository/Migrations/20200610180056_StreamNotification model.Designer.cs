@@ -3,15 +3,17 @@ using System;
 using LiveBot.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace LiveBot.Repository.Migrations
 {
     [DbContext(typeof(LiveBotDBContext))]
-    partial class LiveBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20200610180056_StreamNotification model")]
+    partial class StreamNotificationmodel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,9 +124,6 @@ namespace LiveBot.Repository.Migrations
 
                     b.Property<string>("DiscordGuild_Name")
                         .HasColumnType("text");
-
-                    b.Property<decimal>("DiscordMessage_DiscordId")
-                        .HasColumnType("numeric(20,0)");
 
                     b.Property<decimal>("DiscordRole_DiscordId")
                         .HasColumnType("numeric(20,0)");

@@ -51,7 +51,7 @@ namespace LiveBot.Discord.Modules
         [Remarks("Send an alert to all Discord Channels that have an Active Subscription")]
         public async Task SendAlertAsync(string message)
         {
-            var discordChannels = (await _work.StreamSubscriptionRepository.GetAllAsync()).Select(i => i.DiscordChannel).Distinct();
+            var discordChannels = (await _work.SubscriptionRepository.GetAllAsync()).Select(i => i.DiscordChannel).Distinct();
             discordChannels.ToList().ForEach(i => Task.Run(() => _ProcessAlert(i, message)));
         }
 

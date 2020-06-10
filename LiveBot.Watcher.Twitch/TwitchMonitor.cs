@@ -133,7 +133,7 @@ namespace LiveBot.Watcher.Twitch
                 AvatarURL = user.AvatarURL,
                 ProfileURL = user.ProfileURL
             };
-            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
+            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
         }
 
         #region Messaging Implementation
@@ -153,7 +153,7 @@ namespace LiveBot.Watcher.Twitch
         public async Task _PublishStreamUpdate(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamUpdate
-            Log.Debug("_PublishStreamUpdate: NotImplemented");
+            //Log.Debug("_PublishStreamUpdate: NotImplemented");
             try
             {
                 await Task.Delay(1);
@@ -167,7 +167,7 @@ namespace LiveBot.Watcher.Twitch
         public async Task _PublishStreamOffline(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamOffline
-            Log.Debug("_PublishStreamOffline: NotImplemented");
+            //Log.Debug("_PublishStreamOffline: NotImplemented");
             try
             {
                 await Task.Delay(1);

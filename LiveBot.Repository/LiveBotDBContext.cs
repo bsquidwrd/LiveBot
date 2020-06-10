@@ -22,5 +22,6 @@ namespace LiveBot.Repository
         public DbSet<DiscordRole> DiscordRole { get; set; }
         public DbSet<StreamSubscription> StreamSubscription { get; set; }
         public DbSet<StreamUser> StreamUser { get; set; }
+        public DbSet<StreamNotification> StreamNotification { get; set; }
     }
 }

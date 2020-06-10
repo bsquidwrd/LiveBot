@@ -3,11 +3,10 @@ using LiveBot.Core.Repository.Models.Streams;
 
 namespace LiveBot.Repository.Streams
 {
-    /// <inheritdoc/>
-    public class StreamUserRepository : ModelRepository<StreamUser>, IStreamUserRepository
+    public class NotificationRepository : ModelRepository<StreamNotification>, INotificationRepository
     {
         /// <inheritdoc/>
-        public StreamUserRepository(LiveBotDBContext context) : base(context)
+        public NotificationRepository(LiveBotDBContext context) : base(context)
         {
         }
     }

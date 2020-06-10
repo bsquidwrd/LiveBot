@@ -14,8 +14,9 @@ namespace LiveBot.Repository
         public IGuildRepository GuildRepository { get; }
         public IChannelRepository ChannelRepository { get; }
         public IRoleRepository RoleRepository { get; }
-        public IStreamSubscriptionRepository StreamSubscriptionRepository { get; }
-        public IStreamUserRepository StreamUserRepository { get; }
+        public ISubscriptionRepository SubscriptionRepository { get; }
+        public IUserRepository UserRepository { get; }
+        public INotificationRepository NotificationRepository { get; }
 
         public UnitOfWork(LiveBotDBContext context)
         {
@@ -23,8 +24,9 @@ namespace LiveBot.Repository
             GuildRepository = new GuildRepository(context);
             ChannelRepository = new ChannelRepository(context);
             RoleRepository = new RoleRepository(context);
-            StreamSubscriptionRepository = new StreamSubscriptionRepository(context);
-            StreamUserRepository = new StreamUserRepository(context);
+            SubscriptionRepository = new SubscriptionRepository(context);
+            UserRepository = new UserRepository(context);
+            NotificationRepository = new NotificationRepository(context);
         }
     }
 }

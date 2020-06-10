@@ -130,12 +130,12 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id
             );
-            int pageCount = await _work.StreamSubscriptionRepository.GetPageCountAsync(streamSubscriptionPredicate, pageSize);
+            int pageCount = await _work.SubscriptionRepository.GetPageCountAsync(streamSubscriptionPredicate, pageSize);
             List<string> subscriptions = new List<string>();
 
             for (int i = 1; i <= pageCount; i++)
             {
-                var streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(streamSubscriptionPredicate, i, pageSize);
+                var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(streamSubscriptionPredicate, i, pageSize);
                 if (streamSubscriptions.Count() == 0)
                     continue;
                 subscriptions.Add(string.Join("\n", streamSubscriptions.Select(i => i.User.DisplayName)));
@@ -228,8 +228,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 AvatarURL = user.AvatarURL,
                 ProfileURL = user.ProfileURL
             };
-            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
-            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
@@ -246,8 +246,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             try
             {
-                await _work.StreamSubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
-                streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+                await _work.SubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
+                streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
                 monitor.AddChannel(user);
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
@@ -302,19 +302,19 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 AvatarURL = user.AvatarURL,
                 ProfileURL = user.ProfileURL
             };
-            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
-            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
                 i.DiscordChannel.DiscordGuild == discordGuild
             );
-            IEnumerable<StreamSubscription> streamSubscriptions = await _work.StreamSubscriptionRepository.FindAsync(streamSubscriptionPredicate);
+            IEnumerable<StreamSubscription> streamSubscriptions = await _work.SubscriptionRepository.FindAsync(streamSubscriptionPredicate);
             try
             {
                 foreach (StreamSubscription streamSubscription in streamSubscriptions)
                 {
-                    await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                 }
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have removed the Subscription for {user.DisplayName}");
             }
@@ -427,7 +427,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         private async Task<string> _RequestNotificationMessage()
         {
             string question = $"{Context.Message.Author.Mention}, What message should I send on notification?\n";
-            question += "Type \"Default\" for the message to be: {Defaults.NotificationMessage}\n";
+            question += $"Type \"Default\" for the message to be: {Defaults.NotificationMessage}\n";
             question += "\nParameters:\n";
             question += "{role} - Role to ping (if applicable)\n";
             question += "{name} - Streamers Name\n";

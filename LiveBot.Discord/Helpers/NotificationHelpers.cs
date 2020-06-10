@@ -1,7 +1,12 @@
 ﻿using Discord;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
+using System;
 using System.Globalization;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Helpers
 {

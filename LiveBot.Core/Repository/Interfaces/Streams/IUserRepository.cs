@@ -3,9 +3,9 @@
 namespace LiveBot.Core.Repository.Interfaces.Streams
 {
     /// <summary>
-    /// Interface for Database interaction with a Stream Subscription
+    /// Interface for Database interaction with a Stream User
     /// </summary>
-    public interface IStreamSubscriptionRepository : IRepository<StreamSubscription>
+    public interface IUserRepository : IRepository<StreamUser>
     {
     }
 }

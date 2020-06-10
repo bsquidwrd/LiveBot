@@ -27,7 +27,7 @@ namespace LiveBot.Watcher.Twitch
             service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
             service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");
 
-            var streamUsers = await service._work.StreamUserRepository.FindAsync(i => i.ServiceType == service.ServiceType);
+            var streamUsers = await service._work.UserRepository.FindAsync(i => i.ServiceType == service.ServiceType);
             List<string> channelList = new List<string>(streamUsers.Select(i => i.SourceID).Distinct());
             service.Monitor.SetChannelsById(channelList);
 

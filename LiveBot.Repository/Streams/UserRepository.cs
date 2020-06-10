@@ -4,10 +4,10 @@ using LiveBot.Core.Repository.Models.Streams;
 namespace LiveBot.Repository.Streams
 {
     /// <inheritdoc/>
-    public class StreamSubscriptionRepository : ModelRepository<StreamSubscription>, IStreamSubscriptionRepository
+    public class UserRepository : ModelRepository<StreamUser>, IUserRepository
     {
         /// <inheritdoc/>
-        public StreamSubscriptionRepository(LiveBotDBContext context) : base(context)
+        public UserRepository(LiveBotDBContext context) : base(context)
         {
         }
     }

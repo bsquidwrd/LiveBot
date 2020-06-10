@@ -11,7 +11,8 @@ namespace LiveBot.Core.Repository.Interfaces
         IGuildRepository GuildRepository { get; }
         IChannelRepository ChannelRepository { get; }
         IRoleRepository RoleRepository { get; }
-        IStreamSubscriptionRepository StreamSubscriptionRepository { get; }
-        IStreamUserRepository StreamUserRepository { get; }
+        ISubscriptionRepository SubscriptionRepository { get; }
+        IUserRepository UserRepository { get; }
+        INotificationRepository NotificationRepository { get; }
     }
 }
