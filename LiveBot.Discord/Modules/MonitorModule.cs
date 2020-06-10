@@ -243,21 +243,19 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 DiscordRole = discordRole,
                 Message = notificationMessage
             };
-            await _work.StreamSubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
-            streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
-            if (streamSubscription != null)
+            try
             {
+                await _work.StreamSubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
+                streamSubscription = await _work.StreamSubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+
+                monitor.AddChannel(user);
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have setup a subscription for {user.DisplayName} on {user.ServiceType} with message {escapedMessage}");
             }
-            else
+            catch (Exception e)
             {
-                try
-                {
-                    await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                }
-                catch { }
+                Log.Error($"Error running MonitorStart for {Context.Message.Author.Id} {Context.Message.Author.Username}#{Context.Message.Author.Discriminator} GuildID: {Context.Guild.Id} ChannelID: {Context.Channel.Id}\n{e}");
                 await ReplyAsync($"{Context.Message.Author.Mention}, I wasn't able to create a subscription for the user {user.DisplayName} on {user.ServiceType}. Please try again or contact my owner");
             }
         }
@@ -295,17 +293,17 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
 
-            //StreamUser streamUser = new StreamUser()
-            //{
-            //    ServiceType = user.ServiceType,
-            //    SourceID = user.Id,
-            //    Username = user.Username,
-            //    DisplayName = user.DisplayName,
-            //    AvatarURL = user.AvatarURL,
-            //    ProfileURL = user.ProfileURL
-            //};
-            //await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
-            StreamUser streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+            StreamUser streamUser = new StreamUser()
+            {
+                ServiceType = user.ServiceType,
+                SourceID = user.Id,
+                Username = user.Username,
+                DisplayName = user.DisplayName,
+                AvatarURL = user.AvatarURL,
+                ProfileURL = user.ProfileURL
+            };
+            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
@@ -318,10 +316,11 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 {
                     await _work.StreamSubscriptionRepository.RemoveAsync(streamSubscription.Id);
                 }
-                await ReplyAsync($"{Context.Message.Author.Mention}, I have removed");
+                await ReplyAsync($"{Context.Message.Author.Mention}, I have removed the Subscription for {user.DisplayName}");
             }
-            catch
+            catch (Exception e)
             {
+                Log.Error($"Error running MonitorStop for {Context.Message.Author.Id} {Context.Message.Author.Username}#{Context.Message.Author.Discriminator} GuildID: {Context.Guild.Id} ChannelID: {Context.Channel.Id}\n{e}");
                 await ReplyAsync($"{Context.Message.Author.Mention}, I couldn't remove the Subscription for user {user.DisplayName}. Please try again or contact my owner");
             }
         }
