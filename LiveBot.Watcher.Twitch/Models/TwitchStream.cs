@@ -18,11 +18,7 @@ namespace LiveBot.Watcher.Twitch.Models
             StartTime = stream.StartedAt;
             Game = game;
             ThumbnailURL = stream.ThumbnailUrl;
-        }
-
-        public override string GetStreamURL()
-        {
-            return $"{User.GetProfileURL()}";
+            StreamURL = $"{User.ProfileURL}";
         }
     }
 }

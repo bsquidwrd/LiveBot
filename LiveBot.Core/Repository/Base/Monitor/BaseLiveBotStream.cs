@@ -25,7 +25,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
 
         public string ThumbnailURL { get; set; }
 
-        public abstract string GetStreamURL();
+        public string StreamURL { get; set; }
 
         public override string ToString()
         {

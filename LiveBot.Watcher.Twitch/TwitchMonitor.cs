@@ -40,7 +40,7 @@ namespace LiveBot.Watcher.Twitch
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
 
             API = new TwitchAPI();
-            Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 30, maxStreamRequestCountPerRequest: 100);
+            Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
             Monitor.OnServiceStarted += Monitor_OnServiceStarted;
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
@@ -59,7 +59,7 @@ namespace LiveBot.Watcher.Twitch
         {
             ILiveBotStream stream = await GetStream(e.Stream);
             await _UpdateUser(stream.User);
-            Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.GetStreamURL())}");
+            Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.StreamURL)}");
             await _PublishStreamOnline(stream);
         }
 
@@ -131,7 +131,7 @@ namespace LiveBot.Watcher.Twitch
                 Username = user.Username,
                 DisplayName = user.DisplayName,
                 AvatarURL = user.AvatarURL,
-                ProfileURL = user.GetProfileURL()
+                ProfileURL = user.ProfileURL
             };
             await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
         }
@@ -140,33 +140,42 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task _PublishStreamOnline(ILiveBotStream stream)
         {
-            // TODO: Implement _PublishStreamOnline
-            //Log.Debug("_PublishStreamOnline: NotImplemented");
             try
             {
-                Log.Debug($"Publishing to bus for {stream.User.DisplayName}");
                 await _bus.Publish(new TwitchStreamOnline { Stream = stream });
-                Log.Debug($"Published to bus for {stream.User.DisplayName}");
             }
             catch (Exception e)
             {
                 Log.Error($"Error trying to publish StreamOnline:\n{e}");
             }
-            await Task.Delay(1);
         }
 
         public async Task _PublishStreamUpdate(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamUpdate
             Log.Debug("_PublishStreamUpdate: NotImplemented");
-            await Task.Delay(1);
+            try
+            {
+                await Task.Delay(1);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Error trying to publish StreamUpdate:\n{e}");
+            }
         }
 
         public async Task _PublishStreamOffline(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamOffline
             Log.Debug("_PublishStreamOffline: NotImplemented");
-            await Task.Delay(1);
+            try
+            {
+                await Task.Delay(1);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Error trying to publish StreamOffline:\n{e}");
+            }
         }
 
         #endregion Messaging Implementation

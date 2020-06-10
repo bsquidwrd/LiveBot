@@ -8,6 +8,7 @@ using LiveBot.Discord.Helpers;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers
@@ -37,14 +38,6 @@ namespace LiveBot.Discord.Consumers
 
                 await channel.SendMessageAsync(text: notificationMessage, embed: embed);
             }
-
-            //StreamSubscription streamSubscription = context.Message.Subscription;
-            //SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
-
-            //string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
-            //Embed embed = NotificationHelpers.GetStreamEmbed(stream);
-
-            //await channel.SendMessageAsync(text: notificationMessage, embed: embed);
         }
     }
 }

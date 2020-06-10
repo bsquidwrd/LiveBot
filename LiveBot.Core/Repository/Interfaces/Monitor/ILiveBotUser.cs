@@ -10,11 +10,6 @@
         public string DisplayName { get; set; }
         public string BroadcasterType { get; set; }
         public string AvatarURL { get; set; }
-
-        /// <summary>
-        /// Gets a URL to the Users profile
-        /// </summary>
-        /// <returns></returns>
-        public string GetProfileURL();
+        public string ProfileURL { get; set; }
     }
 }

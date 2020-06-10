@@ -13,11 +13,6 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public string Title { get; }
         public DateTime StartTime { get; }
         public string ThumbnailURL { get; }
-
-        /// <summary>
-        /// Gets the stream URL
-        /// </summary>
-        /// <returns></returns>
-        public string GetStreamURL();
+        public string StreamURL { get; set; }
     }
 }

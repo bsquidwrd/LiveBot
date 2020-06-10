@@ -16,11 +16,7 @@ namespace LiveBot.Watcher.Twitch.Models
             DisplayName = user.DisplayName;
             BroadcasterType = user.BroadcasterType;
             AvatarURL = user.ProfileImageUrl;
-        }
-
-        public override string GetProfileURL()
-        {
-            return $"{BaseURL}/{Username}";
+            ProfileURL = $"{BaseURL}/{Username}";
         }
     }
 }

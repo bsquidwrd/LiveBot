@@ -29,7 +29,7 @@ namespace LiveBot.Discord.Helpers
                 .Replace("{Username}", EscapeSpecialDiscordCharacters(stream.User.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(stream.Game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.GetStreamURL()), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.StreamURL), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Role}", MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), ignoreCase: true, culture: CultureInfo.CurrentCulture);
         }
 
@@ -44,7 +44,7 @@ namespace LiveBot.Discord.Helpers
             EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
             authorBuilder.WithName(stream.User.DisplayName);
             authorBuilder.WithIconUrl(stream.User.AvatarURL);
-            authorBuilder.WithUrl(stream.User.GetProfileURL());
+            authorBuilder.WithUrl(stream.User.ProfileURL);
 
             // Build the Footer of the Embed
             EmbedFooterBuilder footerBuilder = new EmbedFooterBuilder();
@@ -59,7 +59,7 @@ namespace LiveBot.Discord.Helpers
 
             builder.WithTimestamp(stream.StartTime);
             builder.WithDescription(stream.Title);
-            builder.WithUrl(stream.GetStreamURL());
+            builder.WithUrl(stream.StreamURL);
             builder.WithThumbnailUrl(stream.User.AvatarURL);
 
             // Add Status Field
@@ -80,7 +80,7 @@ namespace LiveBot.Discord.Helpers
             EmbedFieldBuilder streamURLField = new EmbedFieldBuilder();
             streamURLField.WithIsInline(true);
             streamURLField.WithName("Stream");
-            streamURLField.WithValue(stream.GetStreamURL());
+            streamURLField.WithValue(stream.StreamURL);
             builder.AddField(streamURLField);
 
             return builder.Build();

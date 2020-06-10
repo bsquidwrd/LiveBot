@@ -20,8 +20,7 @@ namespace LiveBot.Discord.Consumers
 
         public async Task Consume(ConsumeContext<IStreamUpdate> context)
         {
-            Log.Debug("Consume for IStreamUpdate called");
-            await Task.Delay(1);
+            await Task.CompletedTask;
         }
     }
 }

@@ -17,8 +17,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public string DisplayName { get; set; }
         public string BroadcasterType { get; set; }
         public string AvatarURL { get; set; }
-
-        public abstract string GetProfileURL();
+        public string ProfileURL { get; set; }
 
         public override string ToString()
         {

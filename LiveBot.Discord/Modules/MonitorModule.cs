@@ -226,7 +226,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 Username = user.Username,
                 DisplayName = user.DisplayName,
                 AvatarURL = user.AvatarURL,
-                ProfileURL = user.GetProfileURL()
+                ProfileURL = user.ProfileURL
             };
             await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
             streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
@@ -295,17 +295,17 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
 
-            StreamUser streamUser = new StreamUser()
-            {
-                ServiceType = user.ServiceType,
-                SourceID = user.Id,
-                Username = user.Username,
-                DisplayName = user.DisplayName,
-                AvatarURL = user.AvatarURL,
-                ProfileURL = user.GetProfileURL()
-            };
-            await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
-            streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
+            //StreamUser streamUser = new StreamUser()
+            //{
+            //    ServiceType = user.ServiceType,
+            //    SourceID = user.Id,
+            //    Username = user.Username,
+            //    DisplayName = user.DisplayName,
+            //    AvatarURL = user.AvatarURL,
+            //    ProfileURL = user.ProfileURL
+            //};
+            //await _work.StreamUserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
+            StreamUser streamUser = await _work.StreamUserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&

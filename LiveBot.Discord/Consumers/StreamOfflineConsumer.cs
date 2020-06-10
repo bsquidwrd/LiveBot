@@ -20,8 +20,7 @@ namespace LiveBot.Discord.Consumers
 
         public async Task Consume(ConsumeContext<IStreamOffline> context)
         {
-            Log.Debug("Consume for IStreamOffline called");
-            await Task.Delay(1);
+            await Task.CompletedTask;
         }
     }
 }
