@@ -4,11 +4,11 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-ENV DiscordToken
-ENV LiveBotConnectionString
-ENV RabbitMQURL
-ENV TwitchClientId
-ENV TwitchClientSecret
+ENV DiscordToken="replaceme"
+ENV LiveBotConnectionString="replaceme"
+ENV RabbitMQURL="replaceme"
+ENV TwitchClientId="replaceme"
+ENV TwitchClientSecret="replaceme"
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
