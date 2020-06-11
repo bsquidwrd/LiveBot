@@ -18,11 +18,13 @@ namespace LiveBot.Discord.Consumers
     {
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
+        private readonly IBusControl _bus;
 
-        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory)
+        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus)
         {
             _client = client;
             _work = factory.Create();
+            _bus = bus;
         }
 
         public async Task Consume(ConsumeContext<IStreamOnline> context)

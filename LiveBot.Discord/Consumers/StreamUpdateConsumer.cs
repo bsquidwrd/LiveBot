@@ -10,16 +10,22 @@ namespace LiveBot.Discord.Consumers
     {
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
+        private readonly IBusControl _bus;
 
-        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory)
+        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus)
         {
             _client = client;
             _work = factory.Create();
+            _bus = bus;
         }
 
         public async Task Consume(ConsumeContext<IStreamUpdate> context)
         {
             // TODO: Implement StreamOUpdate.Consume
+            // Also find a way to check if a notification has been sent out, but not for the existing subscriptions
+            // If so, send it out.
+            // Because users are monitored on load, if someone gets a subscription setup after someone is live and they didn't exist before
+            // it won't notify because they are being "updated"
             await Task.CompletedTask;
         }
     }
