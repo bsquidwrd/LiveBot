@@ -50,6 +50,8 @@ namespace LiveBot.API
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<StreamOnlineConsumer>();
+                x.AddConsumer<StreamUpdateConsumer>();
+                x.AddConsumer<StreamOfflineConsumer>();
             });
             services.AddSingleton(provider => ConfigureBus(provider));
             services.AddMassTransitHostedService();
