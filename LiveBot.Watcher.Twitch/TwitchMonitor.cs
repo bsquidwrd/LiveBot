@@ -58,26 +58,18 @@ namespace LiveBot.Watcher.Twitch
         {
             ILiveBotStream stream = await GetStream(e.Stream);
             await _UpdateUser(stream.User);
-            Log.Debug($"OnStreamOnline: {stream.User} Match: {IsValid(stream.StreamURL)}");
             await _PublishStreamOnline(stream);
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            //Log.Debug($"OnStreamUpdate: {stream.User}");
-            // WHY THE FLYING FUCK IS THIS TRIGGERED EVERYTIME A CHECK IS RUN THROUGH THIS LIB
-            // THERE'S LITERALLY NOTHING THAT'S CHANGED, YET SOMETHING IS AND I CAN'T FIGURE IT OUT
-            // AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
-            // Okay I think it's because the stream was previously live on check
-            // So I think it sends this incase something has changed to process on my end
-            //await _PublishStreamUpdate(stream);
+            await _PublishStreamOffline(stream);
         }
 
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
             ILiveBotStream stream = await GetStream(e.Stream);
-            Log.Debug($"OnStreamOffline: {stream.User}");
             await _PublishStreamOffline(stream);
         }
 
@@ -187,7 +179,6 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task _PublishStreamUpdate(ILiveBotStream stream)
         {
-            // TODO: Implement _PublishStreamUpdate
             try
             {
                 await _bus.Publish(new TwitchStreamOnline { Stream = stream });
