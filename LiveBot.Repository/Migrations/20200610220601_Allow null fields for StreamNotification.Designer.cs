@@ -3,15 +3,17 @@ using System;
 using LiveBot.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace LiveBot.Repository.Migrations
 {
     [DbContext(typeof(LiveBotDBContext))]
-    partial class LiveBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20200610220601_Allow null fields for StreamNotification")]
+    partial class AllownullfieldsforStreamNotification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -111,13 +113,13 @@ namespace LiveBot.Repository.Migrations
                     b.Property<bool>("Deleted")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("DiscordChannel_DiscordId")
+                    b.Property<decimal?>("DiscordChannel_DiscordId")
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("DiscordChannel_Name")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("DiscordGuild_DiscordId")
+                    b.Property<decimal?>("DiscordGuild_DiscordId")
                         .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("DiscordGuild_Name")
@@ -150,7 +152,7 @@ namespace LiveBot.Repository.Migrations
                     b.Property<string>("Stream_SourceID")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("Stream_StartTime")
+                    b.Property<DateTime?>("Stream_StartTime")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Stream_StreamURL")

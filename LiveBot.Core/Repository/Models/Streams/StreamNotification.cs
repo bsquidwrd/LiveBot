@@ -8,7 +8,8 @@ namespace LiveBot.Core.Repository.Models.Streams
         public ServiceEnum ServiceType { get; set; }
         public bool Success { get; set; }
         public string Message { get; set; }
-        public ulong DiscordMessage_DiscordId { get; set; }
+
+        public ulong? DiscordMessage_DiscordId { get; set; }
 
         public string User_SourceID { get; set; }
         public string User_Username { get; set; }
@@ -32,7 +33,7 @@ namespace LiveBot.Core.Repository.Models.Streams
         public ulong DiscordChannel_DiscordId { get; set; }
         public string DiscordChannel_Name { get; set; }
 
-        public ulong DiscordRole_DiscordId { get; set; }
+        public ulong? DiscordRole_DiscordId { get; set; }
         public string DiscordRole_Name { get; set; }
     }
 }

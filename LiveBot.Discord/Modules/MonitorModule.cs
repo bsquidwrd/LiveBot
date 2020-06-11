@@ -216,7 +216,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             // Get Notification Role
             IRole mentionRole = await _RequestNotificationRole();
-            DiscordRole discordRole = await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == mentionRole.Id);
+            DiscordRole discordRole = mentionRole == null ? null : await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == mentionRole.Id);
 
             // Process their answers
             StreamUser streamUser = new StreamUser()
@@ -404,7 +404,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         private async Task<IRole> _RequestNotificationRole()
         {
             //Context.Guild.
-            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, What is the name of the Role you would like to mention in messages? Ex: {Context.Guild.CurrentUser.Roles.First(d => d.IsEveryone == false).Name}");
+            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, What is the name of the Role you would like to mention in messages? Ex: {Context.Guild.CurrentUser.Roles.First(d => d.IsEveryone == false).Name}, everyone or `none` if you don't want to ping a role");
             var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
             IRole role = responseMessage.MentionedRoles.FirstOrDefault();
             if (role == null)
@@ -413,6 +413,10 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 if (response.Equals("everyone", StringComparison.CurrentCultureIgnoreCase))
                 {
                     role = Context.Guild.EveryoneRole;
+                }
+                else if (response.Equals("none", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    role = null;
                 }
                 else
                 {

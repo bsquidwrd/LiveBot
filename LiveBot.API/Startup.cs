@@ -1,4 +1,3 @@
-using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord;
@@ -80,7 +79,11 @@ namespace LiveBot.API
         {
             var serviceBus = Bus.Factory.CreateUsingRabbitMq(busFactoryConfig =>
             {
-                busFactoryConfig.Host(Environment.GetEnvironmentVariable("RabbitMQURL"));
+                busFactoryConfig.Host(Environment.GetEnvironmentVariable("RabbitMQ_URL"), x =>
+                {
+                    x.Username(Environment.GetEnvironmentVariable("RabbitMQ_Username"));
+                    x.Password(Environment.GetEnvironmentVariable("RabbitMQ_Password"));
+                });
 
                 busFactoryConfig.ReceiveEndpoint("livebot_streamonline", ep =>
                 {
@@ -92,11 +95,10 @@ namespace LiveBot.API
                     ep.Consumer<StreamUpdateConsumer>(provider);
                 });
 
-                busFactoryConfig.ReceiveEndpoint("livebot_streamofffline", ep =>
+                busFactoryConfig.ReceiveEndpoint("livebot_streamoffline", ep =>
                 {
                     ep.Consumer<StreamOfflineConsumer>(provider);
                 });
-
             });
 
             return serviceBus;

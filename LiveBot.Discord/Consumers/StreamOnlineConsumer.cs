@@ -6,7 +6,6 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
 using MassTransit;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
 using System.Linq;
@@ -48,11 +47,15 @@ namespace LiveBot.Discord.Consumers
                     i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId
                 );
 
+                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream);
+
                 StreamNotification streamNotification = new StreamNotification
                 {
                     ServiceType = stream.ServiceType,
                     Success = false,
-                    Message = streamSubscription.Message,
+                    Message = notificationMessage,
 
                     User_SourceID = streamSubscription.User.SourceID,
                     User_Username = streamSubscription.User.Username,
@@ -76,30 +79,25 @@ namespace LiveBot.Discord.Consumers
                     DiscordChannel_DiscordId = streamSubscription.DiscordChannel.DiscordId,
                     DiscordChannel_Name = streamSubscription.DiscordChannel.Name,
 
-                    DiscordRole_DiscordId = streamSubscription.DiscordRole.DiscordId,
-                    DiscordRole_Name = streamSubscription.DiscordRole.Name
+                    DiscordRole_DiscordId = streamSubscription.DiscordRole == null ? 0 : streamSubscription.DiscordRole.DiscordId,
+                    DiscordRole_Name = streamSubscription.DiscordRole?.Name
                 };
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-                foreach (StreamNotification previousNotification in previousNotifications.Where(i => i.TimeStamp.Subtract(DateTime.UtcNow).TotalMinutes <= 60))
-                {
-                    if (previousNotification.Success == true)
-                    {
-                        return;
-                    }
-                    else
-                    {
-                        streamNotification = previousNotification;
-                    }
-                }
+                previousNotifications = previousNotifications.Where(i => 
+                    i.Stream_StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 && // If within an hour of their last start time
+                    i.Success == true
+                );
+
+                if (previousNotifications.Count() > 0)
+                    streamNotification.Success = true;
 
                 await _work.NotificationRepository.AddOrUpdateAsync(streamNotification, notificationPredicate);
                 streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
-                
-                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
-                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
-                Embed embed = NotificationHelpers.GetStreamEmbed(stream);
-                
+
+                if (streamNotification.Success == true)
+                    return;
+
                 try
                 {
                     var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);

@@ -1,19 +1,17 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using TwitchLib.Api;
+using TwitchLib.Api.Core.Exceptions;
 using TwitchLib.Api.Helix.Models.Games;
 using TwitchLib.Api.Helix.Models.Streams;
 using TwitchLib.Api.Helix.Models.Users;
@@ -29,6 +27,7 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
         public IBusControl _bus;
+        private int RetryDelay = 1000 * 5;
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -88,36 +87,61 @@ namespace LiveBot.Watcher.Twitch
 
         private async Task<Game> API_GetGame(string gameId)
         {
-            List<string> gameIDs = new List<string> { gameId };
-            GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
-            return games.Games.FirstOrDefault(i => i.Id == gameId);
+            try
+            {
+                List<string> gameIDs = new List<string> { gameId };
+                GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
+                return games.Games.FirstOrDefault(i => i.Id == gameId);
+            }
+            catch (BadGatewayException e)
+            {
+                await Task.Delay(RetryDelay);
+                return await API_GetGame(gameId);
+            }
         }
 
         private async Task<User> API_GetUserByLogin(string username)
         {
-            List<string> usernameList = new List<string> { username };
-            GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
-            return apiUser.Users.FirstOrDefault(i => i.Login == username);
+            try
+            {
+                List<string> usernameList = new List<string> { username };
+                GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
+                return apiUser.Users.FirstOrDefault(i => i.Login == username);
+            }
+            catch (BadGatewayException e)
+            {
+                await Task.Delay(RetryDelay);
+                return await API_GetUserByLogin(username);
+            }
         }
 
         private async Task<User> API_GetUserById(string userId)
         {
-            List<string> userIdList = new List<string> { userId };
-            GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
-            return apiUser.Users.FirstOrDefault(i => i.Id == userId);
+            try
+            {
+                List<string> userIdList = new List<string> { userId };
+                GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
+                return apiUser.Users.FirstOrDefault(i => i.Id == userId);
+            }
+            catch (BadGatewayException e)
+            {
+                await Task.Delay(RetryDelay);
+                return await API_GetUserById(userId);
+            }
         }
 
         private async Task<User> API_GetUserByURL(string url)
         {
-            string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString();
-            return await API_GetUserByLogin(username: username);
-        }
-
-        public async Task<ILiveBotStream> GetStream(Stream stream)
-        {
-            ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
-            ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
-            return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
+            try
+            {
+                string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString();
+                return await API_GetUserByLogin(username: username);
+            }
+            catch (BadGatewayException e)
+            {
+                await Task.Delay(RetryDelay);
+                return await API_GetUserByURL(url);
+            }
         }
 
         #endregion API Calls
@@ -134,6 +158,13 @@ namespace LiveBot.Watcher.Twitch
                 ProfileURL = user.ProfileURL
             };
             await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
+        }
+
+        public async Task<ILiveBotStream> GetStream(Stream stream)
+        {
+            ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
+            ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
+            return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
         }
 
         #region Messaging Implementation
@@ -153,10 +184,9 @@ namespace LiveBot.Watcher.Twitch
         public async Task _PublishStreamUpdate(ILiveBotStream stream)
         {
             // TODO: Implement _PublishStreamUpdate
-            //Log.Debug("_PublishStreamUpdate: NotImplemented");
             try
             {
-                await Task.Delay(1);
+                await _bus.Publish(new TwitchStreamOnline { Stream = stream });
             }
             catch (Exception e)
             {
@@ -166,11 +196,9 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task _PublishStreamOffline(ILiveBotStream stream)
         {
-            // TODO: Implement _PublishStreamOffline
-            //Log.Debug("_PublishStreamOffline: NotImplemented");
             try
             {
-                await Task.Delay(1);
+                await _bus.Publish(new TwitchStreamOffline { Stream = stream });
             }
             catch (Exception e)
             {

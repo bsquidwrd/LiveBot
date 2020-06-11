@@ -2,7 +2,6 @@
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
-using Serilog;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers
@@ -20,6 +19,7 @@ namespace LiveBot.Discord.Consumers
 
         public async Task Consume(ConsumeContext<IStreamUpdate> context)
         {
+            // TODO: Implement StreamOUpdate.Consume
             await Task.CompletedTask;
         }
     }

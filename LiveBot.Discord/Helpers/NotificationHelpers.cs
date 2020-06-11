@@ -1,12 +1,7 @@
 ﻿using Discord;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
-using System;
 using System.Globalization;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Helpers
 {
@@ -35,7 +30,7 @@ namespace LiveBot.Discord.Helpers
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(stream.Game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.StreamURL), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), ignoreCase: true, culture: CultureInfo.CurrentCulture);
+                .Replace("{Role}", subscription.DiscordRole == null ? "" : MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), ignoreCase: true, culture: CultureInfo.CurrentCulture);
         }
 
         /// <summary>
