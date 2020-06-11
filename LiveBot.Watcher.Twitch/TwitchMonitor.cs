@@ -158,6 +158,7 @@ namespace LiveBot.Watcher.Twitch
 
         #endregion API Calls
 
+        #region Misc Functions
         public async Task _UpdateUser(ILiveBotUser user)
         {
             StreamUser streamUser = new StreamUser()
@@ -178,6 +179,8 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
         }
+
+        #endregion Misc Functions
 
         #region Messaging Implementation
 
