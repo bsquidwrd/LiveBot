@@ -14,5 +14,6 @@ namespace LiveBot.Core.Repository.Interfaces
         ISubscriptionRepository SubscriptionRepository { get; }
         IUserRepository UserRepository { get; }
         INotificationRepository NotificationRepository { get; }
+        IGameRepository GameRepository { get; }
     }
 }

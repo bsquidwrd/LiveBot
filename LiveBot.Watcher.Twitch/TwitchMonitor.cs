@@ -125,6 +125,21 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
+        private async Task<GetUsersResponse> API_GetUsersById(List<string> userIdList)
+        {
+            try
+            {
+                GetUsersResponse apiUsers = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
+                return apiUsers;
+            }
+            catch (BadGatewayException e)
+            {
+                Log.Error($"{e}");
+                await Task.Delay(RetryDelay);
+                return await API_GetUsersById(userIdList);
+            }
+        }
+
         private async Task<User> API_GetUserByURL(string url)
         {
             try
@@ -159,18 +174,29 @@ namespace LiveBot.Watcher.Twitch
         #endregion API Calls
 
         #region Misc Functions
+
         public async Task _UpdateUser(ILiveBotUser user)
         {
-            StreamUser streamUser = new StreamUser()
+            StreamUser existingUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
+
+            if (existingUser != null)
             {
-                ServiceType = ServiceType,
-                SourceID = user.Id,
-                Username = user.Username,
-                DisplayName = user.DisplayName,
-                AvatarURL = user.AvatarURL,
-                ProfileURL = user.ProfileURL
-            };
-            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
+                if (DateTime.UtcNow.Subtract(existingUser.TimeStamp).TotalHours > 1)
+                {
+                    User apiUser = await API_GetUserById(user.Id);
+                    TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
+                    StreamUser streamUser = new StreamUser()
+                    {
+                        ServiceType = ServiceType,
+                        SourceID = twitchUser.Id,
+                        Username = twitchUser.Username,
+                        DisplayName = twitchUser.DisplayName,
+                        AvatarURL = twitchUser.AvatarURL,
+                        ProfileURL = twitchUser.ProfileURL
+                    };
+                    await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == ServiceType && i.SourceID == user.Id));
+                }
+            }
         }
 
         public async Task<ILiveBotStream> GetStream(Stream stream)
@@ -233,7 +259,31 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            Game game = await API_GetGame(gameId);
+            Game game;
+
+            StreamGame existingGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceId == gameId);
+            if (existingGame != null)
+            {
+                if (DateTime.UtcNow.Subtract(existingGame.TimeStamp).TotalHours > 1)
+                {
+                    game = await API_GetGame(gameId);
+                    TwitchGame twitchGame = new TwitchGame(BaseURL, ServiceType, game);
+                    StreamGame streamGame = new StreamGame
+                    {
+                        ServiceType = ServiceType,
+                        SourceId = twitchGame.Id,
+                        Name = twitchGame.Name,
+                        ThumbnailURL = twitchGame.ThumbnailURL
+                    };
+                    await _work.GameRepository.AddOrUpdateAsync(streamGame, i => (i.ServiceType == ServiceType && i.SourceId == gameId));
+                    return twitchGame;
+                }
+                else
+                {
+                    return new TwitchGame(BaseURL, ServiceType, existingGame);
+                }
+            }
+            game = await API_GetGame(gameId);
             return new TwitchGame(BaseURL, ServiceType, game);
         }
 
@@ -251,6 +301,11 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
+            StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && (i.Username == username || i.SourceID == userId || i.ProfileURL == profileURL));
+            if (streamUser != null)
+            {
+                return new TwitchUser(BaseURL, ServiceType, streamUser);
+            }
 
             if (!string.IsNullOrEmpty(username))
             {
