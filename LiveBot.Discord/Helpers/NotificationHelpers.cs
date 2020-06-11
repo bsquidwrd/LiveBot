@@ -24,13 +24,26 @@ namespace LiveBot.Discord.Helpers
         /// <returns></returns>
         public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription)
         {
+            string RoleMention = "";
+            if (subscription.DiscordRole != null)
+            {
+                if (subscription.DiscordRole.Name == "@everyone")
+                {
+                    RoleMention = "@everyone";
+                }
+                else
+                {
+                    RoleMention = MentionUtils.MentionRole(subscription.DiscordRole.DiscordId);
+                }
+            }
+
             return subscription.Message
                 .Replace("{Name}", EscapeSpecialDiscordCharacters(stream.User.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Username}", EscapeSpecialDiscordCharacters(stream.User.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(stream.Game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.StreamURL), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", subscription.DiscordRole == null ? "" : MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), ignoreCase: true, culture: CultureInfo.CurrentCulture);
+                .Replace("{Role}", RoleMention, ignoreCase: true, culture: CultureInfo.CurrentCulture);
         }
 
         /// <summary>
