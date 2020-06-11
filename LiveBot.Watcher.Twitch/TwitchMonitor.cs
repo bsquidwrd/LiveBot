@@ -95,6 +95,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (BadGatewayException e)
             {
+                Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
             }
@@ -110,6 +111,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (BadGatewayException e)
             {
+                Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
             }
@@ -125,6 +127,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (BadGatewayException e)
             {
+                Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
             }
@@ -139,6 +142,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (BadGatewayException e)
             {
+                Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
             }
