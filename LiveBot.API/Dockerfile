@@ -15,7 +15,7 @@ ENV TwitchClientSecret="replaceme"
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 COPY ["LiveBot.API/LiveBot.API.csproj", "LiveBot.API/"]
-RUN nuget sources add -name foxbot -Source https://www.myget.org/F/foxbot-discord-addons/api/v3/index.json
+RUN dotnet nuget sources add -name foxbot -Source https://www.myget.org/F/foxbot-discord-addons/api/v3/index.json
 RUN dotnet restore "LiveBot.API/LiveBot.API.csproj"
 COPY . .
 WORKDIR "/src/LiveBot.API"
