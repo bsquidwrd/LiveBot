@@ -1,0 +1,28 @@
+version: '3'
+services:
+    bot:
+        image: bsquidwrd/livebot_test:latest
+        volumes:
+            - logs:/app/logs/
+        environment:
+            - DiscordToken=${DiscordToken}
+            - LiveBotConnectionString=${LiveBotConnectionString}
+            - RabbitMQ_URL=${RabbitMQ_URL}
+            - RabbitMQ_Username=${RabbitMQ_Username}
+            - RabbitMQ_Password=${RabbitMQ_Password}
+            - TwitchClientId=${TwitchClientId}
+            - TwitchClientSecret=${TwitchClientSecret}
+        deploy:
+            replicas: 1
+            update_config:
+                parallelism: 2
+                delay: 10s
+            restart_policy:
+                condition: on-failure
+        ports:
+            - 80:80
+            - 443:443
+        network_mode: "overlay"
+      
+volumes:
+  logs:
