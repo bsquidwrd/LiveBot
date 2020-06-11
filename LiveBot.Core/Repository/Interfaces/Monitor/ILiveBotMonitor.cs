@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using LiveBot.Core.Repository.Models;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LiveBot.Core.Repository.Interfaces.Monitor
@@ -9,7 +10,8 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
     public interface ILiveBotMonitor : ILiveBotBase
     {
         public string URLPattern { get; set; }
-        public IUnitOfWork _work { get; set; }
+        public IUnitOfWorkFactory _factory { get; set; }
+        public IUnitOfWork _work { get; }
 
         /// <summary>
         /// Gets the basic Regex object based on URLPattern
@@ -23,6 +25,13 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// </summary>
         /// <returns>The class used to start a Monitoring Service</returns>
         public ILiveBotMonitorStart GetStartClass();
+
+        /// <summary>
+        /// Returns a <c>ILiveBotUser</c> object based on <paramref name="userId"/> from API Results
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public Task<ILiveBotUser> GetUserById(string userId);
 
         /// <summary>
         /// Returns a <c>ILiveBotUser</c> object based on the given <paramref name="userId"/> or <paramref name="username"/>
@@ -67,5 +76,12 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="user"></param>
         /// <returns></returns>
         public bool RemoveChannel(ILiveBotUser user);
+
+        /// <summary>
+        /// Updates authentication tokens relevant to the Monitoring Service
+        /// </summary>
+        /// <param name="oldMonitorAuth"></param>
+        /// <returns>New authentication information</returns>
+        public Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
     }
 }

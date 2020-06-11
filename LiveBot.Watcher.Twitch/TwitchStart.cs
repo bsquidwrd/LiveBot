@@ -21,11 +21,14 @@ namespace LiveBot.Watcher.Twitch
         {
             TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
             service.services = services;
-            service._work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
+            service._factory = services.GetRequiredService<IUnitOfWorkFactory>();
             service._bus = services.GetRequiredService<IBusControl>();
 
-            service.API.Settings.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
-            service.API.Settings.Secret = Environment.GetEnvironmentVariable("TwitchClientSecret");
+            service.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
+            service.ClientSecret = Environment.GetEnvironmentVariable("TwitchClientSecret");
+
+            var auth = await service._work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == service.ServiceType && i.Expired == false);
+            service.AccessToken = auth.AccessToken;
 
             var streamUsers = await service._work.UserRepository.FindAsync(i => i.ServiceType == service.ServiceType);
             List<string> channelList = new List<string>(streamUsers.Select(i => i.SourceID).Distinct());

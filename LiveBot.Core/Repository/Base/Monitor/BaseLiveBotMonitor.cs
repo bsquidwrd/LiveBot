@@ -1,5 +1,6 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Static;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -18,7 +19,11 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public string URLPattern { get; set; }
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
-        public IUnitOfWork _work { get; set; }
+        public IUnitOfWorkFactory _factory { get; set; }
+        public IUnitOfWork _work
+        {
+            get => _factory.Create();
+        }
 
         public Regex GetURLRegex(string pattern)
         {
@@ -31,6 +36,8 @@ namespace LiveBot.Core.Repository.Base.Monitor
 
         public abstract Task<ILiveBotStream> GetStream(ILiveBotUser user);
 
+        public abstract Task<ILiveBotUser> GetUserById(string userId);
+
         public abstract Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null);
 
         public bool IsValid(string streamURL)
@@ -41,5 +48,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public abstract bool AddChannel(ILiveBotUser user);
 
         public abstract bool RemoveChannel(ILiveBotUser user);
+
+        public abstract Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
     }
 }

@@ -1,3 +1,4 @@
+using LiveBot.Core.Consumers;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord;
@@ -49,6 +50,9 @@ namespace LiveBot.API
 
             services.AddMassTransit(x =>
             {
+                x.AddConsumer<MonitorRefreshAuthConsumer>();
+                //x.AddConsumer<MonitorUpdateUserConsumer>();
+
                 x.AddConsumer<StreamOnlineConsumer>();
                 x.AddConsumer<StreamUpdateConsumer>();
                 x.AddConsumer<StreamOfflineConsumer>();
@@ -86,6 +90,9 @@ namespace LiveBot.API
                     x.Username(Environment.GetEnvironmentVariable("RabbitMQ_Username"));
                     x.Password(Environment.GetEnvironmentVariable("RabbitMQ_Password"));
                 });
+
+                busFactoryConfig.ReceiveEndpoint("livebot_authrefresh", ep => ep.Consumer<MonitorRefreshAuthConsumer>(provider));
+                //busFactoryConfig.ReceiveEndpoint("livebot_updateuser", ep => ep.Consumer<MonitorUpdateUserConsumer>(provider));
 
                 busFactoryConfig.ReceiveEndpoint("livebot_streamonline", ep => ep.Consumer<StreamOnlineConsumer>(provider));
                 busFactoryConfig.ReceiveEndpoint("livebot_streamupdate", ep => ep.Consumer<StreamUpdateConsumer>(provider));

@@ -18,6 +18,7 @@ namespace LiveBot.Repository
         public IUserRepository UserRepository { get; }
         public INotificationRepository NotificationRepository { get; }
         public IGameRepository GameRepository { get; }
+        public IAuthRepository AuthRepository { get; }
 
         public UnitOfWork(LiveBotDBContext context)
         {
@@ -29,6 +30,7 @@ namespace LiveBot.Repository
             UserRepository = new UserRepository(context);
             NotificationRepository = new NotificationRepository(context);
             GameRepository = new GameRepository(context);
+            AuthRepository = new AuthRepository(context);
         }
     }
 }
