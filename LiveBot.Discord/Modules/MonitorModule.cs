@@ -41,7 +41,7 @@ namespace LiveBot.Discord.Modules
         /// <summary>
         /// Gives a list of loaded Monitoring Services
         /// </summary>
-        [Command("services")]
+        [Command("services", RunMode = RunMode.Async)]
         [RequireOwner]
         [Summary("Get the list of Stream Services that are loaded")]
         public async Task GetMonitorServices()
@@ -53,7 +53,7 @@ namespace LiveBot.Discord.Modules
         /// Checks if a particular Monitoring Service is loaded with a given string name (based on <c>ServiceEnum</c>
         /// </summary>
         /// <param name="serviceName"></param>
-        [Command("services")]
+        [Command("services", RunMode = RunMode.Async)]
         [RequireOwner]
         [Summary("Check if a particular Stream Service is loaded by name")]
         public async Task GetMonitorService(string serviceName)
@@ -70,7 +70,7 @@ namespace LiveBot.Discord.Modules
         /// <summary>
         /// Runs a test of permissions for the given <c>Context</c>
         /// </summary>
-        [Command("test")]
+        [Command("test", RunMode = RunMode.Async)]
         [Alias("perms")]
         [Summary(@"
 Have the bot perform a self check of its required Discord permissions in the channel the command is run.
@@ -156,7 +156,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        [Command("check")]
+        [Command("check", RunMode = RunMode.Async)]
         [RequireOwner]
         [Summary("Check if Stream is live. Basic debug command to see if the Bot can locate a stream")]
         public async Task CheckStream(ILiveBotUser user)
@@ -165,7 +165,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             ILiveBotStream stream = await monitor.GetStream(user);
             if (stream == null)
             {
-                await ReplyAsync($"{user.ServiceType} Doesn't look like the user {user.DisplayName} is live");
+                await ReplyAsync($"Doesn't look like the user {user.DisplayName} is live on {user.ServiceType}");
                 return;
             }
             Embed streamEmbed = NotificationHelpers.GetStreamEmbed(stream);
