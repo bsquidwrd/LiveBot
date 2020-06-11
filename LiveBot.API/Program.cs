@@ -20,24 +20,27 @@ namespace LiveBot.API
                 .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
                 .CreateLogger();
 
-            Log.Information("-------------------------------------------------- Starting services... --------------------------------------------------");
+            Log.Debug("-------------------------------------------------- Starting services... --------------------------------------------------");
             var webHost = CreateHostBuilder(args).Build();
 
             using (var scope = webHost.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
 
+                Log.Debug($"Starting Discord Service");
                 var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
 
                 foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
                 {
+                    Log.Debug($"Starting Monitoring Service for {monitor.ServiceType}");
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
                     await monitorStart.StartAsync(services).ConfigureAwait(false);
                 }
 
                 try
                 {
+                    Log.Debug($"Starting MassTransit Service");
                     var bus = services.GetRequiredService<IBusControl>();
                     await bus.StartAsync().ConfigureAwait(false);
                 }
