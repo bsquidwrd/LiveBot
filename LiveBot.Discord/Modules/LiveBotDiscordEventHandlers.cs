@@ -367,7 +367,7 @@ namespace LiveBot.Discord.Modules
             if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame)
             {
                 StreamingGame userGame = (StreamingGame)userActivity;
-                Log.Information($"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
+                //Log.Information($"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
 
                 foreach (SocketRole role in afterGuildUser.Roles)
                 {
@@ -375,7 +375,7 @@ namespace LiveBot.Discord.Modules
                     {
                         continue;
                     }
-                    Log.Information($"{role.Id} {role.Name}");
+                    //Log.Information($"{role.Id} {role.Name}");
                 }
             }
             return;
