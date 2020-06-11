@@ -27,7 +27,7 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
         public IBusControl _bus;
-        private int RetryDelay = 1000 * 5;
+        private readonly int RetryDelay = 1000 * 5;
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -140,6 +140,22 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
+        private async Task<Stream> API_GetStream(string userId)
+        {
+            try
+            {
+                List<string> userIdList = new List<string> { userId };
+                GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: userIdList);
+                return streams.Streams.FirstOrDefault(i => i.UserId == userId);
+            }
+            catch (BadGatewayException e)
+            {
+                Log.Error($"{e}");
+                await Task.Delay(RetryDelay);
+                return await API_GetStream(userId);
+            }
+        }
+
         #endregion API Calls
 
         public async Task _UpdateUser(ILiveBotUser user)
@@ -221,9 +237,7 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotStream> GetStream(ILiveBotUser user)
         {
-            List<string> listUserId = new List<string> { user.Id };
-            GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: listUserId);
-            Stream stream = streams.Streams.FirstOrDefault(i => i.UserId == user.Id);
+            Stream stream = await API_GetStream(user.Id);
             if (stream == null)
                 return null;
             ILiveBotGame game = await GetGame(stream.GameId);
