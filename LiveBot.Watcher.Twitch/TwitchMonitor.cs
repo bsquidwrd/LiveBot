@@ -181,7 +181,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                await _bus.Publish(new TwitchStreamOnline { Stream = stream });
+                await _bus.Publish(new TwitchStreamUpdate { Stream = stream });
             }
             catch (Exception e)
             {
