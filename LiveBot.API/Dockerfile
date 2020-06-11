@@ -6,7 +6,9 @@ EXPOSE 80
 EXPOSE 443
 ENV DiscordToken="replaceme"
 ENV LiveBotConnectionString="replaceme"
-ENV RabbitMQURL="replaceme"
+ENV RabbitMQ_URL="replaceme"
+ENV RabbitMQ_Username="replaceme"
+ENV RabbitMQ_Password="replaceme"
 ENV TwitchClientId="replaceme"
 ENV TwitchClientSecret="replaceme"
 
