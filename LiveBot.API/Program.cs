@@ -30,12 +30,14 @@ namespace LiveBot.API
                 Log.Debug($"Starting Discord Service");
                 var bot = new Discord.BotStart();
                 await bot.StartAsync(services).ConfigureAwait(false);
+                Log.Debug($"Started Discord Service");
 
                 foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
                 {
                     Log.Debug($"Starting Monitoring Service for {monitor.ServiceType}");
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
                     await monitorStart.StartAsync(services).ConfigureAwait(false);
+                    Log.Debug($"Started Monitoring Service for {monitor.ServiceType}");
                 }
 
                 try
@@ -43,6 +45,7 @@ namespace LiveBot.API
                     Log.Debug($"Starting MassTransit Service");
                     var bus = services.GetRequiredService<IBusControl>();
                     await bus.StartAsync().ConfigureAwait(false);
+                    Log.Debug($"Started MassTransit Service");
                 }
                 catch (Exception e)
                 {
