@@ -1,8 +1,5 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LiveBot.Repository
 {

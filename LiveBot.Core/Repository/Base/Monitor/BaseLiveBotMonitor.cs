@@ -20,6 +20,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
         public IUnitOfWorkFactory _factory { get; set; }
+
         public IUnitOfWork _work
         {
             get => _factory.Create();

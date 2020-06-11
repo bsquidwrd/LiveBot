@@ -14,12 +14,14 @@ namespace LiveBot.Core.Consumers
         private readonly IBusControl _bus;
         private readonly List<ILiveBotMonitor> _monitors;
         private readonly IUnitOfWork _work;
+
         public MonitorRefreshAuthConsumer(IBusControl bus, List<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
         {
             _bus = bus;
             _monitors = monitors;
             _work = factory.Create();
         }
+
         public async Task Consume(ConsumeContext<IMonitorRefreshAuth> context)
         {
             IMonitorRefreshAuth auth = context.Message;

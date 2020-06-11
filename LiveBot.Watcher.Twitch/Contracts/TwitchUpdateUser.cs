@@ -8,6 +8,7 @@ namespace LiveBot.Watcher.Twitch.Contracts
     {
         public ServiceEnum ServiceType { get; set; }
         public ILiveBotUser User { get; set; }
+
         public TwitchUpdateUser(ServiceEnum serviceType, ILiveBotUser user)
         {
             ServiceType = serviceType;

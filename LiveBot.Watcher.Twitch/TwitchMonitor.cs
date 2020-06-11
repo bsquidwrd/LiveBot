@@ -14,10 +14,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using TwitchLib.Api;
 using TwitchLib.Api.Core.Exceptions;
+using TwitchLib.Api.Core.RateLimiter;
 using TwitchLib.Api.Helix.Models.Games;
 using TwitchLib.Api.Helix.Models.Streams;
 using TwitchLib.Api.Helix.Models.Users;
-using TwitchLib.Api.Core.RateLimiter;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
@@ -35,6 +35,7 @@ namespace LiveBot.Watcher.Twitch
 
         private IUnitOfWork _workGame;
         private IUnitOfWork _workUser;
+
         private IUnitOfWork GameWork
         {
             set => _workGame = value;
@@ -47,6 +48,7 @@ namespace LiveBot.Watcher.Twitch
                 return _workGame;
             }
         }
+
         private IUnitOfWork UserWork
         {
             set => _workUser = value;
