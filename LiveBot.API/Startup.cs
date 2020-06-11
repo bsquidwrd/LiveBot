@@ -87,20 +87,9 @@ namespace LiveBot.API
                     x.Password(Environment.GetEnvironmentVariable("RabbitMQ_Password"));
                 });
 
-                busFactoryConfig.ReceiveEndpoint("livebot_streamonline", ep =>
-                {
-                    ep.Consumer<StreamOnlineConsumer>(provider);
-                });
-
-                busFactoryConfig.ReceiveEndpoint("livebot_streamupdate", ep =>
-                {
-                    ep.Consumer<StreamUpdateConsumer>(provider);
-                });
-
-                busFactoryConfig.ReceiveEndpoint("livebot_streamoffline", ep =>
-                {
-                    ep.Consumer<StreamOfflineConsumer>(provider);
-                });
+                busFactoryConfig.ReceiveEndpoint("livebot_streamonline", ep => ep.Consumer<StreamOnlineConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint("livebot_streamupdate", ep => ep.Consumer<StreamUpdateConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint("livebot_streamoffline", ep => ep.Consumer<StreamOfflineConsumer>(provider));
             });
 
             return serviceBus;
