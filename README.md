@@ -1,5 +1,5 @@
 ## Live Bot
-[![GitHub license](https://img.shields.io/github/license/bsquidwrd/Live-Bot.svg)](https://github.com/bsquidwrd/Live-Bot/blob/master/LICENSE) [![Build status](https://ci.appveyor.com/api/projects/status/88rpgpna31dq4pgj?svg=true)](https://ci.appveyor.com/project/Bsquidwrd47752/livebot-test) [![Discord](https://discordapp.com/api/guilds/350337137079746581/widget.png?style=shield)](https://discord.gg/zXkb4JP)
+[![GitHub license](https://img.shields.io/github/license/bsquidwrd/LiveBot.svg)](https://github.com/bsquidwrd/LiveBot/blob/master/LICENSE) [![Build status](https://ci.appveyor.com/api/projects/status/mo984v4k8j5k6ema?svg=true)](https://ci.appveyor.com/project/Bsquidwrd47752/livebot) [![Discord](https://discordapp.com/api/guilds/350337137079746581/widget.png?style=shield)](https://discord.gg/zXkb4JP)
 
 
 ## Running
