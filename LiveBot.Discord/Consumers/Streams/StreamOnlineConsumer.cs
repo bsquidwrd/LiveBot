@@ -120,9 +120,9 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 try
                 {
-                    var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+                    //var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+                    //streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
                     streamNotification.Success = true;
-                    streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
                 }
                 catch (Exception e)

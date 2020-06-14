@@ -36,7 +36,7 @@ namespace LiveBot.API
                 {
                     Log.Debug($"Starting Monitoring Service for {monitor.ServiceType}");
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
-                    //await monitorStart.StartAsync(services).ConfigureAwait(false);
+                    await monitorStart.StartAsync(services).ConfigureAwait(false);
                     Log.Debug($"Started Monitoring Service for {monitor.ServiceType}");
                 }
 
