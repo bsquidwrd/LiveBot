@@ -1,5 +1,4 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Models.Streams;
@@ -31,36 +30,7 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
         public IBusControl _bus;
-        private readonly int RetryDelay = 1000 * 5;
-
-        private IUnitOfWork _workGame;
-        private IUnitOfWork _workUser;
-
-        private IUnitOfWork GameWork
-        {
-            set => _workGame = value;
-            get
-            {
-                if (_workGame == null)
-                {
-                    _workGame = _factory.Create();
-                }
-                return _workGame;
-            }
-        }
-
-        private IUnitOfWork UserWork
-        {
-            set => _workUser = value;
-            get
-            {
-                if (_workUser == null)
-                {
-                    _workUser = _factory.Create();
-                }
-                return _workUser;
-            }
-        }
+        private readonly int RetryDelay = 1000 * 5; // 5 seconds
 
         public string ClientId
         {
@@ -94,11 +64,12 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
         public TwitchMonitor()
         {
+            StartTime = DateTime.UtcNow;
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
 
-            var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(800, TimeSpan.FromMinutes(1));
+            var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
@@ -113,6 +84,7 @@ namespace LiveBot.Watcher.Twitch
         public void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
+            //await _PublishTwitchUpdateUsers();
         }
 
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
@@ -152,7 +124,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -175,7 +147,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -198,7 +170,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -220,7 +192,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetUsersById(userIdList);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -242,7 +214,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -265,7 +237,7 @@ namespace LiveBot.Watcher.Twitch
                 await Task.Delay(RetryDelay);
                 return await API_GetStream(userId);
             }
-            catch (InvalidCredentialException e)
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
                 await _PublishMonitorRefreshAuth();
@@ -283,6 +255,14 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
             ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
+        }
+
+        private static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize = 30)
+        {
+            for (int i = 0; i < locations.Count; i += nSize)
+            {
+                yield return locations.GetRange(i, Math.Min(nSize, locations.Count - i));
+            }
         }
 
         #endregion Misc Functions
@@ -337,15 +317,17 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        public async Task _PublishUpdateUser(ILiveBotUser user)
+        public async Task _PublishTwitchUpdateUsers()
         {
             try
             {
-                await _bus.Publish(new TwitchUpdateUser(ServiceType, user));
+                await _bus.Publish(new TwitchUpdateUsers { ServiceType = ServiceType });
             }
             catch (Exception e)
             {
-                Log.Error($"Error trying to publish TwitchUpdateUser:\n{e}");
+                Log.Error($"Error trying to publish TwitchUpdateUsers:\n{e}");
+                await Task.Delay(RetryDelay);
+                await _PublishTwitchUpdateUsers();
             }
         }
 
@@ -362,32 +344,7 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            Game game;
-
-            //StreamGame existingGame = await GameWork.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceId == gameId);
-            StreamGame existingGame = null;
-            if (existingGame != null)
-            {
-                if (DateTime.UtcNow.Subtract(existingGame.TimeStamp).TotalHours > 1)
-                {
-                    game = await API_GetGame(gameId);
-                    TwitchGame twitchGame = new TwitchGame(BaseURL, ServiceType, game);
-                    StreamGame streamGame = new StreamGame
-                    {
-                        ServiceType = ServiceType,
-                        SourceId = twitchGame.Id,
-                        Name = twitchGame.Name,
-                        ThumbnailURL = twitchGame.ThumbnailURL
-                    };
-                    await _workGame.GameRepository.AddOrUpdateAsync(streamGame, i => (i.ServiceType == ServiceType && i.SourceId == gameId));
-                    return twitchGame;
-                }
-                else
-                {
-                    return new TwitchGame(BaseURL, ServiceType, existingGame);
-                }
-            }
-            game = await API_GetGame(gameId);
+            Game game = await API_GetGame(gameId);
             return new TwitchGame(BaseURL, ServiceType, game);
         }
 
@@ -412,11 +369,6 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
-            //StreamUser streamUser = await UserWork.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && (i.Username == username || i.SourceID == userId || i.ProfileURL == profileURL));
-            //if (streamUser != null)
-            //{
-            //    return new TwitchUser(BaseURL, ServiceType, streamUser);
-            //}
 
             if (!string.IsNullOrEmpty(username))
             {
@@ -476,6 +428,32 @@ namespace LiveBot.Watcher.Twitch
             RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldMonitorAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
             AccessToken = refreshResponse.AccessToken;
             return new TwitchAuth(ServiceType, ClientId, refreshResponse);
+        }
+
+        /// <inheritdoc/>
+        public override async Task UpdateUsers()
+        {
+            try
+            {
+                foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor))
+                {
+                    GetUsersResponse users = await API_GetUsersById(userIds);
+                    foreach (User user in users.Users)
+                    {
+                        TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
+                        StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
+                        streamUser.Username = twitchUser.Username;
+                        streamUser.DisplayName = twitchUser.DisplayName;
+                        streamUser.AvatarURL = twitchUser.AvatarURL;
+                        streamUser.ProfileURL = twitchUser.ProfileURL;
+
+                        await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
+                    }
+                }
+            } catch (Exception e)
+            {
+                Log.Error($"{e}");
+            }
         }
 
         #endregion Interface Requirements
