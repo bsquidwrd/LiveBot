@@ -1,5 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
@@ -38,6 +37,7 @@ namespace LiveBot.Discord.Consumers.Discord
                 discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
                 #region Handle Channels
+
                 foreach (SocketGuildChannel channel in guild.TextChannels)
                 {
                     DiscordChannelUpdate channelUpdateContext = new DiscordChannelUpdate { GuildId = guild.Id, ChannelId = channel.Id };
@@ -54,9 +54,11 @@ namespace LiveBot.Discord.Consumers.Discord
                         await _bus.Publish(channelDeleteContext);
                     }
                 }
+
                 #endregion Handle Channels
 
                 #region Handle Roles
+
                 foreach (SocketRole role in guild.Roles)
                 {
                     DiscordRoleUpdate roleUpdateContext = new DiscordRoleUpdate { GuildId = guild.Id, RoleId = role.Id };
@@ -73,6 +75,7 @@ namespace LiveBot.Discord.Consumers.Discord
                         await _bus.Publish(roleDeleteContext);
                     }
                 }
+
                 #endregion Handle Roles
             }
             catch (Exception e)

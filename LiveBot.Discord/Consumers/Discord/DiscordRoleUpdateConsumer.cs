@@ -3,7 +3,6 @@ using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
-using System;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers.Discord
@@ -12,6 +11,7 @@ namespace LiveBot.Discord.Consumers.Discord
     {
         private readonly IUnitOfWork _work;
         private readonly DiscordShardedClient _client;
+
         public DiscordRoleUpdateConsumer(IUnitOfWorkFactory factory, DiscordShardedClient client)
         {
             _work = factory.Create();

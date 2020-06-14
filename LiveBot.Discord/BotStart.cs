@@ -2,9 +2,9 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
+using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -19,7 +19,7 @@ namespace LiveBot.Discord
     {
         private static readonly DiscordSocketConfig config = new DiscordSocketConfig
         {
-            TotalShards = 1
+            TotalShards = 5
         };
 
         public static DiscordShardedClient GetBot()
@@ -58,7 +58,8 @@ namespace LiveBot.Discord
             client.Log += LogAsync;
 
             // Load Guild Information
-            var LiveBotEventHandles = new LiveBotDiscordEventHandlers(services.GetRequiredService<IUnitOfWorkFactory>());
+            IBusControl busControl = services.GetRequiredService<IBusControl>();
+            var LiveBotEventHandles = new LiveBotDiscordEventHandlers(busControl);
 
             // Guild Events
             client.GuildAvailable += LiveBotEventHandles.GuildAvailable;
@@ -87,6 +88,7 @@ namespace LiveBot.Discord
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DiscordToken"));
 
             int recommendedShards = await client.GetRecommendedShardCountAsync().ConfigureAwait(false);
+            Log.Information($"Discord recommends {recommendedShards} shards");
             if (client.Shards.Count < recommendedShards)
             {
                 Log.Warning($"Discord recommends {recommendedShards} shards but there is only {client.Shards.Count}");
@@ -103,7 +105,9 @@ namespace LiveBot.Discord
         private Task ReadyAsync(DiscordSocketClient shard)
         {
             Log.Information($"Shard Number {shard.ShardId} is connected and ready!");
-            shard.SetGameAsync(name: $"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
+            shard.SetStatusAsync(UserStatus.DoNotDisturb);
+            shard.SetGameAsync(name: $"I'm not ready yet, but soon™", type: ActivityType.Playing);
+            //shard.SetGameAsync(name: $"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
             return Task.CompletedTask;
         }
 

@@ -26,6 +26,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         {
             get => _factory.Create();
         }
+
         public DateTime StartTime { get; set; }
 
         public Regex GetURLRegex(string pattern)

@@ -27,7 +27,7 @@ namespace LiveBot.Core.Consumers
                 return;
 
             await monitor.UpdateUsers();
-            
+
             await Task.Delay(5 * 1000); // 5 minutes
             await _bus.Publish(message);
         }

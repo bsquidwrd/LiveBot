@@ -55,7 +55,7 @@ namespace LiveBot.API
             {
                 x.AddConsumer<MonitorRefreshAuthConsumer>();
                 x.AddConsumer<MonitorUpdateUsersConsumer>();
-                
+
                 x.AddConsumer<DiscordGuildAvailableConsumer>();
                 x.AddConsumer<DiscordGuildUpdateConsumer>();
                 x.AddConsumer<DiscordGuildDeleteConsumer>();

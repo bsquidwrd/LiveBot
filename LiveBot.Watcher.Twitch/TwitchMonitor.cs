@@ -450,7 +450,8 @@ namespace LiveBot.Watcher.Twitch
                         await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
                     }
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Log.Error($"{e}");
             }
