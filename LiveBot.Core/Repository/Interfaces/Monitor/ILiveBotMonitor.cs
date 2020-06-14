@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Models;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public string URLPattern { get; set; }
         public IUnitOfWorkFactory _factory { get; set; }
         public IUnitOfWork _work { get; }
+        public DateTime StartTime { get; set; }
 
         /// <summary>
         /// Gets the basic Regex object based on URLPattern
@@ -83,5 +85,11 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="oldMonitorAuth"></param>
         /// <returns>New authentication information</returns>
         public Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
+
+        /// <summary>
+        /// Updates all <c>StreamUser</c> objects in the database for the related Monitor Object
+        /// </summary>
+        /// <returns></returns>
+        public Task UpdateUsers();
     }
 }

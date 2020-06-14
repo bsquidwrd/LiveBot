@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Static;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -25,6 +26,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         {
             get => _factory.Create();
         }
+        public DateTime StartTime { get; set; }
 
         public Regex GetURLRegex(string pattern)
         {
@@ -51,5 +53,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public abstract bool RemoveChannel(ILiveBotUser user);
 
         public abstract Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
+
+        public abstract Task UpdateUsers();
     }
 }
