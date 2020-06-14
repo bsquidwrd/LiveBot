@@ -4,7 +4,7 @@ using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
 using System.Threading.Tasks;
 
-namespace LiveBot.Discord.Consumers
+namespace LiveBot.Discord.Consumers.Streams
 {
     public class StreamUpdateConsumer : IConsumer<IStreamUpdate>
     {

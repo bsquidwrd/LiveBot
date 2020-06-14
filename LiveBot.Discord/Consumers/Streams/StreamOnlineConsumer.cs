@@ -8,33 +8,51 @@ using LiveBot.Discord.Helpers;
 using MassTransit;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace LiveBot.Discord.Consumers
+namespace LiveBot.Discord.Consumers.Streams
 {
     public class StreamOnlineConsumer : IConsumer<IStreamOnline>
     {
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
+        private readonly List<ILiveBotMonitor> _monitors;
 
-        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus)
+        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, List<ILiveBotMonitor> monitors)
         {
             _client = client;
             _work = factory.Create();
             _bus = bus;
+            _monitors = monitors;
         }
 
         public async Task Consume(ConsumeContext<IStreamOnline> context)
         {
             ILiveBotStream stream = context.Message.Stream;
+            ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
+
+            if (monitor == null)
+                return;
+
+            //if (DateTime.UtcNow.Subtract(monitor.StartTime).TotalHours < 1)
+            //    return;
+
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == stream.User.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
+            if (streamSubscriptions.Count() == 0)
+                return;
+
             foreach (StreamSubscription streamSubscription in streamSubscriptions)
             {
+                var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordChannel);
+                var discordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordRole);
+                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == discordChannel.DiscordGuild);
+
                 Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
                     i.User_SourceID == streamSubscription.User.SourceID &&
                     i.Stream_SourceID == stream.Id &&
@@ -59,11 +77,11 @@ namespace LiveBot.Discord.Consumers
                     Success = false,
                     Message = notificationMessage,
 
-                    User_SourceID = streamSubscription.User.SourceID,
-                    User_Username = streamSubscription.User.Username,
-                    User_DisplayName = streamSubscription.User.DisplayName,
-                    User_AvatarURL = streamSubscription.User.AvatarURL,
-                    User_ProfileURL = streamSubscription.User.ProfileURL,
+                    User_SourceID = streamUser.SourceID,
+                    User_Username = streamUser.Username,
+                    User_DisplayName = streamUser.DisplayName,
+                    User_AvatarURL = streamUser.AvatarURL,
+                    User_ProfileURL = streamUser.ProfileURL,
 
                     Stream_SourceID = stream.Id,
                     Stream_Title = stream.Title,
@@ -75,14 +93,14 @@ namespace LiveBot.Discord.Consumers
                     Game_Name = stream.Game.Name,
                     Game_ThumbnailURL = stream.Game.ThumbnailURL,
 
-                    DiscordGuild_DiscordId = streamSubscription.DiscordChannel.DiscordGuild.DiscordId,
-                    DiscordGuild_Name = streamSubscription.DiscordChannel.DiscordGuild.Name,
+                    DiscordGuild_DiscordId = discordGuild.DiscordId,
+                    DiscordGuild_Name = discordGuild.Name,
 
-                    DiscordChannel_DiscordId = streamSubscription.DiscordChannel.DiscordId,
-                    DiscordChannel_Name = streamSubscription.DiscordChannel.Name,
+                    DiscordChannel_DiscordId = discordChannel.DiscordId,
+                    DiscordChannel_Name = discordChannel.Name,
 
-                    DiscordRole_DiscordId = streamSubscription.DiscordRole == null ? 0 : streamSubscription.DiscordRole.DiscordId,
-                    DiscordRole_Name = streamSubscription.DiscordRole?.Name
+                    DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId,
+                    DiscordRole_Name = discordRole?.Name
                 };
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);

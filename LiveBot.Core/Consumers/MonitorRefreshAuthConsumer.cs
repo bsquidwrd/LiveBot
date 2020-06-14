@@ -11,6 +11,7 @@ namespace LiveBot.Core.Consumers
 {
     public class MonitorRefreshAuthConsumer : IConsumer<IMonitorRefreshAuth>
     {
+        public readonly static string _queueName = "livebot_authrefresh";
         private readonly IBusControl _bus;
         private readonly List<ILiveBotMonitor> _monitors;
         private readonly IUnitOfWork _work;
