@@ -1,7 +1,7 @@
 version: '3'
 services:
     bot:
-        image: bsquidwrd/livebot_test:latest
+        image: bsquidwrd/livebot:latest
         volumes:
             - logs:/app/logs/
         environment:
