@@ -31,23 +31,47 @@ namespace LiveBot.Repository
             DbSet = context.Set<TEntity>();
         }
 
+        /// <summary>
+        /// Include all related objects automatically
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns>Pre-Filtered object to exclude deleted items</returns>
+        private IQueryable<TEntity> GetQueryable(Expression<Func<TEntity, bool>> predicate = null)
+        {
+            Expression<Func<TEntity, bool>> deletedPredicate = (d => d.Deleted == false);
+            IQueryable<TEntity> query = DbSet
+                .Where(deletedPredicate);
+
+            if (predicate != null)
+                query = query.Where(predicate);
+
+            var properties = typeof(TEntity).GetProperties().Where(x => x.PropertyType != typeof(string));
+            foreach (var prop in properties.Where(x => x.PropertyType.IsClass))
+                query = query.Include(prop.Name);
+
+            return query;
+        }
+
         /// <inheritdoc />
         public Task<TEntity> GetAsync(int Id)
         {
-            return DbSet.FindAsync(Id).AsTask();
+            return DbSet
+                .FindAsync(Id)
+                .AsTask();
         }
 
         /// <inheritdoc />
         public async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            return await DbSet.AsQueryable().Where((d => d.Deleted == false)).ToListAsync().ConfigureAwait(false);
+            return await GetQueryable()
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         public virtual async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await DbSet.Where(predicate)
-                .Where((d => d.Deleted == false))
+            return await GetQueryable(predicate)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
@@ -56,9 +80,7 @@ namespace LiveBot.Repository
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public virtual async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate, int page, int pageSize)
         {
-            return await DbSet
-                .Where(predicate)
-                .Where((d => d.Deleted == false))
+            return await GetQueryable(predicate)
                 .Skip((page * pageSize) - pageSize)
                 .Take(pageSize)
                 .ToListAsync()
@@ -69,9 +91,7 @@ namespace LiveBot.Repository
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public virtual async Task<IEnumerable<TEntity>> FindInOrderAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, long>> order, int page, int pageSize)
         {
-            return await DbSet
-                .Where(predicate)
-                .Where((d => d.Deleted == false))
+            return await GetQueryable(predicate)
                 .OrderByDescending(order)
                 .Skip((page * pageSize) - pageSize)
                 .Take(pageSize)
@@ -83,7 +103,9 @@ namespace LiveBot.Repository
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public async Task<int> GetPageCountAsync(Expression<Func<TEntity, bool>> predicate, int pageSize)
         {
-            var count = await DbSet.Where(predicate).Where((d => d.Deleted == false)).CountAsync().ConfigureAwait(false);
+            var count = await GetQueryable(predicate)
+                .CountAsync()
+                .ConfigureAwait(false);
             if (count <= pageSize)
                 return 1;
 
@@ -94,9 +116,7 @@ namespace LiveBot.Repository
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public virtual Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return DbSet
-                .Where(predicate)
-                .Where((d => d.Deleted == false))
+            return GetQueryable(predicate)
                 .FirstOrDefaultAsync();
         }
 
