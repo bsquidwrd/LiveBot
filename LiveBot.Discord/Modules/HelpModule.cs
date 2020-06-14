@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    [DontAutoLoad]
     /// <summary>
     /// Location of all the "Help" commands
     /// </summary>

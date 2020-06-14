@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    [DontAutoLoad]
     [RequireContext(ContextType.Guild)]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [Group("monitor")]

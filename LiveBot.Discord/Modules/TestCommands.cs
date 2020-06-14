@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    [DontAutoLoad]
     [RequireOwner]
     [Group("test")]
     public class TestCommands : InteractiveBase<ShardedCommandContext>

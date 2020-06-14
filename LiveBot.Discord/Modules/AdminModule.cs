@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
+    [DontAutoLoad]
     [RequireOwner]
     [Group("admin")]
     public class AdminModule : ModuleBase<ShardedCommandContext>
