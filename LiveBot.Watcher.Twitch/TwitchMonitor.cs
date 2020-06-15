@@ -30,7 +30,7 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
         public IBusControl _bus;
-        private readonly int RetryDelay = 1000 * 5; // 5 seconds
+        private readonly int RetryDelay = 1000 * 30; // 30 seconds
 
         public string ClientId
         {
@@ -120,7 +120,7 @@ namespace LiveBot.Watcher.Twitch
                 GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
                 return games.Games.FirstOrDefault(i => i.Id == gameId);
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
@@ -143,7 +143,7 @@ namespace LiveBot.Watcher.Twitch
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Login == username);
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
@@ -166,7 +166,7 @@ namespace LiveBot.Watcher.Twitch
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Id == userId);
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
@@ -188,7 +188,7 @@ namespace LiveBot.Watcher.Twitch
                 GetUsersResponse apiUsers = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUsers;
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
@@ -210,7 +210,7 @@ namespace LiveBot.Watcher.Twitch
                 string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString();
                 return await API_GetUserByLogin(username: username);
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
@@ -233,7 +233,7 @@ namespace LiveBot.Watcher.Twitch
                 GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: userIdList);
                 return streams.Streams.FirstOrDefault(i => i.UserId == userId);
             }
-            catch (BadGatewayException e)
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
                 await Task.Delay(RetryDelay);
