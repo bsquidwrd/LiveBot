@@ -1,5 +1,4 @@
-﻿using Discord.WebSocket;
-using LiveBot.Core.Contracts.Discord;
+﻿using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;

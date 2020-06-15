@@ -1,6 +1,5 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Contracts;
@@ -469,6 +468,7 @@ namespace LiveBot.Watcher.Twitch
                 return true;
             return false;
         }
+
         #endregion Interface Requirements
     }
 }

@@ -1,6 +1,5 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models;
-using LiveBot.Core.Repository.Models.Discord;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

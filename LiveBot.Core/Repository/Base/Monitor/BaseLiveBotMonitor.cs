@@ -1,6 +1,5 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Static;
 using System;
 using System.Text.RegularExpressions;
