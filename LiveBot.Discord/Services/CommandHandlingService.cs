@@ -46,6 +46,9 @@ namespace LiveBot.Discord.Services
             if (message.Source != MessageSource.User)
                 return;
 
+            if (_discord.CurrentUser == null)
+                return;
+            
             // This value holds the offset where the prefix ends
             var argPos = 0;
             if (!message.HasMentionPrefix(_discord.CurrentUser, ref argPos))
