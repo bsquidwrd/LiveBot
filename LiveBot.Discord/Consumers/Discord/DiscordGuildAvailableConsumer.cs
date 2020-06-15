@@ -48,7 +48,7 @@ namespace LiveBot.Discord.Consumers.Discord
 
                 List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
                 //IEnumerable<DiscordChannel> dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
-                var dbChannels = discordGuild.DiscordChannels;
+                var dbChannels = discordGuild.DiscordChannels.ToList();
                 if (dbChannels.Count() > 0)
                 {
                     foreach (DiscordChannel dbChannel in dbChannels)
@@ -72,7 +72,7 @@ namespace LiveBot.Discord.Consumers.Discord
                 }
 
                 List<ulong> roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
-                var dbRoles = discordGuild.DiscordRoles;
+                var dbRoles = discordGuild.DiscordRoles.ToList();
                 if (dbRoles.Count() > 0)
                 {
                     foreach (DiscordRole dbRole in dbRoles)

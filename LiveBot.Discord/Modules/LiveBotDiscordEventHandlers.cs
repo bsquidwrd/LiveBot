@@ -58,6 +58,8 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task ChannelCreated(SocketChannel channel)
         {
+            if (!(channel is SocketGuildChannel))
+                return;
             SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
             var context = new DiscordChannelUpdate { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id, ChannelName = socketGuildChannel.Name };
             await _bus.Publish(context);
