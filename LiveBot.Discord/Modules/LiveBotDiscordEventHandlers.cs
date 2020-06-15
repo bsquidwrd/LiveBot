@@ -72,6 +72,8 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task ChannelDestroyed(SocketChannel channel)
         {
+            if (!(channel is SocketGuildChannel))
+                return;
             SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
             var context = new DiscordChannelDelete { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id };
             await _bus.Publish(context);
