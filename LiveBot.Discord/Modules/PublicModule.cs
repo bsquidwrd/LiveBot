@@ -30,7 +30,7 @@ namespace LiveBot.Discord.Modules
             var ReplyEmbed = new EmbedBuilder()
                 .WithTitle($"{AppInfo.Name} Information")
                 //.WithDescription($"")
-                .WithUrl("https://livebot.bsquid.io")
+                .WithUrl(Basic.WebsiteLink)
                 .WithColor(Color.DarkPurple)
                 .WithAuthor(AppInfo.Owner)
                 .WithFooter(footer => footer.Text = $"Shard {Context.Client.GetShardFor(Context.Guild).ShardId + 1} / {Context.Client.Shards.Count}")
