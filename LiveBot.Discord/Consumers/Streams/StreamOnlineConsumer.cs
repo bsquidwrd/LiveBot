@@ -41,6 +41,16 @@ namespace LiveBot.Discord.Consumers.Streams
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == stream.User.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
+            var streamGame = new StreamGame
+            {
+                ServiceType = stream.ServiceType,
+                SourceId = stream.Game.Id,
+                Name = stream.Game.Name,
+                ThumbnailURL = stream.Game.ThumbnailURL
+            };
+            await _work.GameRepository.AddOrUpdateAsync(streamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.Game.Id);
+            streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.Game.Id);
+
             if (streamSubscriptions.Count() == 0)
                 return;
 
@@ -86,9 +96,9 @@ namespace LiveBot.Discord.Consumers.Streams
                     Stream_ThumbnailURL = stream.ThumbnailURL,
                     Stream_StreamURL = stream.StreamURL,
 
-                    Game_SourceID = stream.Game.Id,
-                    Game_Name = stream.Game.Name,
-                    Game_ThumbnailURL = stream.Game.ThumbnailURL,
+                    Game_SourceID = streamGame?.SourceId,
+                    Game_Name = streamGame?.Name,
+                    Game_ThumbnailURL = streamGame?.ThumbnailURL,
 
                     DiscordGuild_DiscordId = discordGuild.DiscordId,
                     DiscordGuild_Name = discordGuild.Name,
