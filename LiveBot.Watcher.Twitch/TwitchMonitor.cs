@@ -130,7 +130,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
             }
@@ -153,7 +153,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
             }
@@ -176,7 +176,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
             }
@@ -198,7 +198,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUsersById(userIdList);
             }
@@ -220,7 +220,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
             }
@@ -243,7 +243,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 Log.Error($"{e}");
-                await _PublishMonitorRefreshAuth();
+                await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetStream(userId);
             }
@@ -362,18 +362,6 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e)
             {
                 Log.Error($"Error trying to publish StreamOffline:\n{e}");
-            }
-        }
-
-        public async Task _PublishMonitorRefreshAuth()
-        {
-            try
-            {
-                await _bus.Publish(new TwitchRefreshAuth { ServiceType = ServiceType, ClientId = ClientId });
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Error trying to publish TwitchRefreshAuth:\n{e}");
             }
         }
 
