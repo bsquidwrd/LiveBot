@@ -7,6 +7,7 @@ using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -63,8 +64,10 @@ namespace LiveBot.Watcher.Twitch
         public Timer RefreshAuthTimer;
 
         // My caches
-        private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
-        private List<ILiveBotUser> _userCache = new List<ILiveBotUser>();
+        //private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
+        //private List<ILiveBotUser> _userCache = new List<ILiveBotUser>();
+        private ConcurrentBag<ILiveBotGame> _gameCache = new ConcurrentBag<ILiveBotGame>();
+        private ConcurrentBag<ILiveBotUser> _userCache = new ConcurrentBag<ILiveBotUser>();
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -420,7 +423,8 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            var cachedGame = _gameCache.Where(i => i.Id == gameId).FirstOrDefault();
+            //var cachedGame = _gameCache.Where(i => i.Id == gameId).FirstOrDefault();
+            var cachedGame = _gameCache.ToList().Where(i => i.Id == gameId).FirstOrDefault();
             if (cachedGame != null)
             {
                 return cachedGame;
@@ -444,7 +448,8 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUserById(string userId)
         {
-            var cachedUser = _userCache.Where(i => i.Id == userId).FirstOrDefault();
+            //var cachedUser = _userCache.Where(i => i.Id == userId).FirstOrDefault();
+            var cachedUser = _userCache.ToList().Where(i => i.Id == userId).FirstOrDefault();
             if (cachedUser != null)
             {
                 return cachedUser;
@@ -459,7 +464,8 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
-            var cachedUser = _userCache.Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
+            //var cachedUser = _userCache.Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
+            var cachedUser = _userCache.ToList().Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
             if (cachedUser != null)
                 return cachedUser;
 
