@@ -1,25 +1,25 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Discord.Contracts;
+using MassTransit;
 using Serilog;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    [DontAutoLoad]
     [RequireOwner]
     [Group("admin")]
     public class AdminModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly IBusControl _bus;
 
-        public AdminModule(IUnitOfWorkFactory factory)
+        public AdminModule(IUnitOfWorkFactory factory, IBusControl bus)
         {
             _work = factory.Create();
+            _bus = bus;
         }
 
         /// <summary>
@@ -52,20 +52,8 @@ namespace LiveBot.Discord.Modules
         [Remarks("Send an alert to all Discord Channels that have an Active Subscription")]
         public async Task SendAlertAsync(string message)
         {
-            var discordChannels = (await _work.SubscriptionRepository.GetAllAsync()).Select(i => i.DiscordChannel).Distinct();
-            discordChannels.ToList().ForEach(i => Task.Run(() => _ProcessAlert(i, message)));
-        }
-
-        /// <summary>
-        /// Task meant to be spawned from <see cref="SendAlertAsync(string)"/>
-        /// </summary>
-        /// <param name="discordChannel"></param>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public async Task _ProcessAlert(DiscordChannel discordChannel, string message)
-        {
-            SocketTextChannel channel = (SocketTextChannel)Context.Client.GetChannel(discordChannel.DiscordId);
-            await channel.SendMessageAsync($"{message}");
+            var payload = new DiscordAlert { Message = message };
+            await _bus.Publish(payload);
         }
     }
 }

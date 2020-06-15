@@ -52,6 +52,9 @@ namespace LiveBot.API
 
             services.AddMassTransit(x =>
             {
+                x.AddConsumer<DiscordAlertConsumer>();
+                x.AddConsumer<DiscordAlertChannelConsumer>();
+
                 x.AddConsumer<DiscordGuildAvailableConsumer>();
                 x.AddConsumer<DiscordGuildUpdateConsumer>();
                 x.AddConsumer<DiscordGuildDeleteConsumer>();
@@ -99,6 +102,10 @@ namespace LiveBot.API
                 });
                 busFactoryConfig.UseMessageRetry(r => r.Interval(5, 5));
                 busFactoryConfig.PrefetchCount = Queues.PrefetchCount;
+
+                // My special events
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordAlert, ep => ep.Consumer<DiscordAlertConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordAlertChannel, ep => ep.Consumer<DiscordAlertChannelConsumer>(provider));
 
                 // Discord Events
                 busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildAvailable, ep => ep.Consumer<DiscordGuildAvailableConsumer>(provider));

@@ -14,6 +14,9 @@ namespace LiveBot.Core.Repository.Static
 
         public static ushort PrefetchCount = 32;
 
+        public static string DiscordAlert = "discord_alert";
+        public static string DiscordAlertChannel = "discord_alertchannel";
+
         public static string DiscordGuildAvailable = "discord_guildavailable";
         public static string DiscordGuildUpdate = "discord_guildupdate";
         public static string DiscordGuildDelete = "discord_guilddelete";
