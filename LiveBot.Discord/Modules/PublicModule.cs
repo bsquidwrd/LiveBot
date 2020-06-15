@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    [DontAutoLoad]
+    [RequireContext(ContextType.Guild)]
     public class PublicModule : InteractiveBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;

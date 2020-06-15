@@ -23,7 +23,7 @@ namespace LiveBot.Discord.Modules
         public async Task GuildAvailable(SocketGuild guild)
         {
             var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name };
-            //await _bus.Publish(context);
+            await _bus.Publish(context);
         }
 
         /// <summary>

@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    [DontAutoLoad]
     [RequireContext(ContextType.Guild)]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [Group("monitor")]
@@ -371,18 +370,22 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <returns></returns>
         private async Task<string> _RequestStreamUser()
         {
-            await ReplyAsync($"{Context.Message.Author.Mention}, What is the URL of the stream?");
-            var response = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            var messageEmbedFooter = new EmbedFooterBuilder()
+                .WithText("Example: https://twitch.tv/bsquidwrd");
+            var messageEmbed = new EmbedBuilder()
+                .WithColor(Color.DarkPurple)
+                .WithDescription("What is the URL of the stream?")
+                .WithFooter(messageEmbedFooter)
+                .Build();
 
-            if (response != null)
-            {
-                return response.Content;
-            }
-            else
-            {
-                await ReplyAsync("You did not reply before the timeout");
-                return null;
-            }
+            var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
+            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+
+            string returnValue = responseMessage?.Content;
+
+            await _DeleteMessage(questionMessage);
+            await _DeleteMessage(responseMessage);
+            return returnValue;
         }
 
         /// <summary>
@@ -391,8 +394,17 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <returns>Resulting Channel object from the Users input</returns>
         private async Task<IGuildChannel> _RequestNotificationChannel()
         {
-            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, Please mention the Discord Channel you would like to start or stop a notification for. Ex: {MentionUtils.MentionChannel(Context.Channel.Id)}");
+            var messageEmbedFooter = new EmbedFooterBuilder()
+                .WithText("Please mention the channel with the # prefix");
+            var messageEmbed = new EmbedBuilder()
+                .WithColor(Color.DarkPurple)
+                .WithDescription($"Please mention the Discord Channel you would like to start or stop a notification for.\nEx: {MentionUtils.MentionChannel(Context.Channel.Id)}")
+                .WithFooter(messageEmbedFooter)
+                .Build();
+
+            var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
             var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+
             IGuildChannel guildChannel = responseMessage.MentionedChannels.FirstOrDefault();
             await _DeleteMessage(questionMessage);
             await _DeleteMessage(responseMessage);
@@ -405,8 +417,15 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <returns></returns>
         private async Task<IRole> _RequestNotificationRole()
         {
-            //Context.Guild.
-            var questionMessage = await ReplyAsync($"{Context.Message.Author.Mention}, What is the name of the Role you would like to mention in messages? Ex: {Context.Guild.CurrentUser.Roles.First(d => d.IsEveryone == false).Name}, everyone or `none` if you don't want to ping a role");
+            var messageEmbedFooter = new EmbedFooterBuilder()
+                .WithText("You do NOT have to mention the role with the @ symbol");
+            var messageEmbed = new EmbedBuilder()
+                .WithColor(Color.DarkPurple)
+                .WithDescription($"What is the name of the Role you would like to mention in messages?\nEx: `{Context.Guild.CurrentUser.Roles.First(d => d.IsEveryone == false).Name}`, `everyone` or `none` if you don't want to ping a role")
+                .WithFooter(messageEmbedFooter)
+                .Build();
+
+            var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
             var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
             IRole role = responseMessage.MentionedRoles.FirstOrDefault();
             if (role == null)
@@ -432,16 +451,28 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
         private async Task<string> _RequestNotificationMessage()
         {
-            string question = $"{Context.Message.Author.Mention}, What message should I send on notification?\n";
-            question += $"Type \"Default\" for the message to be: {Defaults.NotificationMessage}\n";
-            question += "\nParameters:\n";
-            question += "{role} - Role to ping (if applicable)\n";
-            question += "{name} - Streamers Name\n";
-            question += "{game} - Game they are playing\n";
-            question += "{url} - URL to the stream\n";
-            question += "{title} - Stream Title\n";
+            string parameters = "";
+            parameters += "{role} - Role to ping (if applicable)\n";
+            parameters += "{name} - Streamers Name\n";
+            parameters += "{game} - Game they are playing\n";
+            parameters += "{url} - URL to the stream\n";
+            parameters += "{title} - Stream Title\n";
 
-            var questionMessage = await ReplyAsync(question);
+            var embedFieldBuilder = new EmbedFieldBuilder()
+                .WithIsInline(true)
+                .WithName("Parameters")
+                .WithValue(parameters);
+
+            var messageEmbedFooter = new EmbedFooterBuilder()
+                .WithText("You do NOT have to mention the role with the @ symbol");
+            var messageEmbed = new EmbedBuilder()
+                .WithColor(Color.DarkPurple)
+                .WithDescription("What message should be sent? (Max 255 characters)\nIf you'd like to use the default (see footer) type default")
+                .WithFields(embedFieldBuilder)
+                .WithFooter(messageEmbedFooter)
+                .Build();
+
+            var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
             var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
             string notificationMessage = responseMessage.Content.Trim();
 
