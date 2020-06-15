@@ -62,6 +62,10 @@ namespace LiveBot.Watcher.Twitch
 
         public Timer RefreshAuthTimer;
 
+        // My caches
+        private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
+        private List<ILiveBotUser> _userCache = new List<ILiveBotUser>();
+
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
         /// </summary>
@@ -416,8 +420,15 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
+            var cachedGame = _gameCache.Where(i => i.Id == gameId).FirstOrDefault();
+            if (cachedGame != null)
+            {
+                return cachedGame;
+            }
             Game game = await API_GetGame(gameId);
-            return new TwitchGame(BaseURL, ServiceType, game);
+            var twitchGame = new TwitchGame(BaseURL, ServiceType, game);
+            _gameCache.Add(twitchGame);
+            return twitchGame;
         }
 
         /// <inheritdoc/>
@@ -433,14 +444,24 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUserById(string userId)
         {
+            var cachedUser = _userCache.Where(i => i.Id == userId).FirstOrDefault();
+            if (cachedUser != null)
+            {
+                return cachedUser;
+            }
             User apiUser = await API_GetUserById(userId);
-            return new TwitchUser(BaseURL, ServiceType, apiUser);
+            var twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
+            _userCache.Add(twitchUser);
+            return twitchUser;
         }
 
         /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
+            var cachedUser = _userCache.Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
+            if (cachedUser != null)
+                return cachedUser;
 
             if (!string.IsNullOrEmpty(username))
             {
@@ -460,7 +481,7 @@ namespace LiveBot.Watcher.Twitch
             }
 
             TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
-
+            _userCache.Add(twitchUser);
             return twitchUser;
         }
 
