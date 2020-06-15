@@ -87,17 +87,16 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task ChannelUpdated(SocketChannel beforeChannel, SocketChannel afterChannel)
         {
-            if (beforeChannel is SocketTextChannel && afterChannel is SocketTextChannel)
-            {
-                SocketTextChannel beforeGuildChannel = (SocketTextChannel)beforeChannel;
-                SocketTextChannel afterGuildChannel = (SocketTextChannel)afterChannel;
+            if (!(beforeChannel is SocketTextChannel) || !(afterChannel is SocketTextChannel))
+                return;
+            SocketTextChannel beforeGuildChannel = (SocketTextChannel)beforeChannel;
+            SocketTextChannel afterGuildChannel = (SocketTextChannel)afterChannel;
 
-                if (beforeGuildChannel.Name == afterGuildChannel.Name)
-                    return;
+            if (beforeGuildChannel.Name == afterGuildChannel.Name)
+                return;
 
-                var context = new DiscordChannelUpdate { GuildId = afterGuildChannel.Guild.Id, ChannelId = afterGuildChannel.Id, ChannelName = afterGuildChannel.Name };
-                await _bus.Publish(context);
-            }
+            var context = new DiscordChannelUpdate { GuildId = afterGuildChannel.Guild.Id, ChannelId = afterGuildChannel.Id, ChannelName = afterGuildChannel.Name };
+            await _bus.Publish(context);
         }
 
         /// <summary>
