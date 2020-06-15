@@ -54,6 +54,7 @@ namespace LiveBot.Discord.Modules
         {
             var payload = new DiscordAlert { Message = message };
             await _bus.Publish(payload);
+            await ReplyAsync($"{Context.Message.Author.Mention}, I have queued the message to be sent.");
         }
     }
 }
