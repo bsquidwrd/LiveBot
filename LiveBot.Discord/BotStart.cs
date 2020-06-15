@@ -105,8 +105,7 @@ namespace LiveBot.Discord
         private Task ReadyAsync(DiscordSocketClient shard)
         {
             Log.Information($"Shard Number {shard.ShardId} is connected and ready!");
-            shard.SetStatusAsync(UserStatus.DoNotDisturb);
-            shard.SetGameAsync(name: $"I'm not ready yet, but soon™", type: ActivityType.Playing);
+            shard.SetStatusAsync(UserStatus.Online);
             //shard.SetGameAsync(name: $"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
             return Task.CompletedTask;
         }
