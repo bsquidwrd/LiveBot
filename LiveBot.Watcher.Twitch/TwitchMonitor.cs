@@ -31,6 +31,7 @@ namespace LiveBot.Watcher.Twitch
         public IServiceProvider services;
         public IBusControl _bus;
         private readonly int RetryDelay = 1000 * 30; // 30 seconds
+        private readonly int ApiRetryCount = 5; // How many times to retry API requests
 
         public string ClientId
         {
@@ -112,7 +113,7 @@ namespace LiveBot.Watcher.Twitch
 
         #region API Calls
 
-        private async Task<Game> API_GetGame(string gameId)
+        private async Task<Game> API_GetGame(string gameId, int retryCount = 0)
         {
             try
             {
@@ -123,8 +124,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetGame(gameId);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetGame(gameId, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
@@ -135,7 +140,7 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<User> API_GetUserByLogin(string username)
+        private async Task<User> API_GetUserByLogin(string username, int retryCount = 0)
         {
             try
             {
@@ -146,8 +151,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByLogin(username);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserByLogin(username, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
@@ -158,7 +167,7 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<User> API_GetUserById(string userId)
+        private async Task<User> API_GetUserById(string userId, int retryCount = 0)
         {
             try
             {
@@ -169,8 +178,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetUserById(userId);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserById(userId, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
@@ -181,7 +194,7 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<GetUsersResponse> API_GetUsersById(List<string> userIdList)
+        private async Task<GetUsersResponse> API_GetUsersById(List<string> userIdList, int retryCount = 0)
         {
             try
             {
@@ -191,8 +204,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetUsersById(userIdList);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUsersById(userIdList, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
@@ -203,7 +220,7 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<User> API_GetUserByURL(string url)
+        private async Task<User> API_GetUserByURL(string url, int retryCount = 0)
         {
             try
             {
@@ -213,8 +230,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByURL(url);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserByURL(url, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
@@ -225,7 +246,7 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<Stream> API_GetStream(string userId)
+        private async Task<Stream> API_GetStream(string userId, int retryCount = 0)
         {
             try
             {
@@ -236,8 +257,12 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
                 Log.Error($"{e}");
-                await Task.Delay(RetryDelay);
-                return await API_GetStream(userId);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetStream(userId, retryCount + 1);
+                }
+                return null;
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
