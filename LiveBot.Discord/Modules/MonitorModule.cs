@@ -464,7 +464,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 .WithValue(parameters);
 
             var messageEmbedFooter = new EmbedFooterBuilder()
-                .WithText("You do NOT have to mention the role with the @ symbol");
+                .WithText($"Default: {Defaults.NotificationMessage}");
             var messageEmbed = new EmbedBuilder()
                 .WithColor(Color.DarkPurple)
                 .WithDescription("What message should be sent? (Max 255 characters)\nIf you'd like to use the default (see footer) type default")
