@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using TwitchLib.Api;
 using TwitchLib.Api.Core.Exceptions;
 using TwitchLib.Api.Core.RateLimiter;
@@ -58,6 +59,8 @@ namespace LiveBot.Watcher.Twitch
                 API.Settings.AccessToken = value;
             }
         }
+
+        public Timer RefreshAuthTimer;
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -265,6 +268,63 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
+        public async Task UpdateAuth()
+        {
+            Log.Debug($"Refreshing Auth for {ServiceType}");
+            var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+            RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
+
+            var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
+            await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
+
+            oldAuth.Expired = true;
+            await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
+            AccessToken = newAuth.AccessToken;
+
+            TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(refreshResponse.ExpiresIn);
+            // Trigger it 5 minutes before expiration time to be safe
+            SetupAuthTimer(refreshAuthTimeSpan.Subtract(TimeSpan.FromMinutes(5)));
+        }
+
+        private void SetupAuthTimer(TimeSpan timeSpan)
+        {
+            if (RefreshAuthTimer != null)
+                RefreshAuthTimer.Stop();
+
+            RefreshAuthTimer = new Timer(timeSpan.TotalMilliseconds)
+            {
+                AutoReset = false
+            };
+            RefreshAuthTimer.Elapsed += async (sender, e) => await UpdateAuth();
+            RefreshAuthTimer.Start();
+        }
+
+        public async Task UpdateUsers()
+        {
+            try
+            {
+                foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor))
+                {
+                    GetUsersResponse users = await API_GetUsersById(userIds);
+                    foreach (User user in users.Users)
+                    {
+                        TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
+                        StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
+                        streamUser.Username = twitchUser.Username;
+                        streamUser.DisplayName = twitchUser.DisplayName;
+                        streamUser.AvatarURL = twitchUser.AvatarURL;
+                        streamUser.ProfileURL = twitchUser.ProfileURL;
+
+                        await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"{e}");
+            }
+        }
+
         #endregion Misc Functions
 
         #region Messaging Implementation
@@ -421,42 +481,6 @@ namespace LiveBot.Watcher.Twitch
                 return true;
             return false;
         }
-
-        /// <inheritdoc/>
-        public override async Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth)
-        {
-            RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldMonitorAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
-            AccessToken = refreshResponse.AccessToken;
-            return new TwitchAuth(ServiceType, ClientId, refreshResponse);
-        }
-
-        /// <inheritdoc/>
-        public override async Task UpdateUsers()
-        {
-            try
-            {
-                foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor))
-                {
-                    GetUsersResponse users = await API_GetUsersById(userIds);
-                    foreach (User user in users.Users)
-                    {
-                        TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
-                        StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
-                        streamUser.Username = twitchUser.Username;
-                        streamUser.DisplayName = twitchUser.DisplayName;
-                        streamUser.AvatarURL = twitchUser.AvatarURL;
-                        streamUser.ProfileURL = twitchUser.ProfileURL;
-
-                        await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error($"{e}");
-            }
-        }
-
         #endregion Interface Requirements
     }
 }

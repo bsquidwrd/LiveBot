@@ -1,5 +1,4 @@
 using GreenPipes;
-using LiveBot.Core.Consumers;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Static;
@@ -53,9 +52,6 @@ namespace LiveBot.API
 
             services.AddMassTransit(x =>
             {
-                x.AddConsumer<MonitorRefreshAuthConsumer>();
-                x.AddConsumer<MonitorUpdateUsersConsumer>();
-
                 x.AddConsumer<DiscordGuildAvailableConsumer>();
                 x.AddConsumer<DiscordGuildUpdateConsumer>();
                 x.AddConsumer<DiscordGuildDeleteConsumer>();
@@ -102,73 +98,21 @@ namespace LiveBot.API
                     x.Password(Queues.QueuePassword);
                 });
                 busFactoryConfig.UseMessageRetry(r => r.Interval(5, 5));
-
-                // Base Monitor Consumers
-                busFactoryConfig.ReceiveEndpoint(Queues.RefreshAuthQueueName, ep =>
-                {
-                    ep.Consumer<MonitorRefreshAuthConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.UpdateUsersQueueName, ep =>
-                {
-                    ep.Consumer<MonitorUpdateUsersConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
+                busFactoryConfig.PrefetchCount = Queues.PrefetchCount;
 
                 // Discord Events
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildAvailable, ep =>
-                {
-                    ep.Consumer<DiscordGuildAvailableConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildUpdate, ep =>
-                {
-                    ep.Consumer<DiscordGuildUpdateConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildDelete, ep =>
-                {
-                    ep.Consumer<DiscordGuildDeleteConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordChannelUpdate, ep =>
-                {
-                    ep.Consumer<DiscordChannelUpdateConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordChannelDelete, ep =>
-                {
-                    ep.Consumer<DiscordChannelDeleteConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleUpdate, ep =>
-                {
-                    ep.Consumer<DiscordRoleUpdateConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleDelete, ep =>
-                {
-                    ep.Consumer<DiscordRoleDeleteConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildAvailable, ep => ep.Consumer<DiscordGuildAvailableConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildUpdate, ep => ep.Consumer<DiscordGuildUpdateConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordGuildDelete, ep => ep.Consumer<DiscordGuildDeleteConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordChannelUpdate, ep => ep.Consumer<DiscordChannelUpdateConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordChannelDelete, ep => ep.Consumer<DiscordChannelDeleteConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleUpdate, ep => ep.Consumer<DiscordRoleUpdateConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleDelete, ep => ep.Consumer<DiscordRoleDeleteConsumer>(provider));
 
                 // Stream Events
-                busFactoryConfig.ReceiveEndpoint(Queues.StreamOnlineQueueName, ep =>
-                {
-                    ep.Consumer<StreamOnlineConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
-                busFactoryConfig.ReceiveEndpoint(Queues.StreamUpdateQueueName, ep =>
-                {
-                    ep.Consumer<StreamUpdateConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                }
-                );
-                busFactoryConfig.ReceiveEndpoint(Queues.StreamOfflineQueueName, ep =>
-                {
-                    ep.Consumer<StreamOfflineConsumer>(provider);
-                    ep.PrefetchCount = Queues.PrefetchCount;
-                });
+                busFactoryConfig.ReceiveEndpoint(Queues.StreamOnlineQueueName, ep => ep.Consumer<StreamOnlineConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.StreamUpdateQueueName, ep => ep.Consumer<StreamUpdateConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.StreamOfflineQueueName, ep => ep.Consumer<StreamOfflineConsumer>(provider));
             });
 
             return serviceBus;

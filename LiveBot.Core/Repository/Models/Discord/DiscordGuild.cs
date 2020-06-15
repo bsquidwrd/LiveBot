@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using LiveBot.Core.Repository.Models.Streams;
+using System.Collections.Generic;
 
 namespace LiveBot.Core.Repository.Models.Discord
 {
@@ -6,5 +7,6 @@ namespace LiveBot.Core.Repository.Models.Discord
     {
         public virtual ICollection<DiscordChannel> DiscordChannels { get; set; }
         public virtual ICollection<DiscordRole> DiscordRoles { get; set; }
+        public virtual ICollection<StreamSubscription> StreamSubscriptions { get; set; }
     }
 }

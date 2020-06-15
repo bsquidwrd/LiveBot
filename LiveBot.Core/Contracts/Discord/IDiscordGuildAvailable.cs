@@ -3,5 +3,6 @@
     public interface IDiscordGuildAvailable
     {
         public ulong GuildId { get; set; }
+        public string GuildName { get; set; }
     }
 }

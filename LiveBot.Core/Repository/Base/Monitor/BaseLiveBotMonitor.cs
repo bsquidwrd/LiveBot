@@ -52,9 +52,5 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public abstract bool AddChannel(ILiveBotUser user);
 
         public abstract bool RemoveChannel(ILiveBotUser user);
-
-        public abstract Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
-
-        public abstract Task UpdateUsers();
     }
 }

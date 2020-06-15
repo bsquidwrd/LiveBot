@@ -78,18 +78,5 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="user"></param>
         /// <returns></returns>
         public bool RemoveChannel(ILiveBotUser user);
-
-        /// <summary>
-        /// Updates authentication tokens relevant to the Monitoring Service
-        /// </summary>
-        /// <param name="oldMonitorAuth"></param>
-        /// <returns>New authentication information</returns>
-        public Task<MonitorAuth> UpdateAuth(MonitorAuth oldMonitorAuth);
-
-        /// <summary>
-        /// Updates all <c>StreamUser</c> objects in the database for the related Monitor Object
-        /// </summary>
-        /// <returns></returns>
-        public Task UpdateUsers();
     }
 }

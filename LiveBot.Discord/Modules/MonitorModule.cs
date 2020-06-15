@@ -240,6 +240,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             StreamSubscription streamSubscription = new StreamSubscription()
             {
                 User = streamUser,
+                DiscordGuild = discordGuild,
                 DiscordChannel = discordChannel,
                 DiscordRole = discordRole,
                 Message = notificationMessage

@@ -16,6 +16,7 @@ namespace LiveBot.Repository
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
+                .UseLazyLoadingProxies()
                 .UseNpgsql(Environment.GetEnvironmentVariable("LiveBotConnectionString"));
         }
 

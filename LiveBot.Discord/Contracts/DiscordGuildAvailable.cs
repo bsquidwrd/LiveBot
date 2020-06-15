@@ -5,5 +5,6 @@ namespace LiveBot.Discord.Contracts
     public class DiscordGuildAvailable : IDiscordGuildAvailable
     {
         public ulong GuildId { get; set; }
+        public string GuildName { get; set; }
     }
 }

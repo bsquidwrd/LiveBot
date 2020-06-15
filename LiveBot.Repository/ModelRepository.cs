@@ -1,5 +1,6 @@
 ﻿using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models;
+using LiveBot.Core.Repository.Models.Discord;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -39,17 +40,17 @@ namespace LiveBot.Repository
         private IQueryable<TEntity> GetQueryable(Expression<Func<TEntity, bool>> predicate = null)
         {
             Expression<Func<TEntity, bool>> deletedPredicate = (d => d.Deleted == false);
-            IQueryable<TEntity> query = DbSet
+            IQueryable<TEntity> queryable = DbSet
                 .Where(deletedPredicate);
 
             if (predicate != null)
-                query = query.Where(predicate);
+                queryable = queryable.Where(predicate);
 
             var properties = typeof(TEntity).GetProperties().Where(x => x.PropertyType != typeof(string));
             foreach (var prop in properties.Where(x => x.PropertyType.IsClass))
-                query = query.Include(prop.Name);
+                queryable = queryable.Include(prop.Name);
 
-            return query;
+            return queryable;
         }
 
         /// <inheritdoc />

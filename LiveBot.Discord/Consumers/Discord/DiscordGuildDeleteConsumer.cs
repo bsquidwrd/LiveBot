@@ -1,5 +1,6 @@
 ﻿using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Discord.Contracts;
 using MassTransit;
 using Serilog;
 using System.Threading.Tasks;
@@ -9,10 +10,12 @@ namespace LiveBot.Discord.Consumers.Discord
     public class DiscordGuildDeleteConsumer : IConsumer<IDiscordGuildDelete>
     {
         private readonly IUnitOfWork _work;
+        private readonly IBusControl _bus;
 
-        public DiscordGuildDeleteConsumer(IUnitOfWorkFactory factory)
+        public DiscordGuildDeleteConsumer(IUnitOfWorkFactory factory, IBusControl bus)
         {
             _work = factory.Create();
+            _bus = bus;
         }
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)
@@ -23,9 +26,9 @@ namespace LiveBot.Discord.Consumers.Discord
             if (discordGuild == null)
                 return;
 
-            var discordChannels = await _work.ChannelRepository.FindAsync(d => d.DiscordGuild == discordGuild);
-            var discordRoles = await _work.RoleRepository.FindAsync(d => d.DiscordGuild == discordGuild);
-            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(d => d.DiscordChannel.DiscordGuild == discordGuild);
+            var discordChannels = discordGuild.DiscordChannels;
+            var discordRoles = discordGuild.DiscordRoles;
+            var streamSubscriptions = discordGuild.StreamSubscriptions;
 
             foreach (var streamSubscription in streamSubscriptions)
             {
@@ -44,7 +47,8 @@ namespace LiveBot.Discord.Consumers.Discord
             {
                 try
                 {
-                    await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
+                    var channelContext = new DiscordChannelDelete { GuildId = discordGuild.DiscordId, ChannelId = discordChannel.DiscordId };
+                    await _bus.Publish(channelContext);
                 }
                 catch
                 {
@@ -57,7 +61,8 @@ namespace LiveBot.Discord.Consumers.Discord
             {
                 try
                 {
-                    await _work.RoleRepository.RemoveAsync(discordRole.Id);
+                    var roleContext = new DiscordRoleDelete { GuildId = discordGuild.DiscordId, RoleId = discordRole.DiscordId };
+                    await _bus.Publish(roleContext);
                 }
                 catch
                 {

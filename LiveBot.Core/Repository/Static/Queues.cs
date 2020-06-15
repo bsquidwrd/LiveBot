@@ -12,7 +12,7 @@ namespace LiveBot.Core.Repository.Static
         public static string QueueUsername = Environment.GetEnvironmentVariable("RabbitMQ_Username");
         public static string QueuePassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
 
-        public static ushort PrefetchCount = 4;
+        public static ushort PrefetchCount = 32;
 
         public static string DiscordGuildAvailable = "discord_guildavailable";
         public static string DiscordGuildUpdate = "discord_guildupdate";
@@ -21,8 +21,6 @@ namespace LiveBot.Core.Repository.Static
         public static string DiscordChannelDelete = "discord_channeldelete";
         public static string DiscordRoleUpdate = "discord_roleupdate";
         public static string DiscordRoleDelete = "discord_roledelete";
-
-        public static string RefreshAuthQueueName = "monitor_authrefresh";
 
         public static string StreamOnlineQueueName = "streamonline";
         public static string StreamUpdateQueueName = "streamupdate";

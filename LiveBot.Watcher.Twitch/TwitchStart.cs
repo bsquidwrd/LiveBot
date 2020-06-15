@@ -27,11 +27,15 @@ namespace LiveBot.Watcher.Twitch
             service.ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
             service.ClientSecret = Environment.GetEnvironmentVariable("TwitchClientSecret");
 
-            var auth = await service._work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == service.ServiceType && i.Expired == false);
-            service.AccessToken = auth.AccessToken;
+            await service.UpdateAuth();
 
             var streamUsers = await service._work.UserRepository.FindAsync(i => i.ServiceType == service.ServiceType);
             List<string> channelList = new List<string>(streamUsers.Select(i => i.SourceID).Distinct());
+
+            if (channelList.Count() == 0)
+                // Add myself so startup doesn't fail if there's no users in the database
+                channelList.Add("22812120");
+
             service.Monitor.SetChannelsById(channelList);
 
             await Task.Run(service.Monitor.Start);

@@ -22,8 +22,8 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task GuildAvailable(SocketGuild guild)
         {
-            var context = new DiscordGuildUpdate { GuildId = guild.Id };
-            await _bus.Publish(context);
+            var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name };
+            //await _bus.Publish(context);
         }
 
         /// <summary>
@@ -34,7 +34,9 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
         {
-            var context = new DiscordGuildUpdate { GuildId = beforeGuild.Id };
+            if (beforeGuild.Name == afterGuild.Name)
+                return;
+            var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name };
             await _bus.Publish(context);
         }
 
@@ -57,7 +59,7 @@ namespace LiveBot.Discord.Modules
         public async Task ChannelCreated(SocketChannel channel)
         {
             SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
-            var context = new DiscordChannelUpdate { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id };
+            var context = new DiscordChannelUpdate { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id, ChannelName = socketGuildChannel.Name };
             await _bus.Publish(context);
         }
 
@@ -81,9 +83,17 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task ChannelUpdated(SocketChannel beforeChannel, SocketChannel afterChannel)
         {
-            SocketGuildChannel socketGuildChannel = (SocketGuildChannel)beforeChannel;
-            var context = new DiscordChannelUpdate { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id };
-            await _bus.Publish(context);
+            if (beforeChannel is SocketTextChannel && afterChannel is SocketTextChannel)
+            {
+                SocketTextChannel beforeGuildChannel = (SocketTextChannel)beforeChannel;
+                SocketTextChannel afterGuildChannel = (SocketTextChannel)afterChannel;
+
+                if (beforeGuildChannel.Name == afterGuildChannel.Name)
+                    return;
+
+                var context = new DiscordChannelUpdate { GuildId = afterGuildChannel.Guild.Id, ChannelId = afterGuildChannel.Id, ChannelName = afterGuildChannel.Name };
+                await _bus.Publish(context);
+            }
         }
 
         /// <summary>
@@ -93,7 +103,7 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task RoleCreated(SocketRole role)
         {
-            var context = new DiscordRoleUpdate { GuildId = role.Guild.Id, RoleId = role.Id };
+            var context = new DiscordRoleUpdate { GuildId = role.Guild.Id, RoleId = role.Id, RoleName = role.Name };
             await _bus.Publish(context);
         }
 
@@ -116,7 +126,9 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
         {
-            var context = new DiscordRoleUpdate { GuildId = beforeRole.Guild.Id, RoleId = beforeRole.Id };
+            if (beforeRole.Name == afterRole.Name)
+                return;
+            var context = new DiscordRoleUpdate { GuildId = beforeRole.Guild.Id, RoleId = afterRole.Id, RoleName = afterRole.Name };
             await _bus.Publish(context);
         }
 
