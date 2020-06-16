@@ -131,7 +131,7 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
                 previousNotifications = previousNotifications.Where(i =>
-                    i.Stream_StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
+                    stream.StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
                     && i.Success == true // Only pull Successful notifications
                 );
 

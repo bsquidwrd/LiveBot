@@ -4,13 +4,13 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
-ENV DiscordToken="replaceme"
-ENV LiveBotConnectionString="replaceme"
-ENV RabbitMQ_URL="replaceme"
-ENV RabbitMQ_Username="replaceme"
-ENV RabbitMQ_Password="replaceme"
-ENV TwitchClientId="replaceme"
-ENV TwitchClientSecret="replaceme"
+ENV DiscordToken="Mzc5NDk1NjI1MDg1MTU3Mzc3.Xujr4Q.iezHsknPK687gh9CQOpBnhV0tBc"
+ENV LiveBotConnectionString="Persist Security Info=True;Password=livebot;Username=livebot;Database=livebot;Host=192.168.254.12;Port=5432;Trust Server Certificate=true"
+ENV RabbitMQ_URL="192.168.254.12/livebot-test"
+ENV RabbitMQ_Username="guest"
+ENV RabbitMQ_Password="guest"
+ENV TwitchClientId="umqnym0i4g4n6vo5tsiyx60f0wc4by"
+ENV TwitchClientSecret="zba9diay4169wjr6qyl4ov5oaizl13"
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
