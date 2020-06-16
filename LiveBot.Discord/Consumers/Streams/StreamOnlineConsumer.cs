@@ -78,7 +78,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 );
 
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
-                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, streamSubscription);
+                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream);
 
                 StreamNotification streamNotification = new StreamNotification

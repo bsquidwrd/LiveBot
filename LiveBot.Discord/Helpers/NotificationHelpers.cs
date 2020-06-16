@@ -22,7 +22,7 @@ namespace LiveBot.Discord.Helpers
         /// <param name="stream"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription)
+        public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser user = null, ILiveBotGame game = null)
         {
             string RoleMention = "";
             if (subscription.DiscordRole != null)
@@ -37,10 +37,13 @@ namespace LiveBot.Discord.Helpers
                 }
             }
 
+            var tempUser = user ?? stream.User;
+            var tempGame = game ?? stream.Game;
+
             return subscription.Message
-                .Replace("{Name}", EscapeSpecialDiscordCharacters(stream.User.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Username}", EscapeSpecialDiscordCharacters(stream.User.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Game}", EscapeSpecialDiscordCharacters(stream.Game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Name}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Username}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Game}", EscapeSpecialDiscordCharacters(tempGame.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.StreamURL), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Role}", RoleMention, ignoreCase: true, culture: CultureInfo.CurrentCulture);
