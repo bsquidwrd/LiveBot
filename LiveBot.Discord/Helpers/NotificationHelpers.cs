@@ -54,13 +54,13 @@ namespace LiveBot.Discord.Helpers
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>Discord Embed with Stream Information</returns>
-        public static Embed GetStreamEmbed(ILiveBotStream stream)
+        public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
         {
             // Build the Author of the Embed
             EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
-            authorBuilder.WithName(stream.User.DisplayName);
-            authorBuilder.WithIconUrl(stream.User.AvatarURL);
-            authorBuilder.WithUrl(stream.User.ProfileURL);
+            authorBuilder.WithName(user.DisplayName);
+            authorBuilder.WithIconUrl(user.AvatarURL);
+            authorBuilder.WithUrl(user.ProfileURL);
 
             // Build the Footer of the Embed
             EmbedFooterBuilder footerBuilder = new EmbedFooterBuilder();
@@ -76,7 +76,7 @@ namespace LiveBot.Discord.Helpers
             builder.WithTimestamp(stream.StartTime);
             builder.WithDescription(stream.Title);
             builder.WithUrl(stream.StreamURL);
-            builder.WithThumbnailUrl(stream.User.AvatarURL);
+            builder.WithThumbnailUrl(user.AvatarURL);
 
             // Add Status Field
             //EmbedFieldBuilder statusBuilder = new EmbedFieldBuilder();
@@ -89,7 +89,7 @@ namespace LiveBot.Discord.Helpers
             EmbedFieldBuilder gameBuilder = new EmbedFieldBuilder();
             gameBuilder.WithIsInline(true);
             gameBuilder.WithName("Game");
-            gameBuilder.WithValue(stream.Game.Name);
+            gameBuilder.WithValue(game.Name);
             builder.AddField(gameBuilder);
 
             // Add Stream URL field

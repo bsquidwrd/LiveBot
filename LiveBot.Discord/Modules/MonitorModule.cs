@@ -168,7 +168,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 await ReplyAsync($"Doesn't look like the user {user.DisplayName} is live on {user.ServiceType}");
                 return;
             }
-            Embed streamEmbed = NotificationHelpers.GetStreamEmbed(stream);
+            Embed streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: stream.User, game: stream.Game);
             StreamSubscription bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
             string notificationMessage = NotificationHelpers.GetNotificationMessage(stream, bogusSubscription);
             await ReplyAsync(message: $"Service: `{stream.ServiceType}`\n{notificationMessage}", embed: streamEmbed);
