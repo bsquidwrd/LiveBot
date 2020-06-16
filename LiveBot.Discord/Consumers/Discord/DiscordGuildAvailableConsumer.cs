@@ -39,49 +39,49 @@ namespace LiveBot.Discord.Consumers.Discord
                 discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
                 #region Handle Channels
+                var dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
 
                 foreach (SocketGuildChannel channel in guild.TextChannels)
                 {
+                    var existingChannels = dbChannels.ToList().Where(i => i.DiscordId == channel.Id && i.Name == channel.Name );
+                    if (existingChannels.Count() > 0)
+                        continue;
                     DiscordChannelUpdate channelUpdateContext = new DiscordChannelUpdate { GuildId = guild.Id, ChannelId = channel.Id, ChannelName = channel.Name };
                     await _bus.Publish(channelUpdateContext);
                 }
 
                 List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
                 //IEnumerable<DiscordChannel> dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
-                var dbChannels = discordGuild.DiscordChannels.ToList();
                 if (dbChannels.Count() > 0)
                 {
-                    foreach (DiscordChannel dbChannel in dbChannels)
+                    foreach (DiscordChannel dbChannel in dbChannels.Where(i => !channelIDs.Contains(i.DiscordId)))
                     {
-                        if (!channelIDs.Contains(dbChannel.DiscordId))
-                        {
-                            DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = dbChannel.DiscordId };
-                            await _bus.Publish(channelDeleteContext);
-                        }
+                        DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = dbChannel.DiscordId };
+                        await _bus.Publish(channelDeleteContext);
                     }
                 }
 
                 #endregion Handle Channels
 
                 #region Handle Roles
+                var dbRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild == discordGuild);
 
                 foreach (SocketRole role in guild.Roles)
                 {
+                    var existingRoles = dbChannels.ToList().Where(i => i.DiscordId == role.Id && i.Name == role.Name);
+                    if (existingRoles.Count() > 0)
+                        continue;
                     DiscordRoleUpdate roleUpdateContext = new DiscordRoleUpdate { GuildId = guild.Id, RoleId = role.Id, RoleName = role.Name };
                     await _bus.Publish(roleUpdateContext);
                 }
 
                 List<ulong> roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
-                var dbRoles = discordGuild.DiscordRoles.ToList();
                 if (dbRoles.Count() > 0)
                 {
-                    foreach (DiscordRole dbRole in dbRoles)
+                    foreach (DiscordRole dbRole in dbRoles.Where(i => !roleIDs.Contains(i.DiscordId)))
                     {
-                        if (!roleIDs.Contains(dbRole.DiscordId))
-                        {
-                            DiscordRoleDelete roleDeleteContext = new DiscordRoleDelete { GuildId = guild.Id, RoleId = dbRole.DiscordId };
-                            await _bus.Publish(roleDeleteContext);
-                        }
+                        DiscordRoleDelete roleDeleteContext = new DiscordRoleDelete { GuildId = guild.Id, RoleId = dbRole.DiscordId };
+                        await _bus.Publish(roleDeleteContext);
                     }
                 }
 
