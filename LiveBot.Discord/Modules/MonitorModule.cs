@@ -432,7 +432,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(c => c.DiscordId == guildChannel.Id);
             }
 
-            return discordGuild;
+            return discordChannel;
         }
 
         /// <summary>
