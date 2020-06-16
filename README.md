@@ -8,7 +8,7 @@
 ### Example notification
 <img src="https://i.imgur.com/n2RXb1E.png" />
 
-### Start monitoring a Stream
+## Start Monitoring a Stream
 * Run `@Live Bot#5263 monitor perms` to have the Bot run a check for permissions. If you don't get a response, it doesn't even have `Send Messages` permission in that channel
 * Start setting up a monitor `@Live Bot#5263 monitor add https://twitch.tv/bsquidwrd`
 * Which channel you wish to send notifications in. Mention the channel. Ex: `#live`
@@ -24,7 +24,7 @@
 ## List Streams that are being monitored
 * `@Live Bot#5263 monitor list`
 
-## Check if the Bot sees a Stream as live
+## Check if the Bot sees a Stream as Live
 * `@Live Bot#5263 monitor check https://twitch.tv/bsquidwrd`
 
 ## Get a link to my Support Server
