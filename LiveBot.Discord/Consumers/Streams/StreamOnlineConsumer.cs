@@ -82,51 +82,51 @@ namespace LiveBot.Discord.Consumers.Streams
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
-                StreamNotification streamNotification = new StreamNotification();
-                streamNotification.ServiceType = stream.ServiceType;
-                streamNotification.Success = false;
-                streamNotification.Message = notificationMessage;
+                StreamNotification newStreamNotification = new StreamNotification();
+                newStreamNotification.ServiceType = stream.ServiceType;
+                newStreamNotification.Success = false;
+                newStreamNotification.Message = notificationMessage;
 
-                streamNotification.User_SourceID = streamUser.SourceID;
-                streamNotification.User_Username = streamUser.Username;
-                streamNotification.User_DisplayName = streamUser.DisplayName;
-                streamNotification.User_AvatarURL = streamUser.AvatarURL;
-                streamNotification.User_ProfileURL = streamUser.ProfileURL;
+                newStreamNotification.User_SourceID = streamUser.SourceID;
+                newStreamNotification.User_Username = streamUser.Username;
+                newStreamNotification.User_DisplayName = streamUser.DisplayName;
+                newStreamNotification.User_AvatarURL = streamUser.AvatarURL;
+                newStreamNotification.User_ProfileURL = streamUser.ProfileURL;
 
-                streamNotification.Stream_SourceID = stream.Id;
-                streamNotification.Stream_Title = stream.Title;
-                streamNotification.Stream_StartTime = stream.StartTime;
-                streamNotification.Stream_ThumbnailURL = stream.ThumbnailURL;
-                streamNotification.Stream_StreamURL = stream.StreamURL;
+                newStreamNotification.Stream_SourceID = stream.Id;
+                newStreamNotification.Stream_Title = stream.Title;
+                newStreamNotification.Stream_StartTime = stream.StartTime;
+                newStreamNotification.Stream_ThumbnailURL = stream.ThumbnailURL;
+                newStreamNotification.Stream_StreamURL = stream.StreamURL;
 
-                streamNotification.Game_SourceID = streamGame?.SourceId;
-                streamNotification.Game_Name = streamGame?.Name;
-                streamNotification.Game_ThumbnailURL = streamGame?.ThumbnailURL;
+                newStreamNotification.Game_SourceID = streamGame?.SourceId;
+                newStreamNotification.Game_Name = streamGame?.Name;
+                newStreamNotification.Game_ThumbnailURL = streamGame?.ThumbnailURL;
 
-                streamNotification.DiscordGuild_DiscordId = discordGuild.DiscordId;
-                streamNotification.DiscordGuild_Name = discordGuild.Name;
+                newStreamNotification.DiscordGuild_DiscordId = discordGuild.DiscordId;
+                newStreamNotification.DiscordGuild_Name = discordGuild.Name;
 
-                streamNotification.DiscordChannel_DiscordId = channel == null ? 0 : channel.Id;
-                streamNotification.DiscordChannel_Name = channel?.Name;
+                newStreamNotification.DiscordChannel_DiscordId = channel == null ? 0 : channel.Id;
+                newStreamNotification.DiscordChannel_Name = channel?.Name;
 
-                streamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
-                streamNotification.DiscordRole_Name = discordRole?.Name;
+                newStreamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
+                newStreamNotification.DiscordRole_Name = discordRole?.Name;
 
 
 
                 Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
-                    i.User_SourceID == user.Id &&
-                    i.Stream_SourceID == stream.Id &&
-                    i.Stream_StartTime == stream.StartTime &&
-                    i.DiscordGuild_DiscordId == guild.Id &&
-                    i.DiscordChannel_DiscordId == channel.Id &&
-                    i.Game_SourceID == game.Id
+                    i.User_SourceID == newStreamNotification.User_SourceID &&
+                    i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
+                    i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
+                    i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
+                    i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
+                    i.Game_SourceID == newStreamNotification.Game_SourceID
                 );
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                    i.User_SourceID == user.Id &&
-                    i.DiscordGuild_DiscordId == guild.Id &&
-                    i.DiscordChannel_DiscordId == channel.Id
+                    i.User_SourceID == newStreamNotification.User_SourceID &&
+                    i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
+                    i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId
                 );
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
@@ -138,10 +138,10 @@ namespace LiveBot.Discord.Consumers.Streams
                 // If there is already 1 or more notifications that were successful in the past hour
                 // mark this current one as a success
                 if (previousNotifications.Count() > 0)
-                    streamNotification.Success = true;
+                    newStreamNotification.Success = true;
 
-                await _work.NotificationRepository.AddOrUpdateAsync(streamNotification, notificationPredicate);
-                streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
+                await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
+                StreamNotification streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
 
                 // If the current notification was marked as a success, end processing
                 if (streamNotification.Success == true)

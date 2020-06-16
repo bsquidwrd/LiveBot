@@ -304,7 +304,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// </summary>
         /// <param name="user"></param>
         [Command("stop", RunMode = RunMode.Async)]
-        [Alias("end")]
+        [Alias("end", "remove")]
         [Summary("Stop monitoring a Stream for this Discord")]
         public async Task MonitorStop(ILiveBotUser user)
         {

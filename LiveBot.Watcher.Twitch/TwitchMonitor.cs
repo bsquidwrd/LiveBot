@@ -113,7 +113,7 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
-            await _PublishStreamOffline(stream);
+            await _PublishStreamUpdate(stream);
         }
 
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
