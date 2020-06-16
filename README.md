@@ -17,9 +17,18 @@
 * Do you want to mention a role? Type the name of the role or `none` if you don't want to mention a role. Ex: `everyone`
 * That's it!
 
-### Stop Monitoring a Stream
+## Stop Monitoring a Stream
 * Run `@Live Bot#5263 monitor stop https://twitch.tv/bsquidwrd`
 * That's it!
+
+## List Streams that are being monitored
+* `@Live Bot#5263 monitor list`
+
+## Check if the Bot sees a Stream as live
+* `@Live Bot#5263 monitor check https://twitch.tv/bsquidwrd`
+
+## Get a link to my Support Server
+* `@Live Bot#5263 support`
 
 ## Message Parameters
 The below parameters will be replaced at the time of Notification
@@ -28,15 +37,6 @@ The below parameters will be replaced at the time of Notification
 * `{game}` - Game they are playing
 * `{url}` - URL to the stream
 * `{title}` - Stream Title
-
-### List Streams that are being monitored
-* `@Live Bot#5263 monitor list`
-
-### Check if the Bot sees a Stream as live
-* `@Live Bot#5263 monitor check https://twitch.tv/bsquidwrd`
-
-### Get a link to my Support Server
-* `@Live Bot#5263 support`
 
 
 ## Thanks
