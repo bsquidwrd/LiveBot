@@ -28,7 +28,7 @@ namespace LiveBot.Watcher.Twitch.Models
             StartTime = stream.StartedAt;
             GameId = stream.GameId;
             ThumbnailURL = stream.ThumbnailUrl;
-            StreamURL = $"{baseURL}/{stream.UserName}";
+            StreamURL = $"{baseURL}/{stream.UserName.ToLower()}";
         }
     }
 }
