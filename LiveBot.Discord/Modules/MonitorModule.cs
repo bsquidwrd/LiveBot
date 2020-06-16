@@ -205,18 +205,22 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            DiscordGuild discordGuild = new DiscordGuild
+            {
+                DiscordId = Context.Guild.Id,
+                Name = Context.Guild.Name
+            };
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
 
             // Get Notification Channel
-            IGuildChannel notificationChannel = await _RequestNotificationChannel();
-            DiscordChannel discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(c => c.DiscordId == notificationChannel.Id);
+            DiscordChannel discordChannel = await _RequestNotificationChannel(discordGuild);
 
             // Get Notification Message
             string notificationMessage = await _RequestNotificationMessage();
 
             // Get Notification Role
-            IRole mentionRole = await _RequestNotificationRole();
-            DiscordRole discordRole = mentionRole == null ? null : await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == mentionRole.Id);
+            DiscordRole discordRole = await _RequestNotificationRole(discordGuild);
 
             // Process their answers
             StreamUser streamUser = new StreamUser()
@@ -292,7 +296,13 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            DiscordGuild discordGuild = new DiscordGuild
+            {
+                DiscordId = Context.Guild.Id,
+                Name = Context.Guild.Name
+            };
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
 
             StreamUser streamUser = new StreamUser()
             {
@@ -392,7 +402,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// Helper Function to simplify asking for a channel
         /// </summary>
         /// <returns>Resulting Channel object from the Users input</returns>
-        private async Task<IGuildChannel> _RequestNotificationChannel()
+        private async Task<DiscordChannel> _RequestNotificationChannel(DiscordGuild discordGuild)
         {
             var messageEmbedFooter = new EmbedFooterBuilder()
                 .WithText("Please mention the channel with the # prefix");
@@ -408,14 +418,28 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             IGuildChannel guildChannel = responseMessage.MentionedChannels.FirstOrDefault();
             await _DeleteMessage(questionMessage);
             await _DeleteMessage(responseMessage);
-            return guildChannel;
+
+            DiscordChannel discordChannel = null;
+            if (guildChannel != null)
+            {
+                discordChannel = new DiscordChannel
+                {
+                    DiscordGuild = discordGuild,
+                    DiscordId = guildChannel.Id,
+                    Name = guildChannel.Name
+                };
+                await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, i => i.DiscordGuild == discordGuild && i.DiscordId == guildChannel.Id);
+                discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(c => c.DiscordId == guildChannel.Id);
+            }
+
+            return discordGuild;
         }
 
         /// <summary>
         /// Helper Function to simplify asking for a Role to mention
         /// </summary>
         /// <returns></returns>
-        private async Task<IRole> _RequestNotificationRole()
+        private async Task<DiscordRole> _RequestNotificationRole(DiscordGuild discordGuild)
         {
             var messageEmbedFooter = new EmbedFooterBuilder()
                 .WithText("You do NOT have to mention the role with the @ symbol");
@@ -446,7 +470,21 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             }
             await _DeleteMessage(questionMessage);
             await _DeleteMessage(responseMessage);
-            return role;
+
+            DiscordRole discordRole = null;
+            if (role != null)
+            {
+                discordRole = new DiscordRole
+                {
+                    DiscordGuild = discordGuild,
+                    DiscordId = role.Id,
+                    Name = role.Name
+                };
+                await _work.RoleRepository.AddOrUpdateAsync(discordRole, i => i.DiscordGuild == discordGuild && i.DiscordId == role.Id);
+                discordRole = await _work.RoleRepository.SingleOrDefaultAsync(r => r.DiscordId == role.Id);
+            }
+
+            return discordRole;
         }
 
         private async Task<string> _RequestNotificationMessage()
