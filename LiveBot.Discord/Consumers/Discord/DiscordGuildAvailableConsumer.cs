@@ -51,12 +51,11 @@ namespace LiveBot.Discord.Consumers.Discord
                 }
 
                 List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
-                //IEnumerable<DiscordChannel> dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
                 if (dbChannels.Count() > 0)
                 {
-                    foreach (DiscordChannel dbChannel in dbChannels.Where(i => !channelIDs.Contains(i.DiscordId)))
+                    foreach (var channelId in dbChannels.Select(i => i.DiscordId).Distinct().Except(channelIDs))
                     {
-                        DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = dbChannel.DiscordId };
+                        DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = channelId };
                         await _bus.Publish(channelDeleteContext);
                     }
                 }
@@ -78,9 +77,9 @@ namespace LiveBot.Discord.Consumers.Discord
                 List<ulong> roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
                 if (dbRoles.Count() > 0)
                 {
-                    foreach (DiscordRole dbRole in dbRoles.Where(i => !roleIDs.Contains(i.DiscordId)))
+                    foreach (var roleId in dbRoles.Select(i => i.DiscordId).Distinct().Except(roleIDs))
                     {
-                        DiscordRoleDelete roleDeleteContext = new DiscordRoleDelete { GuildId = guild.Id, RoleId = dbRole.DiscordId };
+                        DiscordRoleDelete roleDeleteContext = new DiscordRoleDelete { GuildId = guild.Id, RoleId = roleId };
                         await _bus.Publish(roleDeleteContext);
                     }
                 }
