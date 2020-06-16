@@ -121,11 +121,13 @@ namespace LiveBot.Discord.Consumers.Streams
                 streamNotification.DiscordGuild_DiscordId = discordGuild.DiscordId;
                 streamNotification.DiscordGuild_Name = discordGuild.Name;
 
-                streamNotification.DiscordChannel_DiscordId = discordChannel.DiscordId;
-                streamNotification.DiscordChannel_Name = discordChannel.Name;
+                streamNotification.DiscordChannel_DiscordId = channel == null ? 0 : channel.Id;
+                streamNotification.DiscordChannel_Name = channel?.Name;
 
                 streamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
                 streamNotification.DiscordRole_Name = discordRole?.Name;
+
+
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
                 previousNotifications = previousNotifications.Where(i =>
