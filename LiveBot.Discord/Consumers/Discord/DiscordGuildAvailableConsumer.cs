@@ -67,7 +67,7 @@ namespace LiveBot.Discord.Consumers.Discord
 
                 foreach (SocketRole role in guild.Roles)
                 {
-                    var existingRoles = dbChannels.ToList().Where(i => i.DiscordId == role.Id && i.Name == role.Name);
+                    var existingRoles = dbRoles.ToList().Where(i => i.DiscordId == role.Id && i.Name == role.Name);
                     if (existingRoles.Count() > 0)
                         continue;
                     DiscordRoleUpdate roleUpdateContext = new DiscordRoleUpdate { GuildId = guild.Id, RoleId = role.Id, RoleName = role.Name };
