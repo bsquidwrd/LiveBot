@@ -77,9 +77,26 @@ namespace LiveBot.Discord.Consumers.Streams
                     i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId
                 );
 
-                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+                var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
+                var shard = _client.GetShardFor(guild);
+                SocketTextChannel channel = null;
+                int channelCheckCount = 0;
+
+                while (channel == null)
+                {
+                    if (channelCheckCount >= 5)
+                    {
+                        var errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
+                        Log.Error(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+                    channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+                    channelCheckCount += 1;
+                    await Task.Delay(TimeSpan.FromSeconds(5)); // Delay check for 5 seconds
+                }
+
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
-                Embed embed = NotificationHelpers.GetStreamEmbed(stream);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
                 StreamNotification streamNotification = new StreamNotification
                 {
