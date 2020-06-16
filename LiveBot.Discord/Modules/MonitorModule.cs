@@ -237,10 +237,10 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
-                i.DiscordChannel.DiscordGuild == discordGuild
+                i.DiscordGuild == discordGuild
             );
 
-            StreamSubscription streamSubscription = new StreamSubscription()
+            StreamSubscription newSubscription = new StreamSubscription()
             {
                 User = streamUser,
                 DiscordGuild = discordGuild,
@@ -251,8 +251,22 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             try
             {
-                await _work.SubscriptionRepository.AddOrUpdateAsync(streamSubscription, streamSubscriptionPredicate);
-                streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+                StreamSubscription existingSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+
+                if (existingSubscription != null)
+                {
+                    existingSubscription.DiscordGuild = newSubscription.DiscordGuild;
+                    existingSubscription.DiscordChannel = newSubscription.DiscordChannel;
+                    existingSubscription.DiscordRole = newSubscription.DiscordRole;
+                    existingSubscription.Message = newSubscription.Message;
+                    await _work.SubscriptionRepository.UpdateAsync(existingSubscription);
+                }
+                else
+                {
+                    await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
+                }
+
+                StreamSubscription streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
                 monitor.AddChannel(user);
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);

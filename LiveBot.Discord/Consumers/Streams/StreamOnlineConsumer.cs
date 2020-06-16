@@ -68,7 +68,7 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 while (channel == null)
                 {
-                    if (channelCheckCount >= 12)
+                    if (channelCheckCount >= 12) // Ends up being 60 seconds
                     {
                         var errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
                         Log.Error(errorMessage);
