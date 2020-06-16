@@ -62,21 +62,6 @@ namespace LiveBot.Discord.Consumers.Streams
                 var discordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordRole);
                 var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
 
-                Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
-                    i.User_SourceID == streamSubscription.User.SourceID &&
-                    i.Stream_SourceID == stream.Id &&
-                    i.Stream_StartTime == stream.StartTime &&
-                    i.DiscordGuild_DiscordId == streamSubscription.DiscordGuild.DiscordId &&
-                    i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId &&
-                    i.Game_SourceID == game.Id
-                );
-
-                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                    i.User_SourceID == streamSubscription.User.SourceID &&
-                    i.DiscordGuild_DiscordId == streamSubscription.DiscordGuild.DiscordId &&
-                    i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId
-                );
-
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
                 int channelCheckCount = 0;
@@ -128,6 +113,21 @@ namespace LiveBot.Discord.Consumers.Streams
                 streamNotification.DiscordRole_Name = discordRole?.Name;
 
 
+
+                Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
+                    i.User_SourceID == user.Id &&
+                    i.Stream_SourceID == stream.Id &&
+                    i.Stream_StartTime == stream.StartTime &&
+                    i.DiscordGuild_DiscordId == guild.Id &&
+                    i.DiscordChannel_DiscordId == channel.Id &&
+                    i.Game_SourceID == game.Id
+                );
+
+                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
+                    i.User_SourceID == user.Id &&
+                    i.DiscordGuild_DiscordId == guild.Id &&
+                    i.DiscordChannel_DiscordId == channel.Id
+                );
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
                 previousNotifications = previousNotifications.Where(i =>
