@@ -78,8 +78,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 );
 
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
-                var shard = _client.GetShardFor(guild);
-                SocketTextChannel channel = null;
+                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
                 int channelCheckCount = 0;
 
                 while (channel == null)
@@ -98,37 +97,35 @@ namespace LiveBot.Discord.Consumers.Streams
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
-                StreamNotification streamNotification = new StreamNotification
-                {
-                    ServiceType = stream.ServiceType,
-                    Success = false,
-                    Message = notificationMessage,
+                StreamNotification streamNotification = new StreamNotification();
+                streamNotification.ServiceType = stream.ServiceType;
+                streamNotification.Success = false;
+                streamNotification.Message = notificationMessage;
 
-                    User_SourceID = streamUser.SourceID,
-                    User_Username = streamUser.Username,
-                    User_DisplayName = streamUser.DisplayName,
-                    User_AvatarURL = streamUser.AvatarURL,
-                    User_ProfileURL = streamUser.ProfileURL,
+                streamNotification.User_SourceID = streamUser.SourceID;
+                streamNotification.User_Username = streamUser.Username;
+                streamNotification.User_DisplayName = streamUser.DisplayName;
+                streamNotification.User_AvatarURL = streamUser.AvatarURL;
+                streamNotification.User_ProfileURL = streamUser.ProfileURL;
 
-                    Stream_SourceID = stream.Id,
-                    Stream_Title = stream.Title,
-                    Stream_StartTime = stream.StartTime,
-                    Stream_ThumbnailURL = stream.ThumbnailURL,
-                    Stream_StreamURL = stream.StreamURL,
+                streamNotification.Stream_SourceID = stream.Id;
+                streamNotification.Stream_Title = stream.Title;
+                streamNotification.Stream_StartTime = stream.StartTime;
+                streamNotification.Stream_ThumbnailURL = stream.ThumbnailURL;
+                streamNotification.Stream_StreamURL = stream.StreamURL;
 
-                    Game_SourceID = streamGame?.SourceId,
-                    Game_Name = streamGame?.Name,
-                    Game_ThumbnailURL = streamGame?.ThumbnailURL,
+                streamNotification.Game_SourceID = streamGame?.SourceId;
+                streamNotification.Game_Name = streamGame?.Name;
+                streamNotification.Game_ThumbnailURL = streamGame?.ThumbnailURL;
 
-                    DiscordGuild_DiscordId = discordGuild.DiscordId,
-                    DiscordGuild_Name = discordGuild.Name,
+                streamNotification.DiscordGuild_DiscordId = discordGuild.DiscordId;
+                streamNotification.DiscordGuild_Name = discordGuild.Name;
 
-                    DiscordChannel_DiscordId = discordChannel.DiscordId,
-                    DiscordChannel_Name = discordChannel.Name,
+                streamNotification.DiscordChannel_DiscordId = discordChannel.DiscordId;
+                streamNotification.DiscordChannel_Name = discordChannel.Name;
 
-                    DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId,
-                    DiscordRole_Name = discordRole?.Name
-                };
+                streamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
+                streamNotification.DiscordRole_Name = discordRole?.Name;
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
                 previousNotifications = previousNotifications.Where(i =>
