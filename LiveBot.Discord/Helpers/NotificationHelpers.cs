@@ -45,7 +45,7 @@ namespace LiveBot.Discord.Helpers
                 .Replace("{Username}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(tempGame.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{URL}", EscapeSpecialDiscordCharacters(stream.StreamURL), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{URL}", stream.StreamURL, ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Role}", RoleMention, ignoreCase: true, culture: CultureInfo.CurrentCulture);
         }
 
