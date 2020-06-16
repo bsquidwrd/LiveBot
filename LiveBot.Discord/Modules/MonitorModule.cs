@@ -112,7 +112,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             }
             else
             {
-                Log.Debug("Missing some permissions");
                 permissionsResult = $"Missing Permissions: {string.Join(", ", missingPermissions)}";
             }
             await ReplyAsync($"{Context.Message.Author.Mention}, {permissionsResult}");
