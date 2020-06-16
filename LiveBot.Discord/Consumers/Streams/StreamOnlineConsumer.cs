@@ -34,22 +34,24 @@ namespace LiveBot.Discord.Consumers.Streams
         {
             ILiveBotStream stream = context.Message.Stream;
             ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
+            ILiveBotUser user = await monitor.GetUser(userId: stream.UserId);
+            ILiveBotGame game = await monitor.GetGame(gameId: stream.GameId);
 
             if (monitor == null)
                 return;
 
-            var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == stream.User.Id);
+            var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
             var streamGame = new StreamGame
             {
                 ServiceType = stream.ServiceType,
-                SourceId = stream.Game.Id,
-                Name = stream.Game.Name,
-                ThumbnailURL = stream.Game.ThumbnailURL
+                SourceId = game.Id,
+                Name = game.Name,
+                ThumbnailURL = game.ThumbnailURL
             };
-            await _work.GameRepository.AddOrUpdateAsync(streamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.Game.Id);
-            streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.Game.Id);
+            await _work.GameRepository.AddOrUpdateAsync(streamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
+            streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
 
             if (streamSubscriptions.Count() == 0)
                 return;
@@ -65,7 +67,8 @@ namespace LiveBot.Discord.Consumers.Streams
                     i.Stream_SourceID == stream.Id &&
                     i.Stream_StartTime == stream.StartTime &&
                     i.DiscordGuild_DiscordId == streamSubscription.DiscordGuild.DiscordId &&
-                    i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId
+                    i.DiscordChannel_DiscordId == streamSubscription.DiscordChannel.DiscordId &&
+                    i.Game_SourceID == game.Id
                 );
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>

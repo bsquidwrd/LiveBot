@@ -83,10 +83,17 @@ namespace LiveBot.Watcher.Twitch
             API = new TwitchAPI(rateLimiter: rateLimiter);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
+            Monitor.OnServiceTick += Monitor_OnServiceTick;
             Monitor.OnServiceStarted += Monitor_OnServiceStarted;
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
             Monitor.OnStreamOffline += Monitor_OnStreamOffline;
             Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
+
+        }
+
+        private void Monitor_OnServiceTick(object sender, OnServiceTickArgs e)
+        {
+            Log.Debug("Monitor_OnServiceTick was called");
         }
 
         #region Events
@@ -99,20 +106,19 @@ namespace LiveBot.Watcher.Twitch
 
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
-            ILiveBotStream stream = await GetStream(e.Stream);
-            //await _PublishUpdateUser(stream.User);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamOnline(stream);
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
-            ILiveBotStream stream = await GetStream(e.Stream);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamOffline(stream);
         }
 
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
-            ILiveBotStream stream = await GetStream(e.Stream);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamOffline(stream);
         }
 
@@ -284,13 +290,6 @@ namespace LiveBot.Watcher.Twitch
 
         #region Misc Functions
 
-        public async Task<ILiveBotStream> GetStream(Stream stream)
-        {
-            ILiveBotUser liveBotUser = await GetUser(userId: stream.UserId);
-            ILiveBotGame liveBotGame = await GetGame(gameId: stream.GameId);
-            return new TwitchStream(BaseURL, ServiceType, stream, liveBotUser, liveBotGame);
-        }
-
         private static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize = 30)
         {
             for (int i = 0; i < locations.Count; i += nSize)
@@ -312,7 +311,10 @@ namespace LiveBot.Watcher.Twitch
             await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
             AccessToken = newAuth.AccessToken;
 
-            TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(refreshResponse.ExpiresIn);
+            var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
+            Log.Debug($"Expiration time: {ExpirationSeconds}");
+
+            TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
             // Trigger it 5 minutes before expiration time to be safe
             SetupAuthTimer(refreshAuthTimeSpan.Subtract(TimeSpan.FromMinutes(5)));
         }
