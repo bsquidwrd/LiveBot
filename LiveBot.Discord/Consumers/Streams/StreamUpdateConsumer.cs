@@ -117,84 +117,51 @@ namespace LiveBot.Discord.Consumers.Streams
 
                     if (createNewNotification)
                     {
-                        if (stream.Id == "23397860")
-                        {
-                            string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
+                        string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
 
-                            StreamNotification newStreamNotification = new StreamNotification();
-                            newStreamNotification.ServiceType = previousStreamNotification.ServiceType;
-                            newStreamNotification.Success = true;
-                            newStreamNotification.Message = notificationMessage;
+                        StreamNotification newStreamNotification = new StreamNotification();
+                        newStreamNotification.ServiceType = previousStreamNotification.ServiceType;
+                        newStreamNotification.Success = true;
+                        newStreamNotification.Message = notificationMessage;
 
-                            newStreamNotification.User_SourceID = streamUser.SourceID;
-                            newStreamNotification.User_Username = streamUser.Username;
-                            newStreamNotification.User_DisplayName = streamUser.DisplayName;
-                            newStreamNotification.User_AvatarURL = streamUser.AvatarURL;
-                            newStreamNotification.User_ProfileURL = streamUser.ProfileURL;
+                        newStreamNotification.User_SourceID = streamUser.SourceID;
+                        newStreamNotification.User_Username = streamUser.Username;
+                        newStreamNotification.User_DisplayName = streamUser.DisplayName;
+                        newStreamNotification.User_AvatarURL = streamUser.AvatarURL;
+                        newStreamNotification.User_ProfileURL = streamUser.ProfileURL;
 
-                            newStreamNotification.Stream_SourceID = stream.Id;
-                            newStreamNotification.Stream_Title = stream.Title;
-                            newStreamNotification.Stream_StartTime = stream.StartTime;
-                            newStreamNotification.Stream_ThumbnailURL = stream.ThumbnailURL;
-                            newStreamNotification.Stream_StreamURL = stream.StreamURL;
+                        newStreamNotification.Stream_SourceID = stream.Id;
+                        newStreamNotification.Stream_Title = stream.Title;
+                        newStreamNotification.Stream_StartTime = stream.StartTime;
+                        newStreamNotification.Stream_ThumbnailURL = stream.ThumbnailURL;
+                        newStreamNotification.Stream_StreamURL = stream.StreamURL;
 
-                            newStreamNotification.Game_SourceID = streamGame?.SourceId;
-                            newStreamNotification.Game_Name = streamGame?.Name;
-                            newStreamNotification.Game_ThumbnailURL = streamGame?.ThumbnailURL;
+                        newStreamNotification.Game_SourceID = streamGame?.SourceId;
+                        newStreamNotification.Game_Name = streamGame?.Name;
+                        newStreamNotification.Game_ThumbnailURL = streamGame?.ThumbnailURL;
 
-                            newStreamNotification.DiscordGuild_DiscordId = previousStreamNotification.DiscordGuild_DiscordId;
-                            newStreamNotification.DiscordGuild_Name = previousStreamNotification.DiscordGuild_Name;
+                        newStreamNotification.DiscordGuild_DiscordId = previousStreamNotification.DiscordGuild_DiscordId;
+                        newStreamNotification.DiscordGuild_Name = previousStreamNotification.DiscordGuild_Name;
 
-                            newStreamNotification.DiscordChannel_DiscordId = previousStreamNotification.DiscordChannel_DiscordId;
-                            newStreamNotification.DiscordChannel_Name = previousStreamNotification.DiscordChannel_Name;
+                        newStreamNotification.DiscordChannel_DiscordId = previousStreamNotification.DiscordChannel_DiscordId;
+                        newStreamNotification.DiscordChannel_Name = previousStreamNotification.DiscordChannel_Name;
 
-                            newStreamNotification.DiscordRole_DiscordId = previousStreamNotification.DiscordRole_DiscordId;
-                            newStreamNotification.DiscordRole_Name = previousStreamNotification.DiscordRole_Name;
+                        newStreamNotification.DiscordRole_DiscordId = previousStreamNotification.DiscordRole_DiscordId;
+                        newStreamNotification.DiscordRole_Name = previousStreamNotification.DiscordRole_Name;
 
-                            newStreamNotification.DiscordMessage_DiscordId = previousStreamNotification.DiscordMessage_DiscordId;
+                        newStreamNotification.DiscordMessage_DiscordId = previousStreamNotification.DiscordMessage_DiscordId;
 
-                            Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
-                                i.User_SourceID == newStreamNotification.User_SourceID &&
-                                i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
-                                i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
-                                i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
-                                i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
-                                i.Game_SourceID == newStreamNotification.Game_SourceID &&
-                                i.Stream_Title == newStreamNotification.Stream_Title
-                            );
+                        Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
+                            i.User_SourceID == newStreamNotification.User_SourceID &&
+                            i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
+                            i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
+                            i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
+                            i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
+                            i.Game_SourceID == newStreamNotification.Game_SourceID &&
+                            i.Stream_Title == newStreamNotification.Stream_Title
+                        );
 
-                            await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
-                            var notification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
-
-                            var guild = _client.GetGuild(notification.DiscordGuild_DiscordId);
-                            var channel = (SocketTextChannel)guild.GetChannel(notification.DiscordChannel_DiscordId);
-                            try
-                            {
-                                var message = (RestUserMessage)await channel.GetMessageAsync((ulong)notification.DiscordMessage_DiscordId);
-                                if (message == null)
-                                    continue;
-                                if (message.Author != guild.CurrentUser)
-                                    continue;
-
-                                var messageEmbed = message.Embeds.FirstOrDefault();
-                                if (messageEmbed == null)
-                                    continue;
-
-                                var oldTitle = messageEmbed.Description;
-                                var oldGame = messageEmbed.Fields.Where(i => i.Name == "Game").FirstOrDefault();
-                                var oldStream = messageEmbed.Fields.Where(i => i.Name == "Stream").FirstOrDefault();
-
-                                if (oldTitle == null || oldGame.Value == null || oldStream.Value == null)
-                                    continue;
-                                if (oldTitle == notification.Stream_Title && oldGame.Value == notification.Game_Name && oldStream.Value == notification.Stream_StreamURL)
-                                    continue;
-
-                                var newEmbed = NotificationHelpers.GetStreamEmbed(stream, user, game);
-
-                                await message.ModifyAsync(i => { i.Content = notificationMessage; i.Embed = newEmbed; });
-                            }
-                            catch { }
-                        }
+                        await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
                     }
 
                     continue;
