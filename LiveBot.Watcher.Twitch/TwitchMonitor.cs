@@ -83,7 +83,7 @@ namespace LiveBot.Watcher.Twitch
             API = new TwitchAPI(rateLimiter: rateLimiter);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
-            Monitor.OnServiceTick += Monitor_OnServiceTick;
+            //Monitor.OnServiceTick += Monitor_OnServiceTick;
             Monitor.OnServiceStarted += Monitor_OnServiceStarted;
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
             Monitor.OnStreamOffline += Monitor_OnStreamOffline;
