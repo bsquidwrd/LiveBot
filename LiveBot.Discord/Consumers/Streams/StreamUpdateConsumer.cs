@@ -41,8 +41,14 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 foreach (StreamSubscription streamSubscription in streamSubscriptions)
                 {
-                    var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
-                    var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordChannel);
+                    var discordGuild = streamSubscription.DiscordGuild;
+                    var discordChannel = streamSubscription.DiscordChannel;
+
+                    if (discordGuild == null || discordChannel == null)
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        return;
+                    }
 
                     Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
                         i.User_SourceID == streamUser.SourceID &&
@@ -71,7 +77,8 @@ namespace LiveBot.Discord.Consumers.Streams
             }
             catch (Exception e)
             {
-                Log.Error($"Error running StreamUpdateConsumer\n{e}");
+                Log.Error($"Error running StreamUpdateConsumer\n{streamUser.SourceID} {streamUser.Username} {""}\n{e}");
+                await Task.Delay(1);
             }
         }
     }

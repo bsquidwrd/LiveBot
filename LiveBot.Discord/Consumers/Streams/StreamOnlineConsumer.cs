@@ -73,6 +73,7 @@ namespace LiveBot.Discord.Consumers.Streams
                     {
                         var errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
                         Log.Error(errorMessage);
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                         throw new Exception(errorMessage);
                     }
                     channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
@@ -159,7 +160,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 {
                     Log.Error($"Error sending notification for {streamNotification.Id} {streamNotification.ServiceType} {streamNotification.User_Username} {streamNotification.DiscordGuild_DiscordId} {streamNotification.DiscordChannel_DiscordId} {streamNotification.DiscordRole_DiscordId} {streamNotification.Message}\n{e}");
                     // You lack permissions to perform that action
-                    if (e.DiscordCode == 50013)
+                    if (e.DiscordCode == 50013 || e.DiscordCode == 50001)
                     {
                         // I'm tired of seeing errors for Missing Permissions
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
