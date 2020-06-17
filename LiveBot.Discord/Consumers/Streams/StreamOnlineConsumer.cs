@@ -147,7 +147,7 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 // If the current notification was marked as a success, end processing
                 if (streamNotification.Success == true)
-                    return;
+                    continue;
 
                 try
                 {
