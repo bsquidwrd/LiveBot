@@ -4,7 +4,6 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,50 +34,42 @@ namespace LiveBot.Discord.Consumers.Streams
             if (streamSubscriptions.Count() == 0)
                 return;
 
-            try
+            List<StreamSubscription> unsentSubscriptions = new List<StreamSubscription>();
+
+            foreach (StreamSubscription streamSubscription in streamSubscriptions)
             {
-                List<StreamSubscription> unsentSubscriptions = new List<StreamSubscription>();
+                var discordGuild = streamSubscription.DiscordGuild;
+                var discordChannel = streamSubscription.DiscordChannel;
 
-                foreach (StreamSubscription streamSubscription in streamSubscriptions)
+                if (discordGuild == null || discordChannel == null)
                 {
-                    var discordGuild = streamSubscription.DiscordGuild;
-                    var discordChannel = streamSubscription.DiscordChannel;
-
-                    if (discordGuild == null || discordChannel == null)
-                    {
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                        return;
-                    }
-
-                    Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                        i.User_SourceID == streamUser.SourceID &&
-                        i.DiscordGuild_DiscordId == discordGuild.DiscordId
-                    );
-
-                    var previousStreamNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-
-                    var previousNotifications = previousStreamNotifications.Where(i =>
-                        i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
-                        i.Stream_SourceID == stream.Id &&
-                        i.Stream_StartTime == stream.StartTime &&
-                        i.Success == true
-                    );
-
-                    if (previousNotifications.Count() > 0)
-                        continue;
-
-                    unsentSubscriptions.Add(streamSubscription);
+                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                    return;
                 }
 
-                if (unsentSubscriptions.Count() > 0)
-                {
-                    await _bus.Publish<IStreamOnline>(new { Stream = stream });
-                }
+                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
+                    i.User_SourceID == streamUser.SourceID &&
+                    i.DiscordGuild_DiscordId == discordGuild.DiscordId
+                );
+
+                var previousStreamNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
+
+                var previousNotifications = previousStreamNotifications.Where(i =>
+                    i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
+                    i.Stream_SourceID == stream.Id &&
+                    i.Stream_StartTime == stream.StartTime &&
+                    i.Success == true
+                );
+
+                if (previousNotifications.Count() > 0)
+                    continue;
+
+                unsentSubscriptions.Add(streamSubscription);
             }
-            catch (Exception e)
+
+            if (unsentSubscriptions.Count() > 0)
             {
-                Log.Error($"Error running StreamUpdateConsumer\n{streamUser.SourceID} {streamUser.Username} {""}\n{e}");
-                await Task.Delay(1);
+                await _bus.Publish<IStreamOnline>(new { Stream = stream });
             }
         }
     }
