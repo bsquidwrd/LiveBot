@@ -15,4 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file LiveBot.API/Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build . --file LiveBot.API/Dockerfile --tag bsquidwrd/livebot:$(GITHUB_SHA)
+    - name: Login to Docker
+      run: echo ${{ secrets.DOCKER_ACCESS_TOKEN }} | docker login --username ${{ secrets.DOCKER_ACCESS_USERNAME }} --password-stdin
+    - name: Push to Docker
+      run: docker image push bsquidwrd/livebot:$(GITHUB_SHA)
