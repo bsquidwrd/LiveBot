@@ -48,9 +48,12 @@ namespace LiveBot.Discord.Consumers.Streams
                     var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
                     var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordChannel);
 
-                    var previousNotifications = await _work.NotificationRepository.FindAsync(i =>
+                    var previousStreamNotifications = await _work.NotificationRepository.FindAsync(i =>
                         i.ServiceType == stream.ServiceType &&
-                        i.User_SourceID == streamUser.SourceID &&
+                        i.User_SourceID == streamUser.SourceID
+                    );
+
+                    var previousNotifications = previousStreamNotifications.Where(i =>
                         i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
                         i.DiscordChannel_DiscordId == discordChannel.DiscordId &&
                         i.Stream_SourceID == stream.Id &&
