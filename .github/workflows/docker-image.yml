@@ -13,20 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Build and publish Docker Image to GitHub Packages Registry
+    - name: Build and Publish Tag Docker image
       uses: VaultVulp/gp-docker-action@1.1.6
       with:
-        # GitHub token to push Docker image to GitHub Packages
-        github-token: ${{ github.token }}
-        # Docker Image name
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         image-name: livebot
-        # Docker Image tag
-        image-tag: $(GITHUB_SHA)
-        # Extract git-tag from repository
         extract-git-tag: true
-        # Dockerfile name
-        dockerfile: LiveBot.API/Dockerfile
-        # Path to build context
-        build-context: .
-        # Pull the image before buiding it
-        pull-image: false
