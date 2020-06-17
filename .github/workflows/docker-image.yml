@@ -13,10 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Login to GitHub
-      run: ${{ github.token }} | docker login docker.pkg.github.com -u ${{ github.repository_owner }} --password-stdin
-    - name: Build the Docker image
-      run: docker build . --file LiveBot.API/Dockerfile --tag docker.pkg.github.com/${{ github.repository }}/livebot:${{ github.sha }}
-    - name: Push Docker Image
-      run: docker push docker.pkg.github.com/${{ github.repository }}/livebot:${{ github.sha }}
+    - name: Build and publish Docker Image to GitHub Packages Registry
+      uses: VaultVulp/gp-docker-action@1.1.6
+      with:
+        # GitHub token to push Docker image to GitHub Packages
+        github-token: ${{ github.token }}
+        # Docker Image name
+        image-name: livebot
+        # Docker Image tag
+        image-tag: ${{ github.sha }}
+        # Extract git-tag from repository
+        extract-git-tag: true
+        # Dockerfile name
+        dockerfile: LiveBot.API/Dockerfile
+        # Path to build context
+        build-context: .
+        # Pull the image before buiding it
+        pull-image: false
