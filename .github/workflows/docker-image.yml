@@ -14,9 +14,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Login to GitHub
+      run: ${{ github.token }} | docker login docker.pkg.github.com -u ${{ github.repository_owner }} --password-stdin
     - name: Build the Docker image
-      run: docker build . --file LiveBot.API/Dockerfile --tag bsquidwrd/livebot:$(GITHUB_SHA)
-    - name: Login to Docker
-      run: echo ${{ secrets.DOCKER_ACCESS_TOKEN }} | docker login --username ${{ secrets.DOCKER_ACCESS_USERNAME }} --password-stdin
-    - name: Push to Docker
-      run: docker image push bsquidwrd/livebot:$(GITHUB_SHA)
+      run: docker build . --file LiveBot.API/Dockerfile --tag docker.pkg.github.com/${{ github.repository }}/livebot:${{ github.sha }}
+    - name: Push Docker Image
+      run: docker push docker.pkg.github.com/${{ github.repository }}/livebot:${{ github.sha }}
