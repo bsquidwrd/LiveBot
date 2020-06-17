@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
@@ -154,9 +155,15 @@ namespace LiveBot.Discord.Consumers.Streams
                     streamNotification.Success = true;
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
                 }
-                catch (Exception e)
+                catch (HttpException e)
                 {
                     Log.Error($"Error sending notification for {streamNotification.Id} {streamNotification.ServiceType} {streamNotification.User_Username} {streamNotification.DiscordGuild_DiscordId} {streamNotification.DiscordChannel_DiscordId} {streamNotification.DiscordRole_DiscordId} {streamNotification.Message}\n{e}");
+                    // You lack permissions to perform that action
+                    if (e.DiscordCode == 50013)
+                    {
+                        // I'm tired of seeing errors for Missing Permissions
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                    }
                 }
             }
         }
