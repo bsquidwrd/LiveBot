@@ -71,7 +71,7 @@ namespace LiveBot.Discord.Consumers.Streams
             }
             catch (Exception e)
             {
-                Log.Error($"{e}");
+                Log.Error($"Error checking for unsent subscriptions\n{e}");
             }
         }
     }
