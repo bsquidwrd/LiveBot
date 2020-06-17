@@ -12,7 +12,13 @@ namespace LiveBot.Watcher.Twitch.Models
     {
         public TwitchGame(string baseURL, ServiceEnum serviceType, Game game = null) : base(baseURL, serviceType)
         {
-            if (string.IsNullOrEmpty(game.Id))
+            if (game == null)
+            {
+                Id = "0";
+                Name = "[Not Set]";
+                ThumbnailURL = "";
+            }
+            else if (string.IsNullOrEmpty(game.Id))
             {
                 Id = "0";
                 Name = "[Not Set]";
