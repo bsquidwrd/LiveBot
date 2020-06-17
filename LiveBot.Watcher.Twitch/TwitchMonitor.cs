@@ -92,18 +92,17 @@ namespace LiveBot.Watcher.Twitch
             Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
         }
 
+        #region Events
+
         private void Monitor_OnServiceTick(object sender, OnServiceTickArgs e)
         {
             Log.Debug("Monitor_OnServiceTick was called");
         }
 
-        #region Events
-
         public void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
             SetupUserTimer();
-            //await _PublishTwitchUpdateUsers();
         }
 
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
@@ -431,7 +430,6 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            //var cachedGame = _gameCache.Where(i => i.Id == gameId).FirstOrDefault();
             var cachedGame = _gameCache.ToList().Where(i => i.Id == gameId).FirstOrDefault();
             if (cachedGame != null)
             {
@@ -456,7 +454,6 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUserById(string userId)
         {
-            //var cachedUser = _userCache.Where(i => i.Id == userId).FirstOrDefault();
             var cachedUser = _userCache.ToList().Where(i => i.Id == userId).FirstOrDefault();
             if (cachedUser != null)
             {
@@ -472,7 +469,6 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
-            //var cachedUser = _userCache.Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
             var cachedUser = _userCache.ToList().Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
             if (cachedUser != null)
                 return cachedUser;
