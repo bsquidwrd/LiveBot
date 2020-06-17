@@ -21,7 +21,7 @@ jobs:
         # Docker Image name
         image-name: livebot
         # Docker Image tag
-        image-tag: ${{ github.sha }}
+        image-tag: $(GITHUB_SHA)
         # Extract git-tag from repository
         extract-git-tag: true
         # Dockerfile name
