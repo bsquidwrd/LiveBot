@@ -106,7 +106,7 @@ namespace LiveBot.Discord
         {
             Log.Information($"Shard Number {shard.ShardId} is connected and ready!");
             shard.SetStatusAsync(UserStatus.Online);
-            //shard.SetGameAsync(name: $"@{shard.CurrentUser.Username} help", type: ActivityType.Playing);
+            shard.SetGameAsync(name: "Your Stream!", type: ActivityType.Watching);
             return Task.CompletedTask;
         }
 
