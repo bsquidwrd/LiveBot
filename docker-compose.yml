@@ -1,7 +1,7 @@
 version: '3'
 services:
     bot:
-        image: bsquidwrd/livebot:latest
+        image: docker.pkg.github.com/bsquidwrd/livebot/livebot:2.0.0
         volumes:
             - logs:/app/logs/
         environment:
@@ -22,7 +22,6 @@ services:
         ports:
             - 80:80
             - 443:443
-        network_mode: "overlay"
       
 volumes:
   logs:
