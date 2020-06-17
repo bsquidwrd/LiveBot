@@ -34,6 +34,12 @@ namespace LiveBot.Core.Repository.Interfaces
         /// <summary>Finds all entities matching the provided predicate. Allows for paging of the results. Also allows Ordering of the results.</summary>
         /// <param name="predicate">The filter used to find the entities.</param>
         /// <param name="order">The numeric property to use for the ordering.</param>
+        /// <returns>The <see cref="Task"/>.</returns>
+        Task<IEnumerable<TModel>> FindInOrderAsync(Expression<Func<TModel, bool>> predicate, Expression<Func<TModel, long>> order);
+
+        /// <summary>Finds all entities matching the provided predicate. Allows for paging of the results. Also allows Ordering of the results.</summary>
+        /// <param name="predicate">The filter used to find the entities.</param>
+        /// <param name="order">The numeric property to use for the ordering.</param>
         /// <param name="page">The page you want returned.</param>
         /// <param name="pageSize">The size of each page. <seealso cref="GetPageCountAsync"/></param>
         /// <returns>The <see cref="Task"/>.</returns>

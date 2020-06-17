@@ -89,6 +89,16 @@ namespace LiveBot.Repository
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        public virtual async Task<IEnumerable<TEntity>> FindInOrderAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, long>> order)
+        {
+            return await GetQueryable(predicate)
+                .OrderByDescending(order)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
         public virtual async Task<IEnumerable<TEntity>> FindInOrderAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, long>> order, int page, int pageSize)
         {
             return await GetQueryable(predicate)
