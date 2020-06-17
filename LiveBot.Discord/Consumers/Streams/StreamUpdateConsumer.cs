@@ -44,7 +44,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 if (discordGuild == null || discordChannel == null)
                 {
                     await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                    return;
+                    continue;
                 }
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
