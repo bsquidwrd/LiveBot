@@ -28,6 +28,5 @@ namespace LiveBot.Core.Repository.Static
         public static string StreamOnlineQueueName = "streamonline";
         public static string StreamUpdateQueueName = "streamupdate";
         public static string StreamOfflineQueueName = "streamoffline";
-        public static string UpdateUsersQueueName = "updateusers";
     }
 }

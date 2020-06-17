@@ -62,6 +62,7 @@ namespace LiveBot.Watcher.Twitch
         }
 
         public Timer RefreshAuthTimer;
+        public Timer RefreshUsersTimer;
 
         // My caches
         //private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
@@ -101,6 +102,7 @@ namespace LiveBot.Watcher.Twitch
         public void Monitor_OnServiceStarted(object sender, OnServiceStartedArgs e)
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
+            SetupUserTimer();
             //await _PublishTwitchUpdateUsers();
         }
 
@@ -342,20 +344,38 @@ namespace LiveBot.Watcher.Twitch
                     foreach (User user in users.Users)
                     {
                         TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
-                        StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
-                        streamUser.Username = twitchUser.Username;
-                        streamUser.DisplayName = twitchUser.DisplayName;
-                        streamUser.AvatarURL = twitchUser.AvatarURL;
-                        streamUser.ProfileURL = twitchUser.ProfileURL;
+                        try
+                        {
+                            StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
+                            streamUser.Username = twitchUser.Username;
+                            streamUser.DisplayName = twitchUser.DisplayName;
+                            streamUser.AvatarURL = twitchUser.AvatarURL;
+                            streamUser.ProfileURL = twitchUser.ProfileURL;
 
-                        await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
+                            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error($"Error updating user {twitchUser.Username}: {e}");
+                        }
                     }
                 }
             }
             catch (Exception e)
             {
-                Log.Error($"{e}");
+                Log.Error($"Error updating users\n{e}");
             }
+        }
+
+        private void SetupUserTimer()
+        {
+            TimeSpan timeSpan = TimeSpan.FromMinutes(5);
+            RefreshUsersTimer = new Timer(timeSpan.TotalMilliseconds)
+            {
+                AutoReset = true
+            };
+            RefreshUsersTimer.Elapsed += async (sender, e) => await UpdateUsers();
+            RefreshUsersTimer.Start();
         }
 
         #endregion Misc Functions
@@ -395,20 +415,6 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e)
             {
                 Log.Error($"Error trying to publish StreamOffline:\n{e}");
-            }
-        }
-
-        public async Task _PublishTwitchUpdateUsers()
-        {
-            try
-            {
-                await _bus.Publish(new TwitchUpdateUsers { ServiceType = ServiceType });
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Error trying to publish TwitchUpdateUsers:\n{e}");
-                await Task.Delay(RetryDelay);
-                await _PublishTwitchUpdateUsers();
             }
         }
 
