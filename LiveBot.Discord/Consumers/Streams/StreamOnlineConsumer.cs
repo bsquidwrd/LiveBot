@@ -63,6 +63,12 @@ namespace LiveBot.Discord.Consumers.Streams
                 var discordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordRole);
                 var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
 
+                if (discordGuild == null || discordChannel == null)
+                {
+                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                    continue;
+                }
+
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
                 int channelCheckCount = 0;
@@ -73,7 +79,7 @@ namespace LiveBot.Discord.Consumers.Streams
                     {
                         var errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
                         Log.Error(errorMessage);
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id); // The Channel can't be found by Discord, so just delete the Subscription
                         throw new Exception(errorMessage);
                     }
                     channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
@@ -154,14 +160,21 @@ namespace LiveBot.Discord.Consumers.Streams
                     streamNotification.Success = true;
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
                 }
-                catch (HttpException e)
+                catch (Exception e)
                 {
-                    Log.Error($"Error sending notification for {streamNotification.Id} {streamNotification.ServiceType} {streamNotification.User_Username} {streamNotification.DiscordGuild_DiscordId} {streamNotification.DiscordChannel_DiscordId} {streamNotification.DiscordRole_DiscordId} {streamNotification.Message}\n{e}");
-                    // You lack permissions to perform that action
-                    if (e.DiscordCode == 50013 || e.DiscordCode == 50001)
+                    if (e is HttpException)
                     {
-                        // I'm tired of seeing errors for Missing Permissions
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        HttpException discordError = (HttpException)e;
+                        // You lack permissions to perform that action
+                        if (discordError.DiscordCode == 50013 || discordError.DiscordCode == 50001)
+                        {
+                            // I'm tired of seeing errors for Missing Permissions
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        Log.Error($"Error sending notification for {streamNotification.Id} {streamNotification.ServiceType} {streamNotification.User_Username} {streamNotification.DiscordGuild_DiscordId} {streamNotification.DiscordChannel_DiscordId} {streamNotification.DiscordRole_DiscordId} {streamNotification.Message}\n{e}");
                     }
                 }
             }
