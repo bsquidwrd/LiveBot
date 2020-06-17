@@ -8,6 +8,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers.Streams
@@ -48,10 +49,12 @@ namespace LiveBot.Discord.Consumers.Streams
                     var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
                     var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordChannel);
 
-                    var previousStreamNotifications = await _work.NotificationRepository.FindAsync(i =>
-                        i.ServiceType == stream.ServiceType &&
-                        i.User_SourceID == streamUser.SourceID
+                    Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
+                        i.User_SourceID == streamUser.SourceID &&
+                        i.DiscordGuild_DiscordId == discordGuild.DiscordId
                     );
+
+                    var previousStreamNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
 
                     var previousNotifications = previousStreamNotifications.Where(i =>
                         i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
