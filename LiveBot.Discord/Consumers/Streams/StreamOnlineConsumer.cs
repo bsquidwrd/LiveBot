@@ -59,15 +59,15 @@ namespace LiveBot.Discord.Consumers.Streams
 
             foreach (StreamSubscription streamSubscription in streamSubscriptions)
             {
-                var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordChannel);
-                var discordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordRole);
-                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i == streamSubscription.DiscordGuild);
-
-                if (discordGuild == null || discordChannel == null)
+                if (streamSubscription.DiscordGuild == null || streamSubscription.DiscordChannel == null)
                 {
                     await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     continue;
                 }
+
+                var discordChannel = streamSubscription.DiscordChannel;
+                var discordRole = streamSubscription.DiscordRole;
+                var discordGuild = streamSubscription.DiscordGuild;
 
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
@@ -114,8 +114,8 @@ namespace LiveBot.Discord.Consumers.Streams
                 newStreamNotification.DiscordGuild_DiscordId = discordGuild.DiscordId;
                 newStreamNotification.DiscordGuild_Name = discordGuild.Name;
 
-                newStreamNotification.DiscordChannel_DiscordId = channel == null ? 0 : channel.Id;
-                newStreamNotification.DiscordChannel_Name = channel?.Name;
+                newStreamNotification.DiscordChannel_DiscordId = discordChannel.DiscordId;
+                newStreamNotification.DiscordChannel_Name = discordChannel.Name;
 
                 newStreamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
                 newStreamNotification.DiscordRole_Name = discordRole?.Name;
