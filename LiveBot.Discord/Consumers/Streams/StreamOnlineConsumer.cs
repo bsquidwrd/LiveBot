@@ -41,18 +41,40 @@ namespace LiveBot.Discord.Consumers.Streams
             if (monitor == null)
                 return;
 
+            Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
+            var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
-            var streamGame = new StreamGame
+            StreamGame streamGame;
+            if (game.Id == "0" || string.IsNullOrEmpty(game.Id))
             {
-                ServiceType = stream.ServiceType,
-                SourceId = game.Id,
-                Name = game.Name,
-                ThumbnailURL = game.ThumbnailURL
-            };
-            await _work.GameRepository.AddOrUpdateAsync(streamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
-            streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
+                if (templateGame == null)
+                {
+                    StreamGame newStreamGame = new StreamGame
+                    {
+                        ServiceType = stream.ServiceType,
+                        SourceId = "0",
+                        Name = "[Not Set]",
+                        ThumbnailURL = ""
+                    };
+                    await _work.GameRepository.AddOrUpdateAsync(newStreamGame, templateGamePredicate);
+                    templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
+                }
+                streamGame = templateGame;
+            }
+            else
+            {
+                StreamGame newStreamGame = new StreamGame
+                {
+                    ServiceType = stream.ServiceType,
+                    SourceId = game.Id,
+                    Name = game.Name,
+                    ThumbnailURL = game.ThumbnailURL
+                };
+                await _work.GameRepository.AddOrUpdateAsync(newStreamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
+                streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
+            }
 
             if (streamSubscriptions.Count() == 0)
                 return;
