@@ -68,6 +68,7 @@ namespace LiveBot.Watcher.Twitch
         //private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
         //private List<ILiveBotUser> _userCache = new List<ILiveBotUser>();
         private ConcurrentBag<ILiveBotGame> _gameCache = new ConcurrentBag<ILiveBotGame>();
+
         private ConcurrentBag<ILiveBotUser> _userCache = new ConcurrentBag<ILiveBotUser>();
 
         /// <summary>
@@ -89,7 +90,6 @@ namespace LiveBot.Watcher.Twitch
             Monitor.OnStreamOnline += Monitor_OnStreamOnline;
             Monitor.OnStreamOffline += Monitor_OnStreamOffline;
             Monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
-
         }
 
         private void Monitor_OnServiceTick(object sender, OnServiceTickArgs e)

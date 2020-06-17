@@ -114,8 +114,6 @@ namespace LiveBot.Discord.Consumers.Streams
                 newStreamNotification.DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId;
                 newStreamNotification.DiscordRole_Name = discordRole?.Name;
 
-
-
                 Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
                     i.User_SourceID == newStreamNotification.User_SourceID &&
                     i.Stream_SourceID == newStreamNotification.Stream_SourceID &&

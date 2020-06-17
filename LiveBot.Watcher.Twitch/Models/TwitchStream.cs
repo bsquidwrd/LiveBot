@@ -22,6 +22,7 @@ namespace LiveBot.Watcher.Twitch.Models
             ThumbnailURL = stream.ThumbnailUrl;
             StreamURL = $"{User.ProfileURL}";
         }
+
         public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream) : base(baseURL, serviceType)
         {
             UserId = stream.UserId;

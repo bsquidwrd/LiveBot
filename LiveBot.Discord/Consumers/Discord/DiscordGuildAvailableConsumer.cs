@@ -39,11 +39,12 @@ namespace LiveBot.Discord.Consumers.Discord
                 discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
                 #region Handle Channels
+
                 var dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
 
                 foreach (SocketGuildChannel channel in guild.TextChannels)
                 {
-                    var existingChannels = dbChannels.ToList().Where(i => i.DiscordId == channel.Id && i.Name == channel.Name );
+                    var existingChannels = dbChannels.ToList().Where(i => i.DiscordId == channel.Id && i.Name == channel.Name);
                     if (existingChannels.Count() > 0)
                         continue;
                     DiscordChannelUpdate channelUpdateContext = new DiscordChannelUpdate { GuildId = guild.Id, ChannelId = channel.Id, ChannelName = channel.Name };
@@ -63,6 +64,7 @@ namespace LiveBot.Discord.Consumers.Discord
                 #endregion Handle Channels
 
                 #region Handle Roles
+
                 var dbRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild == discordGuild);
 
                 foreach (SocketRole role in guild.Roles)
