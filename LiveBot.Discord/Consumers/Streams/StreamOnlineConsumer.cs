@@ -39,16 +39,11 @@ namespace LiveBot.Discord.Consumers.Streams
             if (monitor == null)
                 return;
 
+            if (stream.User == null || stream.Game == null || string.IsNullOrEmpty(stream.StreamURL))
+                stream = await monitor.GetStream(stream.UserId);
+
             ILiveBotUser user = stream.User;
-            if (user == null)
-                user = await monitor.GetUser(userId: stream.UserId);
-
-            if (string.IsNullOrEmpty(stream.StreamURL))
-                stream = await monitor.GetStream(user);
-
             ILiveBotGame game = stream.Game;
-            if (game == null)
-                game = await monitor.GetGame(gameId: stream.GameId);
 
             Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);

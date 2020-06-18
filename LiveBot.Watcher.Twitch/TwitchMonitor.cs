@@ -452,6 +452,17 @@ namespace LiveBot.Watcher.Twitch
         }
 
         /// <inheritdoc/>
+        public override async Task<ILiveBotStream> GetStream(string userId)
+        {
+            Stream stream = await API_GetStream(userId);
+            if (stream == null)
+                return null;
+            ILiveBotUser user = await GetUser(userId: userId);
+            ILiveBotGame game = await GetGame(stream.GameId);
+            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
+        }
+
+        /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUserById(string userId)
         {
             var cachedUser = _userCache.ToList().Where(i => i.Id == userId).FirstOrDefault();

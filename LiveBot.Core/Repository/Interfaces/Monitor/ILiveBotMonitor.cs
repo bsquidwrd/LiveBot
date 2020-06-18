@@ -35,7 +35,8 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public Task<ILiveBotUser> GetUserById(string userId);
 
         /// <summary>
-        /// Returns a <c>ILiveBotUser</c> object based on the given <paramref name="userId"/> or <paramref name="username"/>
+        /// Returns a <c>ILiveBotUser</c> object based on the given <paramref name="userId"/> or
+        /// <paramref name="username"/>
         /// </summary>
         /// <param name="username"></param>
         /// <param name="userId"></param>
@@ -48,6 +49,13 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="user"></param>
         /// <returns></returns>
         public Task<ILiveBotStream> GetStream(ILiveBotUser user);
+
+        /// <summary>
+        /// Returns a <c>ILiveBotStream</c> based on the given <paramref name="userId"/>
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public Task<ILiveBotStream> GetStream(string userId);
 
         /// <summary>
         /// Returns a <c>ILiveBotGame</c> based on the given <paramref name="gameId"/>
