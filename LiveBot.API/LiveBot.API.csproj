@@ -29,5 +29,10 @@
     <ProjectReference Include="..\LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Views\" />
+  </ItemGroup>
+
 
 </Project>
