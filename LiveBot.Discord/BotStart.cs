@@ -63,7 +63,7 @@ namespace LiveBot.Discord
 
             // Guild Events
             client.GuildAvailable += LiveBotEventHandles.GuildAvailable;
-            client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
+            //client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
             client.GuildUpdated += LiveBotEventHandles.GuildUpdated;
             client.JoinedGuild += LiveBotEventHandles.GuildAvailable;
             client.LeftGuild += LiveBotEventHandles.GuildLeave;
@@ -98,7 +98,8 @@ namespace LiveBot.Discord
         }
 
         /// <summary>
-        /// Discord Event Handler for when a <c>DiscordSocketClient</c> (aka a <paramref name="shard"/> in this instance) is ready
+        /// Discord Event Handler for when a <c>DiscordSocketClient</c> (aka a <paramref
+        /// name="shard"/> in this instance) is ready
         /// </summary>
         /// <param name="shard"></param>
         /// <returns></returns>
