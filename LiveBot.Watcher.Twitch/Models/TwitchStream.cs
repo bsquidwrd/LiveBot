@@ -26,10 +26,12 @@ namespace LiveBot.Watcher.Twitch.Models
         public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream) : base(baseURL, serviceType)
         {
             UserId = stream.UserId;
+            User = null;
             Id = stream.Id;
             Title = stream.Title;
             StartTime = stream.StartedAt;
             GameId = stream.GameId;
+            Game = null;
             ThumbnailURL = stream.ThumbnailUrl;
         }
     }

@@ -40,11 +40,10 @@ namespace LiveBot.Discord.Consumers.Streams
             if (user == null)
                 user = await monitor.GetUser(userId: stream.UserId);
 
-            if (stream.Game == null || string.IsNullOrEmpty(stream.StreamURL))
+            if (string.IsNullOrEmpty(stream.StreamURL))
                 stream = await monitor.GetStream(user);
 
             ILiveBotGame game = stream.Game;
-
             if (game == null)
                 game = await monitor.GetGame(gameId: stream.GameId);
 
