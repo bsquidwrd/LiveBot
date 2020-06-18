@@ -448,7 +448,7 @@ namespace LiveBot.Watcher.Twitch
             if (stream == null)
                 return null;
             ILiveBotGame game = await GetGame(stream.GameId);
-            return new TwitchStream(BaseURL, ServiceType, stream, user, game, user.ProfileURL);
+            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
 
         /// <inheritdoc/>
@@ -459,7 +459,7 @@ namespace LiveBot.Watcher.Twitch
                 return null;
             ILiveBotUser user = await GetUser(userId: userId);
             ILiveBotGame game = await GetGame(stream.GameId);
-            return new TwitchStream(BaseURL, ServiceType, stream, user, game, user.ProfileURL);
+            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
 
         /// <inheritdoc/>
