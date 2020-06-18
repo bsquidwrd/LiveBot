@@ -1,8 +1,10 @@
-﻿@{
+﻿@model DiscordStats
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <p>There are currently @Model.DiscordShardCount shards for the bot.</p>
+    <p>Currently in @Model.DiscordGuildCount guilds.</p>
+    <p>Total Stream Subscriptions: @Model.SubscriptionCount</p>
 </div>

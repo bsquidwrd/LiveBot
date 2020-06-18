@@ -1,22 +1,38 @@
-﻿using LiveBot.API.Models;
+﻿using Discord.WebSocket;
+using LiveBot.API.Models;
+using LiveBot.API.Models.Discord;
+using LiveBot.Core.Repository.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LiveBot.API.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly DiscordShardedClient _client;
+        private readonly IUnitOfWork _work;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, DiscordShardedClient client, IUnitOfWorkFactory factory)
         {
             _logger = logger;
+            _client = client;
+            _work = factory.Create();
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var subscriptions = await _work.SubscriptionRepository.GetAllAsync();
+            var model = new DiscordStats
+            {
+                DiscordShardCount = _client.Shards.Count,
+                DiscordGuildCount = _client.Guilds.Count,
+                SubscriptionCount = subscriptions.Count()
+            };
+            return View(model);
         }
 
         public IActionResult Privacy()
