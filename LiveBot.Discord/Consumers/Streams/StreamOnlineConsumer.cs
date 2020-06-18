@@ -35,11 +35,13 @@ namespace LiveBot.Discord.Consumers.Streams
         {
             ILiveBotStream stream = context.Message.Stream;
             ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
-            ILiveBotUser user = await monitor.GetUser(stream.UserId);
-            ILiveBotGame game = await monitor.GetGame(stream.GameId);
 
             if (monitor == null)
                 return;
+
+            stream = await monitor.GetStream(stream.UserId);
+            ILiveBotUser user = stream.User != null ? stream.User : await monitor.GetUser(stream.UserId);
+            ILiveBotGame game = stream.Game != null ? stream.Game : await monitor.GetGame(stream.GameId);
 
             Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);

@@ -10,7 +10,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchStream : BaseLiveBotStream
     {
-        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game, string streamUrl) : base(baseURL, serviceType)
+        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, ILiveBotUser user, ILiveBotGame game) : base(baseURL, serviceType)
         {
             UserId = user.Id;
             User = user;
@@ -20,10 +20,10 @@ namespace LiveBot.Watcher.Twitch.Models
             GameId = game.Id;
             Game = game;
             ThumbnailURL = stream.ThumbnailUrl;
-            StreamURL = streamUrl;
+            StreamURL = $"{User.ProfileURL}";
         }
 
-        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream, string streamUrl) : base(baseURL, serviceType)
+        public TwitchStream(string baseURL, ServiceEnum serviceType, Stream stream) : base(baseURL, serviceType)
         {
             UserId = stream.UserId;
             User = null;
@@ -33,7 +33,7 @@ namespace LiveBot.Watcher.Twitch.Models
             GameId = stream.GameId;
             Game = null;
             ThumbnailURL = stream.ThumbnailUrl;
-            StreamURL = streamUrl;
+            StreamURL = null;
         }
     }
 }

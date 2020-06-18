@@ -107,22 +107,19 @@ namespace LiveBot.Watcher.Twitch
 
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
         {
-            ILiveBotUser user = await GetUser(e.Stream.UserId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user.ProfileURL);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamOnline(stream);
         }
 
         public async void Monitor_OnStreamUpdate(object sender, OnStreamUpdateArgs e)
         {
-            ILiveBotUser user = await GetUser(e.Stream.UserId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user.ProfileURL);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamUpdate(stream);
         }
 
         public async void Monitor_OnStreamOffline(object sender, OnStreamOfflineArgs e)
         {
-            ILiveBotUser user = await GetUser(e.Stream.UserId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user.ProfileURL);
+            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream);
             await _PublishStreamOffline(stream);
         }
 
