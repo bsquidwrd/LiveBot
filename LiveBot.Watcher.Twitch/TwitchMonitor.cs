@@ -264,6 +264,8 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                if (Monitor.LiveStreams.ContainsKey(userId))
+                    return Monitor.LiveStreams[userId];
                 List<string> userIdList = new List<string> { userId };
                 GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: userIdList);
                 return streams.Streams.FirstOrDefault(i => i.UserId == userId);

@@ -30,15 +30,18 @@ namespace LiveBot.Discord.Consumers.Streams
 
         public async Task Consume(ConsumeContext<IStreamUpdate> context)
         {
-            ILiveBotStream stream = context.Message.Stream;
-            ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
+            ILiveBotStream messageStream = context.Message.Stream;
+            ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == messageStream.ServiceType).FirstOrDefault();
 
             if (monitor == null)
                 return;
 
-            stream = await monitor.GetStream(stream.UserId);
-            ILiveBotUser user = stream.User != null ? stream.User : await monitor.GetUser(stream.UserId);
-            ILiveBotGame game = stream.Game != null ? stream.Game : await monitor.GetGame(stream.GameId);
+            ILiveBotStream stream = await monitor.GetStream(messageStream.UserId);
+            if (stream == null)
+                return;
+
+            ILiveBotUser user = stream.User ?? await monitor.GetUser(stream.UserId);
+            ILiveBotGame game = stream.Game ?? await monitor.GetGame(stream.GameId);
 
             Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
