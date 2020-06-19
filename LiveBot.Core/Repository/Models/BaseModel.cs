@@ -11,7 +11,9 @@ namespace LiveBot.Core.Repository.Models
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
         public bool Deleted { get; set; }
 
-        /// <summary>Allows for the == operator to be used for equality.</summary>
+        /// <summary>
+        /// Allows for the == operator to be used for equality.
+        /// </summary>
         /// <param name="x">The left side of the operator.</param>
         /// <param name="y">The right side of the operator.</param>
         /// <returns>Whether or not both sides are equal.</returns>
@@ -30,7 +32,9 @@ namespace LiveBot.Core.Repository.Models
             return x.Equals(y);
         }
 
-        /// <summary>Allows for the != operator to be used for equality.</summary>
+        /// <summary>
+        /// Allows for the != operator to be used for equality.
+        /// </summary>
         /// <param name="x">The left side of the operator.</param>
         /// <param name="y">The right side of the operator.</param>
         /// <returns>Whether or not both sides are not equal.</returns>
@@ -39,7 +43,7 @@ namespace LiveBot.Core.Repository.Models
             return !(x == y);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             if (obj == null)
@@ -48,7 +52,7 @@ namespace LiveBot.Core.Repository.Models
             return Equals(other);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public virtual bool Equals(T other)
         {
             if (other == null)
@@ -81,7 +85,7 @@ namespace LiveBot.Core.Repository.Models
             return true;
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             IEnumerable<FieldInfo> fields = GetFields();
@@ -100,7 +104,9 @@ namespace LiveBot.Core.Repository.Models
             return hashCode;
         }
 
-        /// <summary>Gets all instanced, non public, and public fields on this model.</summary>
+        /// <summary>
+        /// Gets all instanced, non public, and public fields on this model.
+        /// </summary>
         /// <returns>The collection of fields.</returns>
         private IEnumerable<FieldInfo> GetFields()
         {

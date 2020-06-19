@@ -28,7 +28,9 @@ namespace LiveBot.Discord.Modules
         /// <summary>
         /// Represents the list of Monitoring Commands available
         /// </summary>
-        /// <param name="monitors">The loaded Monitoring Services, later used for locating and processing requests</param>
+        /// <param name="monitors">
+        /// The loaded Monitoring Services, later used for locating and processing requests
+        /// </param>
         /// <param name="factory">The database factory so that the database can be utilized</param>
         public MonitorModule(List<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
         {
@@ -368,7 +370,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         }
 
         /// <summary>
-        /// Attempts to locate the loaded Monitoring Service for the given <c>ILiveBotBase</c> <paramref name="obj"/>
+        /// Attempts to locate the loaded Monitoring Service for the given
+        /// <c>ILiveBotBase</c><paramref name="obj"/>
         /// </summary>
         /// <param name="obj"></param>
         /// <returns>ILiveBotMonitor object which represents a loaded Monitoring Service</returns>

@@ -63,10 +63,9 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// PagedReplyAsync will send a paginated message to the channel
-        /// You can customize the paginator by creating a PaginatedMessage object
-        /// You can customize the criteria for the paginator as well, which defaults to restricting to the source user
-        /// This method will not block.
+        /// PagedReplyAsync will send a paginated message to the channel You can customize the
+        /// paginator by creating a PaginatedMessage object You can customize the criteria for the
+        /// paginator as well, which defaults to restricting to the source user This method will not block.
         /// </summary>
         [Command("paginator")]
         public async Task Test_Paginator()

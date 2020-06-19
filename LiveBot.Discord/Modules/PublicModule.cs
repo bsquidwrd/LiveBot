@@ -40,7 +40,8 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// General command to test that the bot can send messages, as well as a cheeky way of getting my name out there
+        /// General command to test that the bot can send messages, as well as a cheeky way of
+        /// getting my name out there
         /// </summary>
         /// <returns></returns>
         [Command("hello")]

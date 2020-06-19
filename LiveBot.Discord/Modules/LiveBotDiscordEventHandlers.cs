@@ -27,7 +27,8 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Guild is updated from <paramref name="beforeGuild"/> to <paramref name="afterGuild"/>
+        /// Discord Event Handler for when a Guild is updated from <paramref name="beforeGuild"/> to
+        /// <paramref name="afterGuild"/>
         /// </summary>
         /// <param name="beforeGuild"></param>
         /// <param name="afterGuild"></param>
@@ -80,7 +81,8 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Channel is updated from <paramref name="beforeChannel"/> to <paramref name="afterChannel"/>
+        /// Discord Event Handler for when a Channel is updated from <paramref
+        /// name="beforeChannel"/> to <paramref name="afterChannel"/>
         /// </summary>
         /// <param name="beforeChannel"></param>
         /// <param name="afterChannel"></param>
@@ -122,7 +124,8 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Role is updated from <paramref name="beforeRole"/> to <paramref name="afterRole"/>
+        /// Discord Event Handler for when a Role is updated from <paramref name="beforeRole"/> to
+        /// <paramref name="afterRole"/>
         /// </summary>
         /// <param name="beforeRole"></param>
         /// <param name="afterRole"></param>
@@ -136,9 +139,10 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Guild Member is updated from <paramref name="beforeGuildUser"/> to <paramref name="afterGuildUser"/>.
-        /// This should only be processed for when a Member changes to "Streaming".
-        /// Is used to notify a <c>Guild</c> if someone has a role we have been told to notify for.
+        /// Discord Event Handler for when a Guild Member is updated from <paramref
+        /// name="beforeGuildUser"/> to <paramref name="afterGuildUser"/>. This should only be
+        /// processed for when a Member changes to "Streaming". Is used to notify a <c>Guild</c> if
+        /// someone has a role we have been told to notify for.
         /// </summary>
         /// <param name="beforeGuildUser"></param>
         /// <param name="afterGuildUser"></param>
@@ -152,11 +156,9 @@ namespace LiveBot.Discord.Modules
                 // I don't care about bots
                 return;
             }
-            // This will be where we trigger events such as
-            // when a user goes live in Discord to check if
-            // the Guild has options enabled that allow notifying
-            // when people with a certain role go live and verifying
-            // that it's a legit stream etc etc
+            // This will be where we trigger events such as when a user goes live in Discord to
+            // check if the Guild has options enabled that allow notifying when people with a
+            // certain role go live and verifying that it's a legit stream etc etc
             await Task.Delay(1);
             IActivity userActivity = afterGuildUser.Activity;
             if (userActivity == null)
