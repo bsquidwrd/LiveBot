@@ -10,20 +10,29 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Repository
 {
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public class ModelRepository<TEntity> : IRepository<TEntity>
         where TEntity : BaseModel<TEntity>
     {
-        /// <summary>The Entity Framework Database Context to use.</summary>
+        /// <summary>
+        /// The Entity Framework Database Context to use.
+        /// </summary>
         protected readonly DbContext Context;
 
-        /// <summary>The db set that contains the entities.</summary>
+        /// <summary>
+        /// The db set that contains the entities.
+        /// </summary>
         protected readonly DbSet<TEntity> DbSet;
 
-        /// <summary>The lock used to synchronize threads during certain actions as EF is not entirely multi thread capable.</summary>
+        /// <summary>
+        /// The lock used to synchronize threads during certain actions as EF is not entirely multi
+        /// thread capable.
+        /// </summary>
         private readonly SemaphoreSlim syncLock = new SemaphoreSlim(1, 1);
 
-        /// <summary>Initializes a new instance of the <see cref="ModelRepository{TEntity}"/> class.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ModelRepository{TEntity}"/> class.
+        /// </summary>
         /// <param name="context">The Entity Framework Database Context to use.</param>
         protected ModelRepository(DbContext context)
         {
@@ -52,7 +61,7 @@ namespace LiveBot.Repository
             return queryable;
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public Task<TEntity> GetAsync(int Id)
         {
             return DbSet
@@ -60,7 +69,7 @@ namespace LiveBot.Repository
                 .AsTask();
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task<IEnumerable<TEntity>> GetAllAsync()
         {
             return await GetQueryable()
@@ -68,7 +77,7 @@ namespace LiveBot.Repository
                 .ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public virtual async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return await GetQueryable(predicate)
@@ -76,8 +85,10 @@ namespace LiveBot.Repository
                 .ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
-        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="predicate">predicate</paramref> is null.
+        /// </exception>
         public virtual async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate, int page, int pageSize)
         {
             return await GetQueryable(predicate)
@@ -87,8 +98,10 @@ namespace LiveBot.Repository
                 .ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
-        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="predicate">predicate</paramref> is null.
+        /// </exception>
         public virtual async Task<IEnumerable<TEntity>> FindInOrderAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, long>> order)
         {
             return await GetQueryable(predicate)
@@ -97,8 +110,10 @@ namespace LiveBot.Repository
                 .ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
-        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="predicate">predicate</paramref> is null.
+        /// </exception>
         public virtual async Task<IEnumerable<TEntity>> FindInOrderAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, long>> order, int page, int pageSize)
         {
             return await GetQueryable(predicate)
@@ -109,8 +124,10 @@ namespace LiveBot.Repository
                 .ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
-        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="predicate">predicate</paramref> is null.
+        /// </exception>
         public async Task<int> GetPageCountAsync(Expression<Func<TEntity, bool>> predicate, int pageSize)
         {
             var count = await GetQueryable(predicate)
@@ -122,15 +139,17 @@ namespace LiveBot.Repository
             return (int)Math.Ceiling((decimal)count / pageSize);
         }
 
-        /// <inheritdoc />
-        /// <exception cref="ArgumentNullException"><paramref name="predicate">predicate</paramref> is null.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="predicate">predicate</paramref> is null.
+        /// </exception>
         public virtual Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return GetQueryable(predicate)
                 .FirstOrDefaultAsync();
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task AddAsync(TEntity entity)
         {
             try
@@ -145,7 +164,7 @@ namespace LiveBot.Repository
             }
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task AddAsync(IEnumerable<TEntity> entities)
         {
             try
@@ -160,9 +179,13 @@ namespace LiveBot.Repository
             }
         }
 
-        /// <inheritdoc />
-        /// <exception cref="SemaphoreFullException">The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.</exception>
-        /// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="SemaphoreFullException">
+        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has already been disposed.
+        /// </exception>
         public async Task UpdateAsync(TEntity entity)
         {
             try
@@ -178,9 +201,13 @@ namespace LiveBot.Repository
             }
         }
 
-        /// <inheritdoc />
-        /// <exception cref="SemaphoreFullException">The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.</exception>
-        /// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="SemaphoreFullException">
+        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has already been disposed.
+        /// </exception>
         public virtual async Task AddOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> predicate)
         {
             await syncLock.WaitAsync().ConfigureAwait(false);
@@ -206,9 +233,13 @@ namespace LiveBot.Repository
             syncLock.Release();
         }
 
-        /// <inheritdoc />
-        /// <exception cref="SemaphoreFullException">The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.</exception>
-        /// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
+        /// <inheritdoc/>
+        /// <exception cref="SemaphoreFullException">
+        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// The current instance has already been disposed.
+        /// </exception>
         public async Task RemoveAsync(int Id)
         {
             try
