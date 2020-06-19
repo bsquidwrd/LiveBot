@@ -33,7 +33,7 @@ namespace LiveBot.Watcher.Twitch.Models
             GameId = stream.GameId;
             Game = null;
             ThumbnailURL = stream.ThumbnailUrl;
-            StreamURL = null;
+            StreamURL = $"{baseURL}/{stream.UserName.Replace(" ", "")}";
         }
     }
 }
