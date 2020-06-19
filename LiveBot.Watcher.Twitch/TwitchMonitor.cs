@@ -65,11 +65,9 @@ namespace LiveBot.Watcher.Twitch
         public Timer RefreshUsersTimer;
 
         // My caches
-        //private List<ILiveBotGame> _gameCache = new List<ILiveBotGame>();
-        //private List<ILiveBotUser> _userCache = new List<ILiveBotUser>();
-        private ConcurrentBag<ILiveBotGame> _gameCache = new ConcurrentBag<ILiveBotGame>();
+        private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
 
-        private ConcurrentBag<ILiveBotUser> _userCache = new ConcurrentBag<ILiveBotUser>();
+        private ConcurrentDictionary<string, ILiveBotUser> _userCache = new ConcurrentDictionary<string, ILiveBotUser>();
 
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
@@ -260,35 +258,6 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task<Stream> API_GetStream(string userId, int retryCount = 0)
-        {
-            try
-            {
-                if (Monitor.LiveStreams.ContainsKey(userId))
-                    return Monitor.LiveStreams[userId];
-                List<string> userIdList = new List<string> { userId };
-                GetStreamsResponse streams = await API.Helix.Streams.GetStreamsAsync(userIds: userIdList);
-                return streams.Streams.FirstOrDefault(i => i.UserId == userId);
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                Log.Error($"{e}");
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetStream(userId, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                Log.Error($"{e}");
-                await UpdateAuth();
-                await Task.Delay(RetryDelay);
-                return await API_GetStream(userId);
-            }
-        }
-
         #endregion API Calls
 
         #region Misc Functions
@@ -345,6 +314,14 @@ namespace LiveBot.Watcher.Twitch
                     foreach (User user in users.Users)
                     {
                         TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
+                        if (_userCache.ContainsKey(user.Id))
+                        {
+                            _userCache[user.Id] = twitchUser;
+                        }
+                        else
+                        {
+                            _userCache.TryAdd(user.Id, twitchUser);
+                        }
                         try
                         {
                             StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
@@ -432,23 +409,20 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            var cachedGame = _gameCache.ToList().Where(i => i.Id == gameId).FirstOrDefault();
-            if (cachedGame != null)
-            {
-                return cachedGame;
-            }
+            if (_gameCache.ContainsKey(gameId))
+                return _gameCache[gameId];
             Game game = await API_GetGame(gameId);
             var twitchGame = new TwitchGame(BaseURL, ServiceType, game);
-            _gameCache.Add(twitchGame);
+            _gameCache.TryAdd(gameId, twitchGame);
             return twitchGame;
         }
 
         /// <inheritdoc/>
         public override async Task<ILiveBotStream> GetStream(ILiveBotUser user)
         {
-            Stream stream = await API_GetStream(user.Id);
-            if (stream == null)
+            if (!Monitor.LiveStreams.ContainsKey(user.Id))
                 return null;
+            Stream stream = Monitor.LiveStreams[user.Id];
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
@@ -456,9 +430,9 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotStream> GetStream(string userId)
         {
-            Stream stream = await API_GetStream(userId);
-            if (stream == null)
+            if (!Monitor.LiveStreams.ContainsKey(userId))
                 return null;
+            Stream stream = Monitor.LiveStreams[userId];
             ILiveBotUser user = await GetUser(userId: userId);
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
@@ -467,14 +441,11 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotUser> GetUserById(string userId)
         {
-            var cachedUser = _userCache.ToList().Where(i => i.Id == userId).FirstOrDefault();
-            if (cachedUser != null)
-            {
-                return cachedUser;
-            }
+            if (_userCache.ContainsKey(userId))
+                return _userCache[userId];
             User apiUser = await API_GetUserById(userId);
             var twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
-            _userCache.Add(twitchUser);
+            _userCache.TryAdd(userId, twitchUser);
             return twitchUser;
         }
 
@@ -482,7 +453,7 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
-            var cachedUser = _userCache.ToList().Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
+            var cachedUser = _userCache.Values.Where(i => i.Id == userId || i.Username == username || i.ProfileURL == profileURL).FirstOrDefault();
             if (cachedUser != null)
                 return cachedUser;
 
@@ -504,7 +475,7 @@ namespace LiveBot.Watcher.Twitch
             }
 
             TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
-            _userCache.Add(twitchUser);
+            _userCache.TryAdd(twitchUser.Id, twitchUser);
             return twitchUser;
         }
 
