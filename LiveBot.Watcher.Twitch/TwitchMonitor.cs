@@ -453,7 +453,11 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null)
         {
             User apiUser;
-            var cachedUser = _userCache.Values.Where(i => i.Id == userId || i.Username.ToLower() == username.ToLower() || i.ProfileURL.ToLower() == profileURL.ToLower()).FirstOrDefault();
+
+            if (username == null && userId == null && profileURL == null)
+                return null;
+
+            var cachedUser = _userCache.Values.Where(i => i.Id == userId || i.Username?.ToLower() == username?.ToLower() || i.ProfileURL?.ToLower() == profileURL?.ToLower()).FirstOrDefault();
             if (cachedUser != null)
                 return cachedUser;
 
