@@ -156,7 +156,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                List<string> usernameList = new List<string> { username };
+                List<string> usernameList = new List<string> { username.ToLower() };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Login == username);
             }
@@ -236,7 +236,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString();
+                string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
                 return await API_GetUserByLogin(username: username);
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
