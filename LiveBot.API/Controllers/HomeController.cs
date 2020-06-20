@@ -28,16 +28,10 @@ namespace LiveBot.API.Controllers
             var subscriptions = await _work.SubscriptionRepository.GetAllAsync();
             var model = new DiscordStats
             {
-                DiscordShardCount = _client.Shards.Count,
                 DiscordGuildCount = _client.Guilds.Count,
                 SubscriptionCount = subscriptions.Count()
             };
             return View(model);
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
