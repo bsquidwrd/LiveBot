@@ -23,7 +23,7 @@ namespace LiveBot.Discord.Modules
     public class MonitorModule : InteractiveBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
-        private readonly List<ILiveBotMonitor> _monitors;
+        private readonly IEnumerable<ILiveBotMonitor> _monitors;
 
         /// <summary>
         /// Represents the list of Monitoring Commands available
@@ -32,7 +32,7 @@ namespace LiveBot.Discord.Modules
         /// The loaded Monitoring Services, later used for locating and processing requests
         /// </param>
         /// <param name="factory">The database factory so that the database can be utilized</param>
-        public MonitorModule(List<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
+        public MonitorModule(IEnumerable<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
         {
             _monitors = monitors;
             _work = factory.Create();

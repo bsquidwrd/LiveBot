@@ -13,6 +13,6 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>
-        public Task StartAsync(IServiceProvider services);
+        public Task StartAsync(ILiveBotMonitor monitor, IServiceProvider services);
     }
 }
