@@ -24,7 +24,7 @@ namespace LiveBot.Discord.Helpers
             if (Regex.IsMatch(Input, URLPattern))
             {
                 Match URLMatch = URLRegex.Match(Input);
-                List<ILiveBotMonitor> monitors = Services.GetRequiredService<List<ILiveBotMonitor>>();
+                IEnumerable<ILiveBotMonitor> monitors = Services.GetServices<ILiveBotMonitor>();
                 ILiveBotMonitor monitor = monitors.Where(m => m.IsValid(URLMatch.Groups[0].ToString())).FirstOrDefault();
                 liveBotUser = await monitor.GetUser(profileURL: Input);
             }

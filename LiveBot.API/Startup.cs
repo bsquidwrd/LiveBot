@@ -6,6 +6,7 @@ using LiveBot.Discord;
 using LiveBot.Discord.Consumers.Discord;
 using LiveBot.Discord.Consumers.Streams;
 using LiveBot.Repository;
+using LiveBot.Watcher.Twitch;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,7 +14,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Collections.Generic;
 
 namespace LiveBot.API
 {
@@ -42,11 +42,7 @@ namespace LiveBot.API
             services.AddSingleton<IUnitOfWorkFactory>(factory);
 
             // Add Monitors
-            List<ILiveBotMonitor> monitorList = new List<ILiveBotMonitor>
-            {
-                new Watcher.Twitch.TwitchMonitor()
-            };
-            services.AddSingleton(monitorList);
+            services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
 
             // Add Messaging
             //services.AddScoped<StreamOnlineConsumer>();

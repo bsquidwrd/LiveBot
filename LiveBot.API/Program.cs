@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LiveBot.API
@@ -32,11 +31,11 @@ namespace LiveBot.API
                 await bot.StartAsync(services).ConfigureAwait(false);
                 Log.Debug($"Started Discord Service");
 
-                foreach (ILiveBotMonitor monitor in services.GetRequiredService<List<ILiveBotMonitor>>())
+                foreach (ILiveBotMonitor monitor in services.GetServices<ILiveBotMonitor>())
                 {
                     Log.Debug($"Starting Monitoring Service for {monitor.ServiceType}");
                     ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
-                    await monitorStart.StartAsync(services).ConfigureAwait(false);
+                    await monitorStart.StartAsync(monitor, services).ConfigureAwait(false);
                     Log.Debug($"Started Monitoring Service for {monitor.ServiceType}");
                 }
 

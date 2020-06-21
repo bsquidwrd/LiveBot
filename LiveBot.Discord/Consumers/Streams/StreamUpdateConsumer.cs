@@ -17,9 +17,9 @@ namespace LiveBot.Discord.Consumers.Streams
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
-        private readonly List<ILiveBotMonitor> _monitors;
+        private readonly IEnumerable<ILiveBotMonitor> _monitors;
 
-        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, List<ILiveBotMonitor> monitors)
+        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, IEnumerable<ILiveBotMonitor> monitors)
         {
             _client = client;
             _work = factory.Create();

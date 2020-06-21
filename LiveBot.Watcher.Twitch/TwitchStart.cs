@@ -17,9 +17,9 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
         /// <param name="services"></param>
         /// <returns></returns>
-        public async Task StartAsync(IServiceProvider services)
+        public async Task StartAsync(ILiveBotMonitor monitor, IServiceProvider services)
         {
-            TwitchMonitor service = (TwitchMonitor)services.GetRequiredService<List<ILiveBotMonitor>>().Where(i => i is TwitchMonitor).First();
+            TwitchMonitor service = (TwitchMonitor)monitor;
             service.services = services;
             service._factory = services.GetRequiredService<IUnitOfWorkFactory>();
             service._bus = services.GetRequiredService<IBusControl>();
