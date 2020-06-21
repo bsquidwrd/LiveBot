@@ -13,4 +13,4 @@
 
 
 ## Thanks
-- [ThatOhio](https://github.com/thatohio) and his patience with me while I learned C# and wrote version 2.0 of this bot at the same time
+- [ThatOhio](https://github.com/thatohio) and his patience with me while I learned C# and wrote this new version of the bot at the same time
