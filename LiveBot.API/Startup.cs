@@ -8,6 +8,7 @@ using LiveBot.Discord.Consumers.Streams;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,22 @@ namespace LiveBot.API
         {
             // Web services
             services.AddControllersWithViews();
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/signin";
+                    options.LogoutPath = "/signout";
+                })
+                .AddDiscord(options =>
+                {
+                    options.ClientId = Environment.GetEnvironmentVariable("Discord_ClientId");
+                    options.ClientSecret = Environment.GetEnvironmentVariable("Discord_ClientSecret");
+                    options.Scope.Add("guilds");
+                });
 
             // Add Discord Bot
             LiveBotDiscord discordBot = new LiveBotDiscord();
@@ -122,6 +139,7 @@ namespace LiveBot.API
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

@@ -7,9 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="3.1.1" />
     <PackageReference Include="Discord.Net" Version="2.2.0" />
     <PackageReference Include="MassTransit.AspNetCore" Version="6.3.2" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="6.3.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Owin" Version="3.1.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -28,10 +30,6 @@
     <ProjectReference Include="..\LiveBot.Discord\LiveBot.Discord.csproj" />
     <ProjectReference Include="..\LiveBot.Repository\LiveBot.Repository.csproj" />
     <ProjectReference Include="..\LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Views\" />
   </ItemGroup>
 
 
