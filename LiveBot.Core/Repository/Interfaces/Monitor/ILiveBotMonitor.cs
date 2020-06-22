@@ -22,9 +22,9 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public Regex GetURLRegex(string pattern);
 
         /// <summary>
-        /// Represents the Starting class for a Monitoring Service to function
+        /// Runs the Monitoring Service
         /// </summary>
-        /// <returns>The class used to start a Monitoring Service</returns>
+        /// <returns></returns>
         public Task StartAsync();
 
         /// <summary>
