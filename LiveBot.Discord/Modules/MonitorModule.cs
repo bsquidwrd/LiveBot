@@ -109,7 +109,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             string permissionsResult;
             if (missingPermissions.Count == 0)
             {
-                Log.Debug("All required permissions are set");
                 permissionsResult = "All Set!";
             }
             else
