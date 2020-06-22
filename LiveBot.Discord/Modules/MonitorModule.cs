@@ -168,7 +168,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         /// <param name="user"></param>
         /// <returns></returns>
         [Command("check", RunMode = RunMode.Async)]
-        [RequireOwner]
         [Summary("Check if Stream is live. Basic debug command to see if the Bot can locate a stream")]
         public async Task CheckStream(ILiveBotUser user)
         {
