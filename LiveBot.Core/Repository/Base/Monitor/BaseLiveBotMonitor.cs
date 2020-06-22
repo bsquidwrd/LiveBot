@@ -33,7 +33,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
             return new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
 
-        public abstract ILiveBotMonitorStart GetStartClass();
+        public abstract Task StartAsync();
 
         public abstract Task<ILiveBotGame> GetGame(string gameId);
 

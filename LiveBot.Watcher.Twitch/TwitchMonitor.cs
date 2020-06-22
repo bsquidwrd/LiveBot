@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Base.Monitor;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
@@ -72,8 +73,11 @@ namespace LiveBot.Watcher.Twitch
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
         /// </summary>
-        public TwitchMonitor()
+        public TwitchMonitor(IUnitOfWorkFactory factory, IBusControl bus)
         {
+            _factory = factory;
+            _bus = bus;
+
             StartTime = DateTime.UtcNow;
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
@@ -401,9 +405,23 @@ namespace LiveBot.Watcher.Twitch
         #region Interface Requirements
 
         /// <inheritdoc/>
-        public override ILiveBotMonitorStart GetStartClass()
+        public override async Task StartAsync()
         {
-            return new TwitchStart();
+            ClientId = Environment.GetEnvironmentVariable("TwitchClientId");
+            ClientSecret = Environment.GetEnvironmentVariable("TwitchClientSecret");
+
+            await UpdateAuth();
+
+            var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
+            List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
+
+            if (channelList.Count() == 0)
+                // Add myself so startup doesn't fail if there's no users in the database
+                channelList.Add("22812120");
+
+            Monitor.SetChannelsById(channelList);
+
+            await Task.Run(Monitor.Start);
         }
 
         /// <inheritdoc/>

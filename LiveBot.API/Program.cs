@@ -34,8 +34,7 @@ namespace LiveBot.API
                 foreach (ILiveBotMonitor monitor in services.GetServices<ILiveBotMonitor>())
                 {
                     Log.Debug($"Starting Monitoring Service for {monitor.ServiceType}");
-                    ILiveBotMonitorStart monitorStart = monitor.GetStartClass();
-                    await monitorStart.StartAsync(monitor, services).ConfigureAwait(false);
+                    await monitor.StartAsync().ConfigureAwait(false);
                     Log.Debug($"Started Monitoring Service for {monitor.ServiceType}");
                 }
 

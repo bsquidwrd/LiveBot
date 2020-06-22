@@ -25,7 +25,7 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// Represents the Starting class for a Monitoring Service to function
         /// </summary>
         /// <returns>The class used to start a Monitoring Service</returns>
-        public ILiveBotMonitorStart GetStartClass();
+        public Task StartAsync();
 
         /// <summary>
         /// Returns a <c>ILiveBotUser</c> object based on <paramref name="userId"/> from API Results
