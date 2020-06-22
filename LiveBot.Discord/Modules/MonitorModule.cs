@@ -126,20 +126,31 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Summary("Get a list of all Streams being monitored for the Discord Server")]
         public async Task MonitorList()
         {
-            int pageSize = 10;
+            int pageSize = 5;
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
-                i.DiscordChannel.DiscordGuild.DiscordId == Context.Guild.Id
+                i.DiscordGuild.DiscordId == Context.Guild.Id
             );
             int pageCount = await _work.SubscriptionRepository.GetPageCountAsync(streamSubscriptionPredicate, pageSize);
-            List<string> subscriptions = new List<string>();
+            List<EmbedFieldBuilder> subscriptions = new List<EmbedFieldBuilder>();
 
-            for (int i = 1; i <= pageCount; i++)
+            for (int i = 1; i < pageCount + 1; i++)
             {
                 var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(streamSubscriptionPredicate, i, pageSize);
                 if (streamSubscriptions.Count() == 0)
                     continue;
-                subscriptions.Add(string.Join("\n", streamSubscriptions.Select(i => i.User.DisplayName)));
+                foreach (StreamSubscription streamSubscription in streamSubscriptions)
+                {
+                    string fieldValue = "";
+                    fieldValue += $"Channel: {MentionUtils.MentionChannel(streamSubscription.DiscordChannel.DiscordId)}\n";
+                    fieldValue += $"Role: {streamSubscription.DiscordRole?.Name?.Replace("@everyone", "everyone") ?? "none"}\n";
+                    fieldValue += $"Message: {streamSubscription.Message}";
+                    EmbedFieldBuilder fieldBuilder = new EmbedFieldBuilder()
+                        .WithIsInline(false)
+                        .WithName(streamSubscription.User.ProfileURL)
+                        .WithValue(fieldValue);
+                    subscriptions.Add(fieldBuilder);
+                }
             }
 
             PaginatedMessage paginatedMessage = new PaginatedMessage
@@ -148,7 +159,6 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 Title = "Stream Subscriptions",
                 Pages = subscriptions
             };
-
             await PagedReplyAsync(paginatedMessage);
         }
 
