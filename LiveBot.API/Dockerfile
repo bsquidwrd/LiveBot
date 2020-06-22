@@ -5,6 +5,8 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 ENV DiscordToken="asdf"
+ENV Discord_ClientId="replaceme"
+ENV Discord_ClientSecret="replaceme"
 ENV LiveBotConnectionString="replaceme"
 ENV RabbitMQ_URL="replaceme"
 ENV RabbitMQ_Username="guest"
