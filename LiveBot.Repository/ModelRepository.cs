@@ -245,10 +245,10 @@ namespace LiveBot.Repository
             try
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
-                //DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
-                var exists = await SingleOrDefaultAsync((d => d.Id == Id)).ConfigureAwait(false);
-                exists.Deleted = true;
-                await Context.SaveChangesAsync().ConfigureAwait(false);
+                DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
+                //var exists = await SingleOrDefaultAsync((d => d.Id == Id)).ConfigureAwait(false);
+                //exists.Deleted = true;
+                //await Context.SaveChangesAsync().ConfigureAwait(false);
             }
             finally
             {
