@@ -7,7 +7,7 @@
     <table class="table">
         <thead>
             <tr>
-                @*<th scope="col">Streaming Service</th>*@
+                @*<th scope="col">Platform</th>*@
                 <th scope="col">User</th>
                 <th scope="col">Discord Channel</th>
                 <th scope="col">Discord Role</th>
@@ -18,16 +18,16 @@
             @foreach (var subscription in Model.StreamSubscriptions)
             {
                 <tr scope="row">
-                    @*<td class="col-md-auto">@subscription.User.ServiceType</td>*@
-                    <td class="col-md-auto">
+                    @*<td class="col-md-auto align-middle">@subscription.User.ServiceType</td>*@
+                    <td class="col-md-auto align-middle">
                         <img class="img-fluid rounded-circle" src="@subscription.User.AvatarURL" height="64" width="64" />
                         <a href="@subscription.User.ProfileURL" target="_blank">
                             @subscription.User.DisplayName
                         </a>
                     </td>
-                    <td class="col-md-auto">@subscription.DiscordChannel.Name</td>
-                    <td class="col-md-auto">@subscription.DiscordRole?.Name</td>
-                    <td class="col-md-auto"><input type="text" class="form-control" disabled value="@subscription.Message" /></td>
+                    <td class="col-md-auto align-middle">@subscription.DiscordChannel.Name</td>
+                    <td class="col-md-auto align-middle">@subscription.DiscordRole?.Name</td>
+                    <td class="col-md-auto align-middle"><input type="text" class="form-control" disabled value="@subscription.Message" /></td>
                 </tr>
             }
         </tbody>
