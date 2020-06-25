@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using LiveBot.API.Helpers;
 using LiveBot.API.Models;
 using LiveBot.API.Models.Discord;
 using LiveBot.Core.Repository.Interfaces;
@@ -25,6 +26,10 @@ namespace LiveBot.API.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                var guildsUserCanManage = await DiscordHelper.GetGuildsUserCanManage(HttpContext);
+            }
             var subscriptions = await _work.SubscriptionRepository.GetAllAsync();
             var model = new DiscordStats
             {
