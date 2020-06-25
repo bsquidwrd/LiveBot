@@ -4,5 +4,6 @@
     {
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
+        public string IconUrl { get; set; }
     }
 }

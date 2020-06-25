@@ -34,7 +34,7 @@ namespace LiveBot.Discord.Consumers.Discord
                 if (guild == null)
                     return;
 
-                DiscordGuild discordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName };
+                DiscordGuild discordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName, IconUrl = guild.IconUrl };
                 await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
                 discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 

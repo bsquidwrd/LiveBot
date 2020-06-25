@@ -217,7 +217,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             DiscordGuild discordGuild = new DiscordGuild
             {
                 DiscordId = Context.Guild.Id,
-                Name = Context.Guild.Name
+                Name = Context.Guild.Name,
+                IconUrl = Context.Guild.IconUrl
             };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
             discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
@@ -322,7 +323,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             DiscordGuild discordGuild = new DiscordGuild
             {
                 DiscordId = Context.Guild.Id,
-                Name = Context.Guild.Name
+                Name = Context.Guild.Name,
+                IconUrl = Context.Guild.IconUrl
             };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
             discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);

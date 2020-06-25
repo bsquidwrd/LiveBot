@@ -18,7 +18,7 @@ namespace LiveBot.Discord.Consumers.Discord
         {
             var Message = context.Message;
             var channel = (SocketTextChannel)_client.GetChannel(Message.ChannelId);
-            await channel.SendMessageAsync($"{Message.Message}"); ;
+            await channel.SendMessageAsync($"{Message.Message}");
         }
     }
 }
