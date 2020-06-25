@@ -18,7 +18,7 @@ namespace LiveBot.Discord.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
             var message = context.Message;
-            DiscordGuild discordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName };
+            DiscordGuild discordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName, IconUrl = message.IconUrl };
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
         }
     }

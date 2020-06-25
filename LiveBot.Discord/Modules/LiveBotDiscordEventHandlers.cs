@@ -22,7 +22,7 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task GuildAvailable(SocketGuild guild)
         {
-            var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name };
+            var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name, IconUrl = guild.IconUrl };
             await _bus.Publish(context);
         }
 
@@ -37,7 +37,7 @@ namespace LiveBot.Discord.Modules
         {
             if (beforeGuild.Name == afterGuild.Name)
                 return;
-            var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name };
+            var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name, IconUrl = afterGuild.IconUrl };
             await _bus.Publish(context);
         }
 

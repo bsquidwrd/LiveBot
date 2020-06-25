@@ -8,8 +8,10 @@ using LiveBot.Discord.Consumers.Streams;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,8 +31,31 @@ namespace LiveBot.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Migrate Database
+            using (var context = new LiveBotDBContext())
+            {
+                context.Database.Migrate();
+            }
+
             // Web services
             services.AddControllersWithViews();
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/signin";
+                    options.LogoutPath = "/signout";
+                })
+                .AddDiscord(options =>
+                {
+                    options.ClientId = Environment.GetEnvironmentVariable("Discord_ClientId");
+                    options.ClientSecret = Environment.GetEnvironmentVariable("Discord_ClientSecret");
+                    options.Scope.Add("guilds");
+                    options.SaveTokens = true;
+                });
 
             // Add Discord Bot
             LiveBotDiscord discordBot = new LiveBotDiscord();
@@ -122,6 +147,7 @@ namespace LiveBot.API
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

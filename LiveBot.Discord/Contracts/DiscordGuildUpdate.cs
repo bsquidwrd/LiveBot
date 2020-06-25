@@ -6,5 +6,6 @@ namespace LiveBot.Discord.Contracts
     {
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
+        public string IconUrl { get; set; }
     }
 }

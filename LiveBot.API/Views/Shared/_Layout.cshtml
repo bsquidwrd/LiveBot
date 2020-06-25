@@ -24,7 +24,35 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="https://bsquidwrd.gitbook.io/livebot-docs/" target="_blank">Documentation</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Guilds" asp-action="Index">Guilds</a>
+                        </li>
                     </ul>
+                </div>
+                <div class="nav navbar-nav navbar-right">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-secondary dropdwon dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                @if (User.Claims.Where(i => i.Type == "urn:discord:avatar:url").FirstOrDefault() != null)
+                                {
+                                    <img src="@User.Claims.Where(i => i.Type == "urn:discord:avatar:url").FirstOrDefault().Value?size=16" class="align-self-start img-fluid rounded-circle" alt="Discord Avatar" />
+                                }
+                                @User.Identity.Name#@User.Claims.Where(i => i.Type == "urn:discord:user:discriminator").FirstOrDefault().Value
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="/signout?returnUrl=%2F">Sign out</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <form action="/signin" method="post">
+                            <input type="hidden" name="Provider" value="Discord" />
+                            <input type="hidden" name="ReturnUrl" value="%2F" />
+                            <button class="btn btn-sm btn-secondary" type="submit">Sign in</button>
+                        </form>
+                    }
                 </div>
             </div>
         </nav>
