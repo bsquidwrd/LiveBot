@@ -7,6 +7,7 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
 using MassTransit;
+using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -163,9 +164,11 @@ namespace LiveBot.Discord.Consumers.Streams
                 {
                     if (channelCheckCount >= 2) // Ends up being 60 seconds
                     {
-                        Log.Error($"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts");
+                        string errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
+                        Log.Error(errorMessage);
                         newStreamNotification.Success = true;
-                        newStreamNotification.LogMessage = "Could not find Channel in Discord";
+                        var streamSubscriptionJSON = JsonConvert.SerializeObject(streamSubscription);
+                        newStreamNotification.LogMessage = $"{errorMessage}\n{streamSubscriptionJSON}";
                         break;
                     }
                     channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
