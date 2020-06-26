@@ -96,14 +96,22 @@ namespace LiveBot.Discord.Consumers.Streams
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
                 int channelCheckCount = 0;
 
-                while (channel == null)
+                while (channel == null && _client.LoginState == LoginState.LoggedIn)
                 {
                     if (channelCheckCount >= 12) // Ends up being 60 seconds
                     {
                         var errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
                         Log.Error(errorMessage);
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id); // The Channel can't be found by Discord, so just delete the Subscription
-                        throw new Exception(errorMessage);
+                        try
+                        {
+                            await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id); // The Channel can't be found by Discord, so just delete the Subscription
+                            Log.Debug($"Deleted Subscription for {streamSubscription.User.SourceID} {streamSubscription.User.Username} in channel {streamSubscription.DiscordChannel.DiscordId} {streamSubscription.DiscordChannel.Name} and Guild {streamSubscription.DiscordGuild.DiscordId} {streamSubscription.DiscordGuild.Name}");
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error($"Error removing subscription: {e}");
+                        }
+                        return;
                     }
                     channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
                     channelCheckCount += 1;
