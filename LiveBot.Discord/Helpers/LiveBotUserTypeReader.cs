@@ -26,25 +26,25 @@ namespace LiveBot.Discord.Helpers
                 Match URLMatch = URLRegex.Match(Input);
                 IEnumerable<ILiveBotMonitor> monitors = Services.GetServices<ILiveBotMonitor>();
                 ILiveBotMonitor monitor = monitors.Where(m => m.IsValid(URLMatch.Groups[0].ToString())).FirstOrDefault();
+
+                if (monitor == null)
+                    return TypeReaderResult.FromError(CommandError.Unsuccessful,
+                        $"{Context.Message.Author.Mention}, I couldn't process the link you provided. Please check the link and try again.");
+
                 liveBotUser = await monitor.GetUser(profileURL: Input);
             }
             else
             {
-                //return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed,
-                //    $"{Context.Message.Author.Mention}, you must provide a valid link to the stream you want to monitor."));
                 return TypeReaderResult.FromError(CommandError.ParseFailed,
                     $"{Context.Message.Author.Mention}, you must provide a valid link to the stream you want to monitor.");
             }
 
             if (liveBotUser == null)
             {
-                //return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed,
-                //    $"{Context.Message.Author.Mention}, I couldn't determine what type of stream that was."));
                 return TypeReaderResult.FromError(CommandError.ParseFailed,
                     $"{Context.Message.Author.Mention}, I couldn't determine what type of stream that was.");
             }
 
-            //return Task.FromResult(TypeReaderResult.FromSuccess(liveBotUser));
             return TypeReaderResult.FromSuccess(liveBotUser);
         }
     }

@@ -7,6 +7,7 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.Helpers;
+using LiveBot.Discord.Helpers.RuntimeResults;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -193,14 +194,14 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Command("start", RunMode = RunMode.Async)]
         [Alias("edit", "add")]
         [Summary("Setup a new Stream to monitor for this Discord")]
-        public async Task MonitorStart_RequestURL()
+        public async Task<RuntimeResult> MonitorStart_RequestURL()
         {
             string profileURL = await _RequestStreamUser();
             if (profileURL == null)
-                return;
+                return MonitorResult.FromError($"${Context.Message.Author.Mention}, Please provide a valid Stream URL");
             ILiveBotMonitor monitor = _GetServiceMonitor(profileURL);
             ILiveBotUser user = await monitor.GetUser(profileURL: profileURL);
-            await MonitorStart(user);
+            return await MonitorStart(user);
         }
 
         /// <summary>
@@ -210,7 +211,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Command("start", RunMode = RunMode.Async)]
         [Alias("edit", "add")]
         [Summary("Setup a new Stream to monitor for this Discord")]
-        public async Task MonitorStart(ILiveBotUser user)
+        public async Task<RuntimeResult> MonitorStart(ILiveBotUser user)
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
@@ -225,9 +226,13 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             // Get Notification Channel
             DiscordChannel discordChannel = await _RequestNotificationChannel(discordGuild);
+            if (discordChannel == null)
+                return MonitorResult.FromError($"{Context.Message.Author.Mention}, Please re-run the command and be sure to mention a channel.");
 
             // Get Notification Message
             string notificationMessage = await _RequestNotificationMessage();
+            if (notificationMessage == null)
+                return MonitorResult.FromError($"{Context.Message.Author.Mention}, Please re-run the command and provide a valid message for notifications");
 
             // Get Notification Role
             DiscordRole discordRole = await _RequestNotificationRole(discordGuild);
@@ -281,11 +286,13 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 monitor.AddChannel(user);
                 string escapedMessage = NotificationHelpers.EscapeSpecialDiscordCharacters(streamSubscription.Message);
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have setup a subscription for {user.DisplayName} on {user.ServiceType} with message {escapedMessage}");
+
+                return MonitorResult.FromSuccess();
             }
             catch (Exception e)
             {
                 Log.Error($"Error running MonitorStart for {Context.Message.Author.Id} {Context.Message.Author.Username}#{Context.Message.Author.Discriminator} GuildID: {Context.Guild.Id} ChannelID: {Context.Channel.Id}\n{e}");
-                await ReplyAsync($"{Context.Message.Author.Mention}, I wasn't able to create a subscription for the user {user.DisplayName} on {user.ServiceType}. Please try again or contact my owner");
+                return MonitorResult.FromError($"{Context.Message.Author.Mention}, I wasn't able to create a subscription for the user {user.DisplayName} on {user.ServiceType}. Please try again or contact my owner");
             }
         }
 
@@ -299,14 +306,14 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Command("stop", RunMode = RunMode.Async)]
         [Alias("end", "remove")]
         [Summary("Stop monitoring a Stream for this Discord")]
-        public async Task MonitorStop_RequestURL()
+        public async Task<RuntimeResult> MonitorStop_RequestURL()
         {
             string profileURL = await _RequestStreamUser();
             if (profileURL == null)
-                return;
+                return MonitorResult.FromError($"{Context.Message.Author.Mention}, Please provide a valid Stream URL for me to stop monitoring");
             ILiveBotMonitor monitor = _GetServiceMonitor(profileURL);
             ILiveBotUser user = await monitor.GetUser(profileURL: profileURL);
-            await MonitorStop(user);
+            return await MonitorStop(user);
         }
 
         /// <summary>
@@ -316,7 +323,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         [Command("stop", RunMode = RunMode.Async)]
         [Alias("end", "remove")]
         [Summary("Stop monitoring a Stream for this Discord")]
-        public async Task MonitorStop(ILiveBotUser user)
+        public async Task<RuntimeResult> MonitorStop(ILiveBotUser user)
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
@@ -353,11 +360,12 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                     await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                 }
                 await ReplyAsync($"{Context.Message.Author.Mention}, I have removed the Subscription for {user.DisplayName}");
+                return MonitorResult.FromSuccess();
             }
             catch (Exception e)
             {
                 Log.Error($"Error running MonitorStop for {Context.Message.Author.Id} {Context.Message.Author.Username}#{Context.Message.Author.Discriminator} GuildID: {Context.Guild.Id} ChannelID: {Context.Channel.Id}\n{e}");
-                await ReplyAsync($"{Context.Message.Author.Mention}, I couldn't remove the Subscription for user {user.DisplayName}. Please try again or contact my owner");
+                return MonitorResult.FromSuccess($"{Context.Message.Author.Mention}, I couldn't remove the Subscription for user {user.DisplayName}. Please try again or contact my owner");
             }
         }
 
