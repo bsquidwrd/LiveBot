@@ -42,24 +42,24 @@ namespace LiveBot.Discord.Services
 
         public async Task MessageReceivedAsync(SocketMessage rawMessage)
         {
+            // Ignore system messages, or messages from other bots
+            if (!(rawMessage is SocketUserMessage message))
+                return;
+            if (message.Source != MessageSource.User)
+                return;
+
+            if (_discord.CurrentUser == null)
+                return;
+
+            // This value holds the offset where the prefix ends
+            var argPos = 0;
+            bool mentionedByName = message.HasMentionPrefix(_discord.CurrentUser, ref argPos);
+
+            // Check if mentioned by its Managed Role Some users were mentioning the role and not
+            // the user This should fix that
+            bool mentionedByRole = false;
             try
             {
-                // Ignore system messages, or messages from other bots
-                if (!(rawMessage is SocketUserMessage message))
-                    return;
-                if (message.Source != MessageSource.User)
-                    return;
-
-                if (_discord.CurrentUser == null)
-                    return;
-
-                // This value holds the offset where the prefix ends
-                var argPos = 0;
-                bool mentionedByName = message.HasMentionPrefix(_discord.CurrentUser, ref argPos);
-
-                // Check if mentioned by its Managed Role Some users were mentioning the role and
-                // not the user This should fix that
-                bool mentionedByRole = false;
                 var channel = _discord.GetChannel(message.Channel.Id);
                 if (channel is SocketTextChannel socketTextChannel)
                 {
@@ -67,20 +67,17 @@ namespace LiveBot.Discord.Services
                     var guildRole = guild.CurrentUser.Roles.Where(i => i.IsManaged == true).FirstOrDefault();
                     mentionedByRole = message.HasStringPrefix($"{guildRole.Mention} ", ref argPos);
                 }
-
-                if (!mentionedByName && !mentionedByRole)
-                    return;
-
-                // A new kind of command context, ShardedCommandContext can be utilized with the
-                // commands framework
-                var context = new ShardedCommandContext(_discord, message);
-                await _commands.ExecuteAsync(context, argPos, _services);
             }
-            catch (Exception e)
-            {
-                Log.Error($"Error processing message for {rawMessage.Author.Username} {rawMessage.Author.Id} in {rawMessage.Channel.Name} {rawMessage.Channel.Id}: {e}");
+            catch
+            { }
+
+            if (!mentionedByName && !mentionedByRole)
                 return;
-            }
+
+            // A new kind of command context, ShardedCommandContext can be utilized with the
+            // commands framework
+            var context = new ShardedCommandContext(_discord, message);
+            await _commands.ExecuteAsync(context, argPos, _services);
         }
 
         public async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
