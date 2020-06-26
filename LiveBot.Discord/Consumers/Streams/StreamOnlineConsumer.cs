@@ -164,11 +164,11 @@ namespace LiveBot.Discord.Consumers.Streams
                 {
                     if (channelCheckCount >= 2) // Ends up being 60 seconds
                     {
-                        string errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
+                        var streamSubscriptionJSON = JsonConvert.SerializeObject(streamSubscription);
+                        string errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts\n{streamSubscriptionJSON}";
                         Log.Error(errorMessage);
                         newStreamNotification.Success = true;
-                        var streamSubscriptionJSON = JsonConvert.SerializeObject(streamSubscription);
-                        newStreamNotification.LogMessage = $"{errorMessage}\n{streamSubscriptionJSON}";
+                        newStreamNotification.LogMessage = errorMessage;
                         break;
                     }
                     channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
