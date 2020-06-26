@@ -10,6 +10,7 @@ namespace LiveBot.Core.Repository.Models.Streams
         public string Message { get; set; }
 
         public ulong? DiscordMessage_DiscordId { get; set; }
+        public string LogMessage { get; set; }
 
         public string User_SourceID { get; set; }
         public string User_Username { get; set; }
