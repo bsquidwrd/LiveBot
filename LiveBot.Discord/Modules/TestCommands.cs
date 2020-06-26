@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
 {
-    [DontAutoLoad]
     [RequireOwner]
     [Group("test")]
     public class TestCommands : InteractiveBase<ShardedCommandContext>
@@ -21,6 +20,12 @@ namespace LiveBot.Discord.Modules
         public TestCommands(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
+        }
+
+        [Command("bool")]
+        public async Task TestBoolAsync(bool value)
+        {
+            await ReplyAsync($"I evaluated {value}");
         }
 
         /// <summary>
