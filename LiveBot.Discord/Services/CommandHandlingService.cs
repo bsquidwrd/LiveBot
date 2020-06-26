@@ -3,9 +3,11 @@ using Discord.Commands;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.Helpers;
+using LiveBot.Discord.Helpers.RuntimeResults;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -51,7 +53,20 @@ namespace LiveBot.Discord.Services
 
             // This value holds the offset where the prefix ends
             var argPos = 0;
-            if (!message.HasMentionPrefix(_discord.CurrentUser, ref argPos))
+            bool mentionedByName = message.HasMentionPrefix(_discord.CurrentUser, ref argPos);
+
+            // Check if mentioned by its Managed Role Some users were mentioning the role and not
+            // the user This should fix that
+            bool mentionedByRole = false;
+            var channel = _discord.GetChannel(message.Channel.Id);
+            if (channel is SocketTextChannel socketTextChannel)
+            {
+                var guild = socketTextChannel.Guild;
+                var guildRole = guild.CurrentUser.Roles.Where(i => i.IsManaged == true).FirstOrDefault();
+                mentionedByRole = message.HasStringPrefix($"{guildRole.Mention} ", ref argPos);
+            }
+
+            if (!mentionedByName && !mentionedByRole)
                 return;
 
             // A new kind of command context, ShardedCommandContext can be utilized with the
@@ -72,8 +87,19 @@ namespace LiveBot.Discord.Services
             if (result.IsSuccess)
                 return;
 
+            switch (result)
+            {
+                case MonitorResult monitorResult:
+                    await context.Channel.SendMessageAsync(monitorResult.Reason);
+                    break;
+
+                default:
+                    await context.Channel.SendMessageAsync($"error: {result.ToString()}");
+                    break;
+            }
+
             // the command failed, let's notify the user that something happened.
-            await context.Channel.SendMessageAsync($"error: {result.ToString()}");
+            //await context.Channel.SendMessageAsync($"error: {result.ToString()}");
         }
 
         private Task LogAsync(LogMessage log)
