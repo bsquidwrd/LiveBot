@@ -162,7 +162,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 int channelCheckCount = 0;
                 while (channel == null && _client.LoginState == LoginState.LoggedIn)
                 {
-                    if (channelCheckCount >= 2 || 1 == 1) // Ends up being 60 seconds
+                    if (channelCheckCount >= 12) // Ends up being 10 seconds
                     {
                         var streamSubscriptionJSON = JsonConvert.SerializeObject(streamSubscription);
                         string errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts\n{streamSubscriptionJSON}";
