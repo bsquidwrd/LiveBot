@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Static;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace LiveBot.Core.Repository.Models.Streams
@@ -11,6 +12,8 @@ namespace LiveBot.Core.Repository.Models.Streams
         public string DisplayName { get; set; }
         public string AvatarURL { get; set; }
         public string ProfileURL { get; set; }
+
+        [JsonIgnore]
         public virtual ICollection<StreamSubscription> StreamSubscriptions { get; set; }
     }
 }

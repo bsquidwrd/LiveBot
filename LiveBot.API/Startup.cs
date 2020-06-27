@@ -38,7 +38,7 @@ namespace LiveBot.API
             }
 
             // Web services
-            services.AddControllersWithViews();
+            services.AddControllersWithViews().AddNewtonsoftJson();
             services
                 .AddAuthentication(options =>
                 {
