@@ -62,7 +62,7 @@ namespace LiveBot.Repository
         }
 
         /// <inheritdoc/>
-        public Task<TEntity> GetAsync(int Id)
+        public Task<TEntity> GetAsync(long Id)
         {
             return DbSet
                 .FindAsync(Id)
@@ -240,7 +240,7 @@ namespace LiveBot.Repository
         /// <exception cref="ObjectDisposedException">
         /// The current instance has already been disposed.
         /// </exception>
-        public async Task RemoveAsync(int Id)
+        public async Task RemoveAsync(long Id)
         {
             try
             {

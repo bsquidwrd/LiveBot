@@ -7,7 +7,8 @@ namespace LiveBot.Core.Repository.Models
     public abstract class BaseModel<T> : IEquatable<T>
         where T : BaseModel<T>
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
+
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
         public bool Deleted { get; set; }
 

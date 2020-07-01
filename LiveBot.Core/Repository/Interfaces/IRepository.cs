@@ -17,7 +17,7 @@ namespace LiveBot.Core.Repository.Interfaces
         /// </summary>
         /// <param name="Id">The Id of the entity.</param>
         /// <returns><see cref="Task"/>.</returns>
-        Task<TModel> GetAsync(int Id);
+        Task<TModel> GetAsync(long Id);
 
         /// <summary>
         /// Gets all of the entities in the database.
@@ -111,6 +111,6 @@ namespace LiveBot.Core.Repository.Interfaces
         /// </summary>
         /// <param name="Id">The id of the entity to remove.</param>
         /// <returns>The <see cref="Task"/>.</returns>
-        Task RemoveAsync(int Id);
+        Task RemoveAsync(long Id);
     }
 }

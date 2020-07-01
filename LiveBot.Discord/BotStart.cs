@@ -19,7 +19,7 @@ namespace LiveBot.Discord
     {
         private static readonly DiscordSocketConfig config = new DiscordSocketConfig
         {
-            TotalShards = 5
+            TotalShards = null
         };
 
         public static DiscordShardedClient GetBot()

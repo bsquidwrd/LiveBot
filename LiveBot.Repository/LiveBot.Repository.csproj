@@ -71,6 +71,8 @@
     <Compile Remove="Migrations\20200608050136_Added Proxy.Designer.cs" />
     <Compile Remove="Migrations\20200611072053_Add StreamGame.cs" />
     <Compile Remove="Migrations\20200611072053_Add StreamGame.Designer.cs" />
+    <Compile Remove="Migrations\20200701202722_Change Id to bigint from int.cs" />
+    <Compile Remove="Migrations\20200701202722_Change Id to bigint from int.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
