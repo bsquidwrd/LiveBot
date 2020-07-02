@@ -64,6 +64,7 @@ namespace LiveBot.Watcher.Twitch
 
         public Timer RefreshAuthTimer;
         public Timer RefreshUsersTimer;
+        public Timer ClearCacheTimer;
 
         // My caches
         private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
@@ -105,6 +106,7 @@ namespace LiveBot.Watcher.Twitch
         {
             Log.Debug("Monitor service successfully connected to Twitch!");
             SetupUserTimer();
+            SetupCacheTimer();
         }
 
         public async void Monitor_OnStreamOnline(object sender, OnStreamOnlineArgs e)
@@ -358,6 +360,23 @@ namespace LiveBot.Watcher.Twitch
             };
             RefreshUsersTimer.Elapsed += async (sender, e) => await UpdateUsers();
             RefreshUsersTimer.Start();
+        }
+
+        public void ClearCache(object sender, ElapsedEventArgs e)
+        {
+            _userCache.Clear();
+            _gameCache.Clear();
+        }
+
+        private void SetupCacheTimer()
+        {
+            TimeSpan timeSpan = TimeSpan.FromMinutes(15);
+            ClearCacheTimer = new Timer(timeSpan.TotalMilliseconds)
+            {
+                AutoReset = true
+            };
+            ClearCacheTimer.Elapsed += ClearCache;
+            ClearCacheTimer.Start();
         }
 
         #endregion Misc Functions
