@@ -22,6 +22,13 @@ namespace LiveBot.Discord.Consumers.Discord
             if (role == null)
                 return;
 
+            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordRole.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
+            foreach (var subscription in subscriptions)
+            {
+                subscription.DiscordRole = null;
+                await _work.SubscriptionRepository.UpdateAsync(subscription);
+            }
+
             await _work.RoleRepository.RemoveAsync(role.Id);
         }
     }

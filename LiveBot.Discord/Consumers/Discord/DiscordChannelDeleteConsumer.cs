@@ -22,6 +22,12 @@ namespace LiveBot.Discord.Consumers.Discord
             if (channel == null)
                 return;
 
+            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
+            foreach (var subscription in subscriptions)
+            {
+                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+            }
+
             await _work.ChannelRepository.RemoveAsync(channel.Id);
         }
     }
