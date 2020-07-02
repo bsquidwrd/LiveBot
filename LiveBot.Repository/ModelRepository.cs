@@ -245,7 +245,9 @@ namespace LiveBot.Repository
             try
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.Remove(await DbSet.FindAsync(Id).ConfigureAwait(false));
+                TEntity entity = await DbSet.FindAsync(Id).ConfigureAwait(false);
+                DbSet.Remove(entity);
+                await Context.SaveChangesAsync().ConfigureAwait(false);
             }
             finally
             {

@@ -350,7 +350,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
-                i.DiscordChannel.DiscordGuild == discordGuild
+                i.DiscordGuild == discordGuild
             );
             IEnumerable<StreamSubscription> streamSubscriptions = await _work.SubscriptionRepository.FindAsync(streamSubscriptionPredicate);
             try
