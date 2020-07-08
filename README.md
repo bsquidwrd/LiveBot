@@ -1,5 +1,6 @@
 ## Live Bot
 [![GitHub license](https://img.shields.io/github/license/bsquidwrd/LiveBot.svg)](https://github.com/bsquidwrd/LiveBot/blob/master/LICENSE) ![.NET Core](https://github.com/bsquidwrd/LiveBot/workflows/.NET%20Core/badge.svg) [![Discord](https://discordapp.com/api/guilds/350337137079746581/widget.png?style=shield)](https://discord.gg/zXkb4JP)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbsquidwrd%2FLiveBot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbsquidwrd%2FLiveBot?ref=badge_shield)
 
 
 ## Running
@@ -14,3 +15,7 @@
 
 ## Thanks
 - [ThatOhio](https://github.com/thatohio) and his patience with me while I learned C# and wrote this new version of the bot at the same time
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbsquidwrd%2FLiveBot.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbsquidwrd%2FLiveBot?ref=badge_large)
