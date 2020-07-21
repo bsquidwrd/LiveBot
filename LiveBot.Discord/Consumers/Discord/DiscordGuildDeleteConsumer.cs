@@ -1,8 +1,8 @@
 ﻿using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Discord.Contracts;
 using MassTransit;
 using Serilog;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers.Discord
@@ -10,12 +10,10 @@ namespace LiveBot.Discord.Consumers.Discord
     public class DiscordGuildDeleteConsumer : IConsumer<IDiscordGuildDelete>
     {
         private readonly IUnitOfWork _work;
-        private readonly IBusControl _bus;
 
-        public DiscordGuildDeleteConsumer(IUnitOfWorkFactory factory, IBusControl bus)
+        public DiscordGuildDeleteConsumer(IUnitOfWorkFactory factory)
         {
             _work = factory.Create();
-            _bus = bus;
         }
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)
@@ -30,49 +28,18 @@ namespace LiveBot.Discord.Consumers.Discord
             var discordRoles = discordGuild.DiscordRoles;
             var streamSubscriptions = discordGuild.StreamSubscriptions;
 
-            foreach (var streamSubscription in streamSubscriptions)
-            {
-                try
-                {
-                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                }
-                catch
-                {
-                    Log.Error($"Unable to remove Stream Subscription {streamSubscription.User.SourceID} {streamSubscription.User.Username} in {discordGuild.DiscordId} {discordGuild.Name}");
-                    continue;
-                }
-            }
-
-            foreach (var discordChannel in discordChannels)
-            {
-                try
-                {
-                    var channelContext = new DiscordChannelDelete { GuildId = discordGuild.DiscordId, ChannelId = discordChannel.DiscordId };
-                    await _bus.Publish(channelContext);
-                }
-                catch
-                {
-                    Log.Error($"Unable to remove Channel {discordChannel.DiscordId} {discordChannel.Name}");
-                    continue;
-                }
-            }
-
-            foreach (var discordRole in discordRoles)
-            {
-                try
-                {
-                    var roleContext = new DiscordRoleDelete { GuildId = discordGuild.DiscordId, RoleId = discordRole.DiscordId };
-                    await _bus.Publish(roleContext);
-                }
-                catch
-                {
-                    Log.Error($"Unable to remove Role {discordRole.DiscordId} {discordRole.Name}");
-                    continue;
-                }
-            }
-
             try
             {
+                // Remove Stream Subscriptions for this Guild
+                streamSubscriptions.ToList().ForEach(async i => await _work.SubscriptionRepository.RemoveAsync(i.Id));
+
+                // Remove Discord Roles for this Guild
+                discordRoles.ToList().ForEach(async i => await _work.RoleRepository.RemoveAsync(i.Id));
+
+                // Remove Discord Channels for this Guild
+                discordChannels.ToList().ForEach(async i => await _work.ChannelRepository.RemoveAsync(i.Id));
+
+                // Remove Discord Guild
                 await _work.GuildRepository.RemoveAsync(discordGuild.Id);
             }
             catch
