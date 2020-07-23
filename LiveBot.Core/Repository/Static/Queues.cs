@@ -25,6 +25,8 @@ namespace LiveBot.Core.Repository.Static
         public static string DiscordRoleUpdate = "discord_roleupdate";
         public static string DiscordRoleDelete = "discord_roledelete";
 
+        public static string DiscordMemberLive = "discord_memberlive";
+
         public static string StreamOnlineQueueName = "streamonline";
         public static string StreamUpdateQueueName = "streamupdate";
         public static string StreamOfflineQueueName = "streamoffline";

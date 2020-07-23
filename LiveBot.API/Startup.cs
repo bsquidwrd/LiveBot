@@ -70,8 +70,6 @@ namespace LiveBot.API
             services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
 
             // Add Messaging
-            //services.AddScoped<StreamOnlineConsumer>();
-
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<DiscordAlertConsumer>();
@@ -84,6 +82,8 @@ namespace LiveBot.API
                 x.AddConsumer<DiscordChannelDeleteConsumer>();
                 x.AddConsumer<DiscordRoleUpdateConsumer>();
                 x.AddConsumer<DiscordRoleDeleteConsumer>();
+
+                x.AddConsumer<DiscordMemberLiveConsumer>();
 
                 x.AddConsumer<StreamOnlineConsumer>();
                 x.AddConsumer<StreamUpdateConsumer>();
@@ -117,6 +117,7 @@ namespace LiveBot.API
                 busFactoryConfig.ReceiveEndpoint(Queues.DiscordChannelDelete, ep => ep.Consumer<DiscordChannelDeleteConsumer>(provider));
                 busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleUpdate, ep => ep.Consumer<DiscordRoleUpdateConsumer>(provider));
                 busFactoryConfig.ReceiveEndpoint(Queues.DiscordRoleDelete, ep => ep.Consumer<DiscordRoleDeleteConsumer>(provider));
+                busFactoryConfig.ReceiveEndpoint(Queues.DiscordMemberLive, ep => ep.Consumer<DiscordMemberLiveConsumer>(provider));
 
                 // Stream Events
                 busFactoryConfig.ReceiveEndpoint(Queues.StreamOnlineQueueName, ep => ep.Consumer<StreamOnlineConsumer>(provider));
