@@ -58,6 +58,13 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public Task<ILiveBotStream> GetStream(string userId);
 
         /// <summary>
+        /// Force check Stream for a User
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public Task<ILiveBotStream> GetStream_Force(ILiveBotUser user);
+
+        /// <summary>
         /// Returns a <c>ILiveBotGame</c> based on the given <paramref name="gameId"/>
         /// </summary>
         /// <param name="gameId"></param>

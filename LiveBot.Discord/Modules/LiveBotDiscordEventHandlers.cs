@@ -1,7 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.Contracts;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Modules
@@ -9,10 +15,16 @@ namespace LiveBot.Discord.Modules
     internal class LiveBotDiscordEventHandlers
     {
         private readonly IBusControl _bus;
+        private readonly IEnumerable<ILiveBotMonitor> _monitors;
+        private readonly IUnitOfWork _work;
 
-        public LiveBotDiscordEventHandlers(IBusControl bus)
+        public LiveBotDiscordEventHandlers(IServiceProvider services)
         {
-            _bus = bus;
+            _bus = services.GetRequiredService<IBusControl>();
+            _monitors = services.GetServices<ILiveBotMonitor>();
+
+            IUnitOfWorkFactory factory = services.GetRequiredService<IUnitOfWorkFactory>();
+            _work = factory.Create();
         }
 
         /// <summary>
@@ -81,8 +93,7 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Channel is updated from <paramref
-        /// name="beforeChannel"/> to <paramref name="afterChannel"/>
+        /// Discord Event Handler for when a Channel is updated from <paramref name="beforeChannel"/> to <paramref name="afterChannel"/>
         /// </summary>
         /// <param name="beforeChannel"></param>
         /// <param name="afterChannel"></param>
@@ -139,47 +150,49 @@ namespace LiveBot.Discord.Modules
         }
 
         /// <summary>
-        /// Discord Event Handler for when a Guild Member is updated from <paramref
-        /// name="beforeGuildUser"/> to <paramref name="afterGuildUser"/>. This should only be
-        /// processed for when a Member changes to "Streaming". Is used to notify a <c>Guild</c> if
-        /// someone has a role we have been told to notify for.
+        /// Discord Event Handler for when a Guild Member is updated from <paramref name="beforeGuildUser"/> to <paramref name="afterGuildUser"/>.
+        /// This should only be /// processed for when a Member changes to "Streaming".
+        /// Is used to notify a <c>Guild</c> if someone has a role we have been told to notify for.
         /// </summary>
         /// <param name="beforeGuildUser"></param>
         /// <param name="afterGuildUser"></param>
         /// <returns></returns>
         public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
         {
-            if (afterGuildUser.Guild.Id != 225471771355250688)
+            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == afterGuildUser.Guild.Id);
+            Serilog.Log.Information($"Guild status {discordGuild.IsInBeta}");
+            if (discordGuild == null || (discordGuild?.IsInBeta ?? false))
                 return;
-            if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
-            {
-                // I don't care about bots
-                return;
-            }
-            // This will be where we trigger events such as when a user goes live in Discord to
-            // check if the Guild has options enabled that allow notifying when people with a
-            // certain role go live and verifying that it's a legit stream etc etc
-            await Task.Delay(1);
-            IActivity userActivity = afterGuildUser.Activity;
-            if (userActivity == null)
-            {
-                return;
-            }
-            if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame)
-            {
-                StreamingGame userGame = (StreamingGame)userActivity;
-                //Log.Information($"User changed to Streaming {afterGuildUser.Username}#{afterGuildUser.DiscriminatorValue} {userGame.Name} {userGame.Url}");
 
-                foreach (SocketRole role in afterGuildUser.Roles)
-                {
-                    if (role.IsEveryone)
-                    {
-                        continue;
-                    }
-                    //Log.Information($"{role.Id} {role.Name}");
-                }
+            // I don't care about bots
+            if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
+                return;
+
+            // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
+            IActivity userActivity = afterGuildUser.Activity;
+            if (userActivity == null && userActivity?.Type != ActivityType.Streaming)
+            {
+                return;
             }
-            return;
+
+            // Check if the users activity is a Game
+            if (userActivity is StreamingGame userGame)
+            {
+                // Make sure the Stream is supported by the bot
+                var monitor = _monitors.Where(i => i.IsValid(userGame.Url)).FirstOrDefault();
+                if (monitor == null) return;
+
+                // Publish a Member Live Event for more in-depth checking
+                var memberLivePayload = new DiscordMemberLive
+                {
+                    ServiceType = monitor.ServiceType,
+                    Url = userGame.Url,
+                    DiscordGuildId = afterGuildUser.Guild.Id,
+                    DiscordUserId = afterGuildUser.Id
+                };
+                await _bus.Publish(memberLivePayload);
+            }
         }
     }
 }

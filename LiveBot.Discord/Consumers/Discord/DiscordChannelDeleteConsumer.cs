@@ -28,6 +28,13 @@ namespace LiveBot.Discord.Consumers.Discord
                 await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
             }
 
+            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            if (guildConfig != null && guildConfig?.DiscordChannel == channel)
+            {
+                guildConfig.DiscordChannel = null;
+                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
+            }
+
             await _work.ChannelRepository.RemoveAsync(channel.Id);
         }
     }

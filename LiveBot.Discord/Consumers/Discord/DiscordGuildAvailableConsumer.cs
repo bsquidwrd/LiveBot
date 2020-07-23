@@ -34,9 +34,14 @@ namespace LiveBot.Discord.Consumers.Discord
                 if (guild == null)
                     return;
 
-                DiscordGuild discordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName, IconUrl = guild.IconUrl };
-                await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
-                discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+                DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+
+                if (discordGuild == null)
+                {
+                    DiscordGuild newDiscordGuild = new DiscordGuild() { DiscordId = message.GuildId, Name = message.GuildName, IconUrl = guild.IconUrl };
+                    await _work.GuildRepository.AddOrUpdateAsync(newDiscordGuild, (d => d.DiscordId == message.GuildId));
+                    discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+                }
 
                 #region Handle Channels
 

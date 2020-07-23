@@ -57,9 +57,8 @@ namespace LiveBot.Discord
             client.ShardReady += ReadyAsync;
             client.Log += LogAsync;
 
-            // Load Guild Information
-            IBusControl busControl = services.GetRequiredService<IBusControl>();
-            var LiveBotEventHandles = new LiveBotDiscordEventHandlers(busControl);
+            // Initialize Guild Events
+            var LiveBotEventHandles = new LiveBotDiscordEventHandlers(services);
 
             // Guild Events
             client.GuildAvailable += LiveBotEventHandles.GuildAvailable;

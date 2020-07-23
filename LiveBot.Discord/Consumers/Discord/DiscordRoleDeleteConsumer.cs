@@ -29,6 +29,25 @@ namespace LiveBot.Discord.Consumers.Discord
                 await _work.SubscriptionRepository.UpdateAsync(subscription);
             }
 
+            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            if (guildConfig != null)
+            {
+                bool update = false;
+                if (guildConfig.DiscordRole == role)
+                {
+                    guildConfig.DiscordRole = null;
+                    update = true;
+                }
+                if (guildConfig.MonitorRole == role)
+                {
+                    guildConfig.MonitorRole = null;
+                    update = true;
+                }
+
+                if (update)
+                    await _work.GuildConfigRepository.UpdateAsync(guildConfig);
+            }
+
             await _work.RoleRepository.RemoveAsync(role.Id);
         }
     }

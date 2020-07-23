@@ -204,14 +204,18 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task<DiscordGuild> _GetDiscordGuild()
         {
-            DiscordGuild discordGuild = new DiscordGuild
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            if (discordGuild == null)
             {
-                DiscordId = Context.Guild.Id,
-                Name = Context.Guild.Name,
-                IconUrl = Context.Guild.IconUrl
-            };
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
-            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+                DiscordGuild newDiscordGuild = new DiscordGuild
+                {
+                    DiscordId = Context.Guild.Id,
+                    Name = Context.Guild.Name,
+                    IconUrl = Context.Guild.IconUrl
+                };
+                await _work.GuildRepository.AddOrUpdateAsync(newDiscordGuild, g => g.DiscordId == Context.Guild.Id);
+                discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            }
             return discordGuild;
         }
 

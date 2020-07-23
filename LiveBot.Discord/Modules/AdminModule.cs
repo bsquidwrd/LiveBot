@@ -56,5 +56,25 @@ namespace LiveBot.Discord.Modules
             await _bus.Publish(payload);
             await ReplyAsync($"{Context.Message.Author.Mention}, I have queued the message to be sent.");
         }
+
+        [RequireOwner]
+        [Command("beta")]
+        [Remarks("Get status of Beta for a Guild")]
+        public async Task GetBetaStatus()
+        {
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
+            await ReplyAsync($"{Context.Message.Author.Mention}, The Beta status of this Guild is `{discordGuild.IsInBeta}`");
+        }
+
+        [RequireOwner]
+        [Command("beta")]
+        [Remarks("Toggle the Beta status of a Guild")]
+        public async Task ToggleBeta(bool status)
+        {
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
+            discordGuild.IsInBeta = status;
+            await _work.GuildRepository.UpdateAsync(discordGuild);
+            await ReplyAsync($"{Context.Message.Author.Mention}, I have set the Beta status of this Guild to `{discordGuild.IsInBeta}`");
+        }
     }
 }

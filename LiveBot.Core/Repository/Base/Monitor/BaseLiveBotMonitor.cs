@@ -41,6 +41,8 @@ namespace LiveBot.Core.Repository.Base.Monitor
 
         public abstract Task<ILiveBotStream> GetStream(string userId);
 
+        public abstract Task<ILiveBotStream> GetStream_Force(ILiveBotUser user);
+
         public abstract Task<ILiveBotUser> GetUserById(string userId);
 
         public abstract Task<ILiveBotUser> GetUser(string username = null, string userId = null, string profileURL = null);

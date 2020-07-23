@@ -30,6 +30,10 @@ namespace LiveBot.Discord.Consumers.Discord
 
             try
             {
+                // Remove Discord Guild Config
+                if (discordGuild.Config != null)
+                    await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
+
                 // Remove Stream Subscriptions for this Guild
                 streamSubscriptions.ToList().ForEach(async i => await _work.SubscriptionRepository.RemoveAsync(i.Id));
 
