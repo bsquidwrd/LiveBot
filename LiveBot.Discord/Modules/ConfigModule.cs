@@ -178,8 +178,13 @@ namespace LiveBot.Discord.Modules
         private async Task _ReplyFinished(DiscordGuildConfig guildConfig)
         {
             string channelName = guildConfig.DiscordChannel != null ? MentionUtils.MentionChannel(guildConfig.DiscordChannel.DiscordId) : "`none`";
-            string monitorRoleName = guildConfig.MonitorRole.Name ?? "none";
+            string monitorRoleName = guildConfig.MonitorRole?.Name ?? "none";
             string mentionRoleName = guildConfig.DiscordRole?.Name ?? "none";
+
+            if (monitorRoleName == "@everyone")
+                monitorRoleName = "everyone";
+            if (mentionRoleName == "@everyone")
+                mentionRoleName = "everyone";
 
             await ReplyAsync($"{Context.Message.Author.Mention}, I have configured your server to monitor the role `{monitorRoleName}` and post in {channelName} with the message `{guildConfig.Message}` mentioning `{mentionRoleName}`");
         }
