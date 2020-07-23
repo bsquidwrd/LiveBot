@@ -172,7 +172,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         public async Task CheckStream(ILiveBotUser user)
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
-            ILiveBotStream stream = await monitor.GetStream(user);
+            ILiveBotStream stream = await monitor.GetStream_Force(user);
             if (stream == null)
             {
                 await ReplyAsync($"Doesn't look like the user {user.DisplayName} is live on {user.ServiceType}");
@@ -215,14 +215,18 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
-            DiscordGuild discordGuild = new DiscordGuild
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            if (discordGuild == null)
             {
-                DiscordId = Context.Guild.Id,
-                Name = Context.Guild.Name,
-                IconUrl = Context.Guild.IconUrl
-            };
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
-            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+                DiscordGuild newDiscordGuild = new DiscordGuild
+                {
+                    DiscordId = Context.Guild.Id,
+                    Name = Context.Guild.Name,
+                    IconUrl = Context.Guild.IconUrl
+                };
+                await _work.GuildRepository.AddOrUpdateAsync(newDiscordGuild, g => g.DiscordId == Context.Guild.Id);
+                discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            }
 
             // Get Notification Channel
             DiscordChannel discordChannel = await _RequestNotificationChannel(discordGuild);
@@ -327,14 +331,18 @@ Don't worry, this won't send any weird messages. It will only send a response wi
         {
             ILiveBotMonitor monitor = _GetServiceMonitor(user);
 
-            DiscordGuild discordGuild = new DiscordGuild
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            if (discordGuild == null)
             {
-                DiscordId = Context.Guild.Id,
-                Name = Context.Guild.Name,
-                IconUrl = Context.Guild.IconUrl
-            };
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, g => g.DiscordId == Context.Guild.Id);
-            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+                DiscordGuild newDiscordGuild = new DiscordGuild
+                {
+                    DiscordId = Context.Guild.Id,
+                    Name = Context.Guild.Name,
+                    IconUrl = Context.Guild.IconUrl
+                };
+                await _work.GuildRepository.AddOrUpdateAsync(newDiscordGuild, g => g.DiscordId == Context.Guild.Id);
+                discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(g => g.DiscordId == Context.Guild.Id);
+            }
 
             StreamUser streamUser = new StreamUser()
             {

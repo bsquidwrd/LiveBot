@@ -264,6 +264,36 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
+        private async Task<Stream> API_GetStream(ILiveBotUser user, int retryCount = 0)
+        {
+            try
+            {
+                List<string> userIds = new List<string>
+                {
+                    user.Id
+                };
+                var streams = await API.Helix.Streams.GetStreamsAsync(type: "live", userIds: userIds);
+                return streams.Streams.Where(i => i.UserId == user.Id).FirstOrDefault();
+            }
+            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
+            {
+                Log.Error($"{e}");
+                if (retryCount <= ApiRetryCount)
+                {
+                    await Task.Delay(RetryDelay);
+                    return await API_GetStream(user, retryCount + 1);
+                }
+                return null;
+            }
+            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
+            {
+                Log.Error($"{e}");
+                await UpdateAuth();
+                await Task.Delay(RetryDelay);
+                return await API_GetStream(user);
+            }
+        }
+
         #endregion API Calls
 
         #region Misc Functions
@@ -471,6 +501,18 @@ namespace LiveBot.Watcher.Twitch
                 return null;
             Stream stream = Monitor.LiveStreams[userId];
             ILiveBotUser user = await GetUser(userId: userId);
+            ILiveBotGame game = await GetGame(stream.GameId);
+            return new TwitchStream(BaseURL, ServiceType, stream, user, game);
+        }
+
+        /// <inheritdoc/>
+        public override async Task<ILiveBotStream> GetStream_Force(ILiveBotUser user)
+        {
+            Stream stream;
+            if (Monitor.LiveStreams.ContainsKey(user.Id))
+                stream = Monitor.LiveStreams[user.Id];
+            else
+                stream = await API_GetStream(user);
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
