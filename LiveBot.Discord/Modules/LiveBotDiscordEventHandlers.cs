@@ -159,11 +159,6 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
         {
-            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
-            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == afterGuildUser.Guild.Id);
-            if (discordGuild == null || (discordGuild?.IsInBeta ?? false))
-                return;
-
             // I don't care about bots
             if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
                 return;

@@ -33,6 +33,10 @@ namespace LiveBot.Discord.Consumers.Streams
 
             DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == context.Message.DiscordGuildId);
 
+            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
+            if (discordGuild == null || (discordGuild?.IsInBeta ?? false))
+                return;
+
             if (discordGuild == null) return;
 
             DiscordGuildConfig guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild == discordGuild);
