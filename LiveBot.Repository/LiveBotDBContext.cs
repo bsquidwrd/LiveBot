@@ -28,5 +28,6 @@ namespace LiveBot.Repository
         public DbSet<StreamNotification> StreamNotification { get; set; }
         public DbSet<StreamGame> StreamGame { get; set; }
         public DbSet<MonitorAuth> MonitorAuth { get; set; }
+        public DbSet<DiscordGuildConfig> DiscordGuildConfig { get; set; }
     }
 }

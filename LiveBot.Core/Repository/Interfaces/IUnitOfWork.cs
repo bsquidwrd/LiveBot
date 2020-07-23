@@ -16,5 +16,6 @@ namespace LiveBot.Core.Repository.Interfaces
         INotificationRepository NotificationRepository { get; }
         IGameRepository GameRepository { get; }
         IAuthRepository AuthRepository { get; }
+        IGuildConfigRepository GuildConfigRepository { get; }
     }
 }

@@ -16,5 +16,7 @@ namespace LiveBot.Core.Repository.Models.Discord
 
         [JsonIgnore]
         public virtual ICollection<StreamSubscription> StreamSubscriptions { get; set; }
+
+        public virtual DiscordGuildConfig Config { get; set; }
     }
 }
