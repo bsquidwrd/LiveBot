@@ -61,25 +61,25 @@ namespace LiveBot.Discord.Consumers.Streams
 
             StreamSubscription existingSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
+            var guild = _client.GetGuild(discordGuild.DiscordId);
+            if (guild == null) return;
+            var guildMember = guild.GetUser(context.Message.DiscordUserId);
+
+            var userHasMonitorRole = guildMember.Roles.Where(i => i.IsEveryone == false).Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
+
             // If there's an existing subscription, check that they still have the role
             if (existingSubscription != null)
             {
                 // If it's not from a role, just return and stop processing
                 if (!existingSubscription.IsFromRole)
                     return;
-
-                var guild = _client.GetGuild(discordGuild.DiscordId);
-                if (guild == null) return;
-                var guildMember = guild.GetUser(context.Message.DiscordUserId);
-
-                var userHasMonitorRole = guildMember.Roles.Where(i => i.IsEveryone == false).Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
                 // If the user does not have the role, remove their subscription
                 if (!userHasMonitorRole)
-                {
                     await _work.SubscriptionRepository.RemoveAsync(existingSubscription.Id);
-                    return;
-                }
             }
+
+            if (!userHasMonitorRole)
+                return;
 
             StreamSubscription newSubscription = new StreamSubscription()
             {
