@@ -76,5 +76,22 @@ namespace LiveBot.Discord.Modules
             await _work.GuildRepository.UpdateAsync(discordGuild);
             await ReplyAsync($"{Context.Message.Author.Mention}, I have set the Beta status of this Guild to `{discordGuild.IsInBeta}`");
         }
+
+        [RequireOwner]
+        [Command("cleanup")]
+        [Remarks("Cleanup the DB of Guilds the bot has left")]
+        public async Task CleanupDatabase()
+        {
+            var guilds = await _work.GuildRepository.GetAllAsync();
+            foreach (var guild in guilds)
+            {
+                if (Context.Client.GetGuild(guild.DiscordId) == null)
+                    await _bus.Publish(new DiscordGuildDelete
+                    {
+                        GuildId = guild.DiscordId
+                    });
+            }
+            await ReplyAsync($"{Context.Message.Author.Mention}, I have queued a cleanup of all Guilds");
+        }
     }
 }
