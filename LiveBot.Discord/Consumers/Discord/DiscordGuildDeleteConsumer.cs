@@ -2,7 +2,6 @@
 using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
 using Serilog;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers.Discord
@@ -35,13 +34,16 @@ namespace LiveBot.Discord.Consumers.Discord
                     await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
 
                 // Remove Stream Subscriptions for this Guild
-                streamSubscriptions.ToList().ForEach(async i => await _work.SubscriptionRepository.RemoveAsync(i.Id));
+                foreach (var streamSubscription in streamSubscriptions)
+                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
 
                 // Remove Discord Roles for this Guild
-                discordRoles.ToList().ForEach(async i => await _work.RoleRepository.RemoveAsync(i.Id));
+                foreach (var discordRole in discordRoles)
+                    await _work.RoleRepository.RemoveAsync(discordRole.Id);
 
                 // Remove Discord Channels for this Guild
-                discordChannels.ToList().ForEach(async i => await _work.ChannelRepository.RemoveAsync(i.Id));
+                foreach (var discordChannel in discordChannels)
+                    await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
 
                 // Remove Discord Guild
                 await _work.GuildRepository.RemoveAsync(discordGuild.Id);
