@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
 using Serilog;
+using System;
 using System.Threading.Tasks;
 
 namespace LiveBot.Discord.Consumers.Discord
@@ -48,9 +49,9 @@ namespace LiveBot.Discord.Consumers.Discord
                 // Remove Discord Guild
                 await _work.GuildRepository.RemoveAsync(discordGuild.Id);
             }
-            catch
+            catch (Exception e)
             {
-                Log.Error($"Unable to remove Guild {discordGuild.DiscordId} {discordGuild.Name}");
+                Log.Error($"Unable to remove Guild {discordGuild.DiscordId} {discordGuild.Name}\n{e}");
             }
         }
     }
