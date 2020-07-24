@@ -94,7 +94,7 @@ namespace LiveBot.Discord.Consumers.Streams
                 var discordGuild = streamSubscription.DiscordGuild;
 
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
-                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId); ;
+                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
@@ -192,11 +192,10 @@ namespace LiveBot.Discord.Consumers.Streams
                 }
                 catch (Exception e)
                 {
-                    if (e is HttpException)
+                    if (e is HttpException discordError)
                     {
-                        HttpException discordError = (HttpException)e;
                         // You lack permissions to perform that action
-                        if (discordError.DiscordCode == 50013 || discordError.DiscordCode == 50001)
+                        if (discordError.DiscordCode == 50013)
                         {
                             // I'm tired of seeing errors for Missing Permissions
                             continue;
