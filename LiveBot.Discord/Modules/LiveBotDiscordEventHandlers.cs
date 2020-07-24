@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.Contracts;
 using MassTransit;
@@ -16,15 +15,11 @@ namespace LiveBot.Discord.Modules
     {
         private readonly IBusControl _bus;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
-        private readonly IUnitOfWork _work;
 
         public LiveBotDiscordEventHandlers(IServiceProvider services)
         {
             _bus = services.GetRequiredService<IBusControl>();
             _monitors = services.GetServices<ILiveBotMonitor>();
-
-            IUnitOfWorkFactory factory = services.GetRequiredService<IUnitOfWorkFactory>();
-            _work = factory.Create();
         }
 
         /// <summary>
