@@ -24,9 +24,9 @@ namespace LiveBot.Discord.Consumers.Discord
             if (discordGuild == null)
                 return;
 
-            var discordChannels = discordGuild.DiscordChannels;
-            var discordRoles = discordGuild.DiscordRoles;
-            var streamSubscriptions = discordGuild.StreamSubscriptions;
+            var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
 
             try
             {
