@@ -31,18 +31,19 @@ namespace LiveBot.Discord.Consumers.Streams
             var monitor = _monitors.Where(i => i.ServiceType == context.Message.ServiceType).FirstOrDefault();
             if (monitor == null) return;
 
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == context.Message.DiscordGuildId);
-
-            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
-            if (discordGuild == null || (discordGuild?.IsInBeta ?? false))
-                return;
+            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == context.Message.DiscordGuildId && i.IsInBeta == true);
 
             if (discordGuild == null) return;
 
-            DiscordGuildConfig guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild == discordGuild);
+            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
+            bool isInBeta = discordGuild?.IsInBeta ?? false;
+            if (!isInBeta) return;
+
+            DiscordGuildConfig guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == context.Message.DiscordGuildId);
 
             // If they don't have any of the proper settings set, ignore
-            if (guildConfig == null || guildConfig?.MonitorRole == null || guildConfig?.DiscordChannel == null || guildConfig?.Message == null)
+            if (guildConfig == null) return;
+            if (guildConfig.MonitorRole == null || guildConfig.DiscordChannel == null || guildConfig.Message == null)
                 return;
 
             ILiveBotUser user = await monitor.GetUser(profileURL: context.Message.Url);
