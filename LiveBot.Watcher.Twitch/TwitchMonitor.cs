@@ -519,6 +519,7 @@ namespace LiveBot.Watcher.Twitch
                 stream = Monitor.LiveStreams[user.Id];
             else
                 stream = await API_GetStream(user);
+            if (stream == null) return null;
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
