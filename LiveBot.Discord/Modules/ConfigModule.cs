@@ -249,11 +249,11 @@ namespace LiveBot.Discord.Modules
         /// <returns></returns>
         public async Task<DiscordGuildConfig> _SaveDiscordGuildConfig(DiscordGuild discordGuild, DiscordGuildConfig guildConfig)
         {
-            await _work.GuildConfigRepository.AddOrUpdateAsync(guildConfig, i => i.DiscordGuild == discordGuild);
+            await _work.GuildConfigRepository.UpdateAsync(guildConfig);
             DiscordGuildConfig newConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild == discordGuild);
 
             discordGuild.Config = newConfig;
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, i => i.DiscordId == discordGuild.DiscordId);
+            await _work.GuildRepository.UpdateAsync(discordGuild);
             discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == discordGuild.DiscordId);
 
             return newConfig;
