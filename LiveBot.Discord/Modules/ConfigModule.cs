@@ -51,9 +51,8 @@ namespace LiveBot.Discord.Modules
                 guildConfig.Message = notificationMessage;
                 guildConfig.DiscordRole = notificationRole;
                 guildConfig.MonitorRole = monitorRole;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
 
-                guildConfig = await _GetDiscordGuildConfig(discordGuild);
+                guildConfig = await _SaveDiscordGuildConfig(discordGuild, guildConfig);
                 await _ReplyFinished(guildConfig);
             }
             catch (Exception e)
@@ -78,9 +77,8 @@ namespace LiveBot.Discord.Modules
             try
             {
                 guildConfig.DiscordChannel = notificationChannel;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
 
-                guildConfig = await _GetDiscordGuildConfig(discordGuild);
+                guildConfig = await _SaveDiscordGuildConfig(discordGuild, guildConfig);
                 await _ReplyFinished(guildConfig);
             }
             catch (Exception e)
@@ -105,9 +103,8 @@ namespace LiveBot.Discord.Modules
             try
             {
                 guildConfig.Message = notificationMessage;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
 
-                guildConfig = await _GetDiscordGuildConfig(discordGuild);
+                guildConfig = await _SaveDiscordGuildConfig(discordGuild, guildConfig);
                 await _ReplyFinished(guildConfig);
             }
             catch (Exception e)
@@ -132,9 +129,8 @@ namespace LiveBot.Discord.Modules
             try
             {
                 guildConfig.MonitorRole = monitorRole;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
 
-                guildConfig = await _GetDiscordGuildConfig(discordGuild);
+                guildConfig = await _SaveDiscordGuildConfig(discordGuild, guildConfig);
                 await _ReplyFinished(guildConfig);
             }
             catch (Exception e)
@@ -159,9 +155,8 @@ namespace LiveBot.Discord.Modules
             try
             {
                 guildConfig.DiscordRole = notificationRole;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
 
-                guildConfig = await _GetDiscordGuildConfig(discordGuild);
+                guildConfig = await _SaveDiscordGuildConfig(discordGuild, guildConfig);
                 await _ReplyFinished(guildConfig);
             }
             catch (Exception e)
@@ -232,7 +227,7 @@ namespace LiveBot.Discord.Modules
         public async Task<DiscordGuildConfig> _GetDiscordGuildConfig(DiscordGuild discordGuild)
         {
             // Get/Create Guild Config
-            DiscordGuildConfig guildConfig = discordGuild.Config;
+            DiscordGuildConfig guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild == discordGuild);
             if (guildConfig is null)
             {
                 var newGuildConfig = new DiscordGuildConfig
@@ -245,6 +240,23 @@ namespace LiveBot.Discord.Modules
                 await _work.GuildRepository.UpdateAsync(discordGuild);
             }
             return guildConfig;
+        }
+
+        /// <summary>
+        /// Save and return the newly stored <seealso cref="DiscordGuildConfig"/>
+        /// </summary>
+        /// <param name="guildConfig"></param>
+        /// <returns></returns>
+        public async Task<DiscordGuildConfig> _SaveDiscordGuildConfig(DiscordGuild discordGuild, DiscordGuildConfig guildConfig)
+        {
+            await _work.GuildConfigRepository.AddOrUpdateAsync(guildConfig, i => i.DiscordGuild == discordGuild);
+            DiscordGuildConfig newConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild == discordGuild);
+
+            discordGuild.Config = newConfig;
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, i => i.DiscordId == discordGuild.DiscordId);
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == discordGuild.DiscordId);
+
+            return newConfig;
         }
 
         /// <summary>
