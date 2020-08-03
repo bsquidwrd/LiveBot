@@ -70,7 +70,7 @@ namespace LiveBot.Discord.Consumers.Streams
             if (guild == null) return;
             var guildMember = guild.GetUser(context.Message.DiscordUserId);
 
-            var userHasMonitorRole = guildMember.Roles.Where(i => i.IsEveryone == false).Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
+            var userHasMonitorRole = guildMember.Roles.Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
 
             // If there's an existing subscription, check that they still have the role
             if (existingSubscription != null)
