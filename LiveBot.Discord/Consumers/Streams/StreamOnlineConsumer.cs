@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts;
@@ -157,23 +157,17 @@ namespace LiveBot.Discord.Consumers.Streams
                 if (previousNotifications.Count() > 0)
                     newStreamNotification.Success = true;
 
-                // Do some checks to see if the channel can be found. If not, just mark as a success
-                // and move on
-                int channelCheckCount = 0;
-                while (channel == null && _client.LoginState == LoginState.LoggedIn)
+                // If the channel can't be found (null) and the shard
+                // is online, check if the Guild is online
+                if (channel == null && _client.GetShardFor(guild).LoginState == LoginState.LoggedIn)
                 {
-                    if (channelCheckCount >= 12) // Ends up being 10 seconds
+                    // If the Guild is online, but the channel isn't found
+                    // remove the subscription
+                    if (guild.IsConnected)
                     {
-                        string errorMessage = $"Unable to get a Discord Channel for {streamSubscription.DiscordChannel.DiscordId} after {channelCheckCount} attempts";
-                        Log.Error(errorMessage);
-                        newStreamNotification.Success = true;
-                        var streamSubscriptionJSON = JsonConvert.SerializeObject(streamSubscription);
-                        newStreamNotification.LogMessage = $"{errorMessage}\n{streamSubscriptionJSON}";
-                        break;
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     }
-                    channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
-                    channelCheckCount += 1;
-                    await Task.Delay(TimeSpan.FromSeconds(5)); // Delay check for 5 seconds
+                    return;
                 }
 
                 await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
