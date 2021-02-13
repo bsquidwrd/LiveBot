@@ -56,16 +56,15 @@ namespace LiveBot.Discord.Consumers.Discord
                     await _bus.Publish(channelUpdateContext);
                 }
 
-                // Shit just gets deleted for no reason, so fuck it
-                //List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
-                //if (dbChannels.Count() > 0)
-                //{
-                //    foreach (var channelId in dbChannels.Select(i => i.DiscordId).Distinct().Except(channelIDs))
-                //    {
-                //        DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = channelId };
-                //        await _bus.Publish(channelDeleteContext);
-                //    }
-                //}
+                List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
+                if (dbChannels.Count() > 0)
+                {
+                    foreach (var channelId in dbChannels.Select(i => i.DiscordId).Distinct().Except(channelIDs))
+                    {
+                        DiscordChannelDelete channelDeleteContext = new DiscordChannelDelete { GuildId = guild.Id, ChannelId = channelId };
+                        await _bus.Publish(channelDeleteContext);
+                    }
+                }
 
                 #endregion Handle Channels
 
