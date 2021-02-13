@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts;
@@ -7,7 +7,6 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
 using MassTransit;
-using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -92,8 +91,39 @@ namespace LiveBot.Discord.Consumers.Streams
                 var discordChannel = streamSubscription.DiscordChannel;
                 var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
+                var discordConfig = discordGuild.Config;
 
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
+
+                // Do some checks if the Subscription is from a role
+                if (discordConfig != null && streamSubscription.IsFromRole)
+                {
+                    if (discordConfig.MonitorRole == null)
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        continue;
+                    }
+
+                    if (streamSubscription.DiscordUserId == null)
+                        continue;
+
+                    var guildMember = guild.GetUser((ulong)streamSubscription.DiscordUserId);
+                    // If the user can't be found, delete the subscription
+                    if (guildMember == null)
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        continue;
+                    }
+
+                    var userHasMonitorRole = guildMember.Roles.Select(i => i.Id).Distinct().Contains(discordConfig.MonitorRole.DiscordId);
+                    // If the user doesn't have the mention role, delete the subscription
+                    if (!userHasMonitorRole)
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        continue;
+                    }
+                }
+
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);

@@ -19,6 +19,8 @@ namespace LiveBot.Discord.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)
         {
+            // Fuck this shit, don't clean up DB I guess.
+            return;
             var message = context.Message;
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
 

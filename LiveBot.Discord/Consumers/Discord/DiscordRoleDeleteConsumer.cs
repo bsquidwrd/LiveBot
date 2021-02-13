@@ -48,6 +48,17 @@ namespace LiveBot.Discord.Consumers.Discord
                     await _work.GuildConfigRepository.UpdateAsync(guildConfig);
             }
 
+            var roleSubscriptions = await _work.SubscriptionRepository.FindAsync(i =>
+                i.DiscordGuild.DiscordId == message.GuildId
+                && i.DiscordGuild.Config.MonitorRole.DiscordId == message.RoleId
+                && i.IsFromRole == true
+            );
+
+            foreach (var roleSubscription in roleSubscriptions)
+            {
+                await _work.SubscriptionRepository.RemoveAsync(roleSubscription.Id);
+            }
+
             await _work.RoleRepository.RemoveAsync(role.Id);
         }
     }

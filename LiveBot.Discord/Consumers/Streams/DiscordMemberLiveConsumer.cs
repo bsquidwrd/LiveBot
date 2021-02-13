@@ -78,6 +78,14 @@ namespace LiveBot.Discord.Consumers.Streams
                 // If it's not from a role, just return and stop processing
                 if (!existingSubscription.IsFromRole)
                     return;
+
+                // If the Discord User Id is null, populate it
+                if (existingSubscription.DiscordUserId == null)
+                {
+                    existingSubscription.DiscordUserId = context.Message.DiscordUserId;
+                    await _work.SubscriptionRepository.UpdateAsync(existingSubscription);
+                }
+
                 // If the user does not have the role, remove their subscription
                 if (!userHasMonitorRole)
                     await _work.SubscriptionRepository.RemoveAsync(existingSubscription.Id);
@@ -93,7 +101,8 @@ namespace LiveBot.Discord.Consumers.Streams
                 DiscordChannel = guildConfig.DiscordChannel,
                 DiscordRole = guildConfig.DiscordRole,
                 Message = guildConfig.Message,
-                IsFromRole = true
+                IsFromRole = true,
+                DiscordUserId = context.Message.DiscordUserId
             };
 
             await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);

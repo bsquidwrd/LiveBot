@@ -10,5 +10,6 @@ namespace LiveBot.Core.Repository.Models.Streams
         public virtual DiscordRole DiscordRole { get; set; }
         public string Message { get; set; }
         public bool IsFromRole { get; set; }
+        public ulong? DiscordUserId { get; set; }
     }
 }
