@@ -14,11 +14,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using TwitchLib.Api;
+using TwitchLib.Api.Core;
 using TwitchLib.Api.Core.Exceptions;
 using TwitchLib.Api.Core.RateLimiter;
 using TwitchLib.Api.Helix.Models.Games;
-using TwitchLib.Api.Helix.Models.Streams;
-using TwitchLib.Api.Helix.Models.Users;
+using TwitchLib.Api.Helix.Models.Streams.GetStreams;
+using TwitchLib.Api.Helix.Models.Users.GetUsers;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
@@ -85,7 +86,12 @@ namespace LiveBot.Watcher.Twitch
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
-            API = new TwitchAPI(rateLimiter: rateLimiter);
+            var apiSettings = new ApiSettings()
+            {
+                SkipAutoServerTokenGeneration = false // Don't skip auto server token generation
+            };
+
+            API = new TwitchAPI(rateLimiter: rateLimiter, settings: apiSettings);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
             //Monitor.OnServiceTick += Monitor_OnServiceTick;
@@ -314,6 +320,7 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task UpdateAuth()
         {
+            return;
             Log.Debug($"Refreshing Auth for {ServiceType}");
             var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
             RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
@@ -383,13 +390,14 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
+                SetupUserTimer(1);
                 Log.Error($"Error updating users\n{e}");
             }
         }
 
-        private void SetupUserTimer()
+        private void SetupUserTimer(double minutes = 5)
         {
-            TimeSpan timeSpan = TimeSpan.FromMinutes(5);
+            TimeSpan timeSpan = TimeSpan.FromMinutes(minutes);
             RefreshUsersTimer = new Timer(timeSpan.TotalMilliseconds)
             {
                 AutoReset = true
@@ -484,7 +492,11 @@ namespace LiveBot.Watcher.Twitch
         {
             if (_gameCache.ContainsKey(gameId))
                 return _gameCache[gameId];
-            Game game = await API_GetGame(gameId);
+            Game game = null;
+            if (!string.IsNullOrWhiteSpace(gameId))
+            {
+                game = await API_GetGame(gameId);
+            }
             var twitchGame = new TwitchGame(BaseURL, ServiceType, game);
             _gameCache.TryAdd(gameId, twitchGame);
             return twitchGame;
