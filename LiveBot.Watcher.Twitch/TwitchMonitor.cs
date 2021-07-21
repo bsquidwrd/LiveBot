@@ -320,7 +320,6 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task UpdateAuth()
         {
-            return;
             Log.Debug($"Refreshing Auth for {ServiceType}");
             var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
             RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
