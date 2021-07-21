@@ -14,7 +14,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using TwitchLib.Api;
-using TwitchLib.Api.Core;
 using TwitchLib.Api.Core.Exceptions;
 using TwitchLib.Api.Core.RateLimiter;
 using TwitchLib.Api.Helix.Models.Games;
@@ -86,12 +85,7 @@ namespace LiveBot.Watcher.Twitch
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
-            var apiSettings = new ApiSettings()
-            {
-                SkipAutoServerTokenGeneration = false // Don't skip auto server token generation
-            };
-
-            API = new TwitchAPI(rateLimiter: rateLimiter, settings: apiSettings);
+            API = new TwitchAPI(rateLimiter: rateLimiter);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
             //Monitor.OnServiceTick += Monitor_OnServiceTick;
