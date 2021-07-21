@@ -96,6 +96,9 @@ namespace LiveBot.Discord.Consumers.Streams
                 var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
                 SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
 
+                if (guild == null)
+                    return;
+
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 

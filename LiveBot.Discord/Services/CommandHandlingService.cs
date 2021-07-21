@@ -65,7 +65,8 @@ namespace LiveBot.Discord.Services
                 {
                     var guild = socketTextChannel.Guild;
                     var guildRole = guild.CurrentUser.Roles.Where(i => i.IsManaged == true).FirstOrDefault();
-                    mentionedByRole = message.HasStringPrefix($"{guildRole.Mention} ", ref argPos);
+                    if (guildRole != null)
+                        mentionedByRole = message.HasStringPrefix($"{guildRole.Mention} ", ref argPos);
                 }
             }
             catch
