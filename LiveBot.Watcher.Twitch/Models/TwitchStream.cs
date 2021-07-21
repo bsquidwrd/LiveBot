@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Static;
 using TwitchLib.Api.Helix.Models.Streams;
+using TwitchLib.Api.Helix.Models.Streams.GetStreams;
 
 namespace LiveBot.Watcher.Twitch.Models
 {
