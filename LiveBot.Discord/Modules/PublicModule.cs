@@ -1,6 +1,6 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
+using Interactivity;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Static;
 using System;
@@ -9,13 +9,15 @@ using System.Threading.Tasks;
 namespace LiveBot.Discord.Modules
 {
     [RequireContext(ContextType.Guild)]
-    public class PublicModule : InteractiveBase<ShardedCommandContext>
+    public class PublicModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly InteractivityService _interactivity;
 
-        public PublicModule(IUnitOfWorkFactory factory)
+        public PublicModule(IUnitOfWorkFactory factory, InteractivityService interactivity)
         {
             _work = factory.Create();
+            _interactivity = interactivity;
         }
 
         /// <summary>
@@ -59,7 +61,7 @@ namespace LiveBot.Discord.Modules
         [Command("source")]
         public async Task SourceAsync()
         {
-            await ReplyAndDeleteAsync($"{Context.Message.Author.Mention} You can find my source code here: {Basic.SourceLink}", timeout: TimeSpan.FromMinutes(1));
+            _interactivity.DelayedSendMessageAndDeleteAsync(Context.Channel, text: $"{Context.Message.Author.Mention} You can find my source code here: {Basic.SourceLink}", deleteDelay: TimeSpan.FromMinutes(1));
         }
 
         /// <summary>
@@ -69,7 +71,7 @@ namespace LiveBot.Discord.Modules
         [Command("support")]
         public async Task SupportAsync()
         {
-            await ReplyAndDeleteAsync($"{Context.Message.Author.Mention}, you can find my support server here: {Basic.SupportInvite}", timeout: TimeSpan.FromMinutes(1));
+            _interactivity.DelayedSendMessageAndDeleteAsync(Context.Channel, text: $"{Context.Message.Author.Mention}, you can find my support server here: {Basic.SupportInvite}", deleteDelay: TimeSpan.FromMinutes(1));
         }
 
         /// <summary>
@@ -79,7 +81,7 @@ namespace LiveBot.Discord.Modules
         [Command("donate")]
         public async Task DonateAsync()
         {
-            await ReplyAndDeleteAsync($"{Context.Message.Author.Mention}, Thank you so much for even considering donating! You can donate here: <{Basic.DonationLink}>", timeout: TimeSpan.FromMinutes(1));
+            _interactivity.DelayedSendMessageAndDeleteAsync(Context.Channel, text: $"{Context.Message.Author.Mention}, Thank you so much for even considering donating! You can donate here: <{Basic.DonationLink}>", deleteDelay: TimeSpan.FromMinutes(1));
         }
     }
 }

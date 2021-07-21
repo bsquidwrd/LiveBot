@@ -1,6 +1,6 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
+using Interactivity;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
@@ -15,17 +15,19 @@ namespace LiveBot.Discord.Modules
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [Group("config")]
     [Summary("Monitor actions for Streams")]
-    public class ConfigModule : InteractiveBase<ShardedCommandContext>
+    public class ConfigModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly InteractivityService _interactivity;
 
         /// <summary>
         /// Represents the Command to configure the bot for a Guild
         /// </summary>
         /// <param name="factory"></param>
-        public ConfigModule(IUnitOfWorkFactory factory)
+        public ConfigModule(IUnitOfWorkFactory factory, InteractivityService interactivity)
         {
             _work = factory.Create();
+            _interactivity = interactivity;
         }
 
         #region Commands
@@ -274,15 +276,15 @@ namespace LiveBot.Discord.Modules
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
 
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
 
-            if (responseMessage.Content.Trim().Equals("none", StringComparison.CurrentCultureIgnoreCase))
+            if (responseMessage.Value.Content.Trim().Equals("none", StringComparison.CurrentCultureIgnoreCase))
                 return null;
 
-            IGuildChannel guildChannel = responseMessage.MentionedChannels.FirstOrDefault();
+            IGuildChannel guildChannel = responseMessage.Value.MentionedChannels.FirstOrDefault();
 
             DiscordChannel discordChannel = null;
             if (guildChannel != null)
@@ -315,11 +317,11 @@ namespace LiveBot.Discord.Modules
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            IRole role = responseMessage.MentionedRoles.FirstOrDefault();
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
+            IRole role = responseMessage.Value.MentionedRoles.FirstOrDefault();
             if (role == null)
             {
-                string response = responseMessage.Content.Trim();
+                string response = responseMessage.Value.Content.Trim();
                 if (response.Equals("everyone", StringComparison.CurrentCultureIgnoreCase))
                 {
                     role = Context.Guild.EveryoneRole;
@@ -334,7 +336,7 @@ namespace LiveBot.Discord.Modules
                 }
             }
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
 
             DiscordRole discordRole = null;
             if (role != null)
@@ -367,11 +369,11 @@ namespace LiveBot.Discord.Modules
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            IRole role = responseMessage.MentionedRoles.FirstOrDefault();
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
+            IRole role = responseMessage.Value.MentionedRoles.FirstOrDefault();
             if (role == null)
             {
-                string response = responseMessage.Content.Trim();
+                string response = responseMessage.Value.Content.Trim();
                 if (response.Equals("everyone", StringComparison.CurrentCultureIgnoreCase))
                 {
                     role = Context.Guild.EveryoneRole;
@@ -386,7 +388,7 @@ namespace LiveBot.Discord.Modules
                 }
             }
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
 
             DiscordRole discordRole = null;
             if (role != null)
@@ -428,8 +430,8 @@ namespace LiveBot.Discord.Modules
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            string notificationMessage = responseMessage.Content.Trim();
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
+            string notificationMessage = responseMessage.Value.Content.Trim();
 
             if (notificationMessage.Equals("default", StringComparison.CurrentCultureIgnoreCase))
             {
@@ -437,7 +439,7 @@ namespace LiveBot.Discord.Modules
             }
 
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
             return notificationMessage;
         }
 

@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace LiveBot.Discord.Modules
     /// Location of all the "Help" commands
     /// </summary>
     [RequireBotPermission(ChannelPermission.EmbedLinks)]
-    public class HelpModule : InteractiveBase<ShardedCommandContext>
+    public class HelpModule : ModuleBase<ShardedCommandContext>
     {
         private readonly CommandService _service;
 

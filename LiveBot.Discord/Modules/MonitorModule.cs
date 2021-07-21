@@ -1,6 +1,7 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
+using Interactivity;
+using Interactivity.Pagination;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
@@ -21,10 +22,11 @@ namespace LiveBot.Discord.Modules
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [Group("monitor")]
     [Summary("Monitor actions for Streams")]
-    public class MonitorModule : InteractiveBase<ShardedCommandContext>
+    public class MonitorModule : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
+        private readonly InteractivityService _interactivity;
 
         /// <summary>
         /// Represents the list of Monitoring Commands available
@@ -33,10 +35,11 @@ namespace LiveBot.Discord.Modules
         /// The loaded Monitoring Services, later used for locating and processing requests
         /// </param>
         /// <param name="factory">The database factory so that the database can be utilized</param>
-        public MonitorModule(IEnumerable<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory)
+        public MonitorModule(IEnumerable<ILiveBotMonitor> monitors, IUnitOfWorkFactory factory, InteractivityService interactivity)
         {
             _monitors = monitors;
             _work = factory.Create();
+            _interactivity = interactivity;
         }
 
         #region Owner Commands
@@ -132,13 +135,14 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 i.DiscordGuild.DiscordId == Context.Guild.Id
             );
             int pageCount = await _work.SubscriptionRepository.GetPageCountAsync(streamSubscriptionPredicate, pageSize);
-            List<EmbedFieldBuilder> subscriptions = new List<EmbedFieldBuilder>();
+            List<PageBuilder> subscriptions = new List<PageBuilder>();
 
             for (int i = 1; i < pageCount + 1; i++)
             {
                 var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(streamSubscriptionPredicate, i, pageSize);
                 if (streamSubscriptions.Count() == 0)
                     continue;
+                List<EmbedFieldBuilder> fieldBuilders = new List<EmbedFieldBuilder>();
                 foreach (StreamSubscription streamSubscription in streamSubscriptions)
                 {
                     string fieldValue = "";
@@ -149,17 +153,20 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                         .WithIsInline(false)
                         .WithName(streamSubscription.User.ProfileURL)
                         .WithValue(fieldValue);
-                    subscriptions.Add(fieldBuilder);
+                    fieldBuilders.Add(fieldBuilder);
                 }
+                PageBuilder pageBuilder = new PageBuilder().WithTitle("Stream Subscriptions").WithFields(fieldBuilders);
+                subscriptions.Add(pageBuilder);
             }
 
-            PaginatedMessage paginatedMessage = new PaginatedMessage
-            {
-                Color = Color.LightGrey,
-                Title = "Stream Subscriptions",
-                Pages = subscriptions
-            };
-            await PagedReplyAsync(paginatedMessage);
+            var paginator = new StaticPaginatorBuilder()
+                .WithUsers(Context.User)
+                .WithPages(subscriptions)
+                .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
+                .WithDefaultEmotes()
+                .Build();
+
+            await _interactivity.SendPaginatorAsync(paginator, Context.Channel, timeout: TimeSpan.FromMinutes(2));
         }
 
         /// <summary>
@@ -431,12 +438,12 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
 
-            string returnValue = responseMessage?.Content;
+            string returnValue = responseMessage.Value.Content;
 
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
             return returnValue;
         }
 
@@ -455,11 +462,11 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
 
-            IGuildChannel guildChannel = responseMessage.MentionedChannels.FirstOrDefault();
+            IGuildChannel guildChannel = responseMessage.Value.MentionedChannels.FirstOrDefault();
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
 
             DiscordChannel discordChannel = null;
             if (guildChannel != null)
@@ -492,11 +499,11 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            IRole role = responseMessage.MentionedRoles.FirstOrDefault();
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
+            IRole role = responseMessage.Value.MentionedRoles.FirstOrDefault();
             if (role == null)
             {
-                string response = responseMessage.Content.Trim();
+                string response = responseMessage.Value.Content.Trim();
                 if (response.Equals("everyone", StringComparison.CurrentCultureIgnoreCase))
                 {
                     role = Context.Guild.EveryoneRole;
@@ -511,7 +518,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 }
             }
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
 
             DiscordRole discordRole = null;
             if (role != null)
@@ -553,8 +560,8 @@ Don't worry, this won't send any weird messages. It will only send a response wi
                 .Build();
 
             var questionMessage = await ReplyAsync(message: $"{Context.Message.Author.Mention}", embed: messageEmbed);
-            var responseMessage = await NextMessageAsync(timeout: Defaults.MessageTimeout);
-            string notificationMessage = responseMessage.Content.Trim();
+            var responseMessage = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
+            string notificationMessage = responseMessage.Value.Content.Trim();
 
             if (notificationMessage.Equals("default", StringComparison.CurrentCultureIgnoreCase))
             {
@@ -562,7 +569,7 @@ Don't worry, this won't send any weird messages. It will only send a response wi
             }
 
             await _DeleteMessage(questionMessage);
-            await _DeleteMessage(responseMessage);
+            await _DeleteMessage(responseMessage.Value);
             return notificationMessage;
         }
 

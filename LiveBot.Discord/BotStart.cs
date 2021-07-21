@@ -1,10 +1,9 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using Interactivity;
 using LiveBot.Discord.Modules;
 using LiveBot.Discord.Services;
-using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -33,7 +32,7 @@ namespace LiveBot.Discord
         /// <param name="services"></param>
         public void PopulateServices(IServiceCollection services)
         {
-            services.AddSingleton<InteractiveService>();
+            services.AddSingleton<InteractivityService>();
             services.AddSingleton<CommandService>();
             services.AddSingleton<CommandHandlingService>();
         }

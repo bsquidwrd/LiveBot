@@ -1,7 +1,9 @@
-﻿using Discord.Addons.Interactive;
-using Discord.Commands;
+﻿using Discord.Commands;
+using Interactivity;
+using Interactivity.Pagination;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Static;
 using System;
 using System.Threading.Tasks;
 
@@ -9,17 +11,19 @@ namespace LiveBot.Discord.Modules
 {
     [RequireOwner]
     [Group("test")]
-    public class TestCommands : InteractiveBase<ShardedCommandContext>
+    public class TestCommands : ModuleBase<ShardedCommandContext>
     {
         private readonly IUnitOfWork _work;
+        private readonly InteractivityService _interactivity;
 
         /// <summary>
         /// Testing Commands for the bot
         /// </summary>
         /// <param name="factory"></param>
-        public TestCommands(IUnitOfWorkFactory factory)
+        public TestCommands(IUnitOfWorkFactory factory, InteractivityService interactivity)
         {
             _work = factory.Create();
+            _interactivity = interactivity;
         }
 
         [Command("bool")]
@@ -40,17 +44,6 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync($"The following names were retrieved from the Database: Channel {DBChannel.Name} in Guild {DBGuild.Name}");
         }
 
-        /// <summary>
-        /// Test deleting a message after a set amount of time
-        /// </summary>
-        /// <returns></returns>
-        [Command("delete")]
-        public async Task<RuntimeResult> Test_DeleteAfterAsync()
-        {
-            await ReplyAndDeleteAsync("this message will delete in 10 seconds", timeout: TimeSpan.FromSeconds(10));
-            return Ok();
-        }
-
         ///<summary>
         /// NextMessageAsync will wait for the next message to come in over the gateway, given certain criteria
         /// By default, this will be limited to messages from the source user in the source channel
@@ -60,23 +53,32 @@ namespace LiveBot.Discord.Modules
         public async Task Test_NextMessageAsync()
         {
             await ReplyAsync("What is 2+2?");
-            var response = await NextMessageAsync();
+            var response = await _interactivity.NextMessageAsync(x => x.Author.Id == Context.User.Id, timeout: Defaults.MessageTimeout);
             if (response != null)
-                await ReplyAsync($"You replied: {response.Content}");
+                await ReplyAsync($"You replied: {response.Value.Content}");
             else
                 await ReplyAsync("You did not reply before the timeout");
         }
 
-        /// <summary>
-        /// PagedReplyAsync will send a paginated message to the channel You can customize the
-        /// paginator by creating a PaginatedMessage object You can customize the criteria for the
-        /// paginator as well, which defaults to restricting to the source user This method will not block.
-        /// </summary>
-        [Command("paginator")]
-        public async Task Test_Paginator()
+        [Command("paginator", RunMode = RunMode.Async)]
+        public Task PaginatorAsync()
         {
-            var pages = new[] { "Page 1", "Page 2", "Page 3", "aaaaaa", "Page 5" };
-            await PagedReplyAsync(pages);
+            var pages = new PageBuilder[] {
+                new PageBuilder().WithTitle("I"),
+                new PageBuilder().WithTitle("am"),
+                new PageBuilder().WithTitle("cool"),
+                new PageBuilder().WithTitle(":sunglasses:"),
+                new PageBuilder().WithText("I am cool :crown:")
+            };
+
+            var paginator = new StaticPaginatorBuilder()
+                .WithUsers(Context.User)
+                .WithPages(pages)
+                .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
+                .WithDefaultEmotes()
+                .Build();
+
+            return _interactivity.SendPaginatorAsync(paginator, Context.Channel, TimeSpan.FromMinutes(2));
         }
     }
 }
