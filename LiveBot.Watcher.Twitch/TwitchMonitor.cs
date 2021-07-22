@@ -350,7 +350,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor))
+                foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor, 90))
                 {
                     GetUsersResponse users = await API_GetUsersById(userIds);
                     foreach (User user in users.Users)
