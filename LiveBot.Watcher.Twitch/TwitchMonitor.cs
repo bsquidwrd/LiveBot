@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using TwitchLib.Api;
+using TwitchLib.Api.Auth;
 using TwitchLib.Api.Core.Exceptions;
 using TwitchLib.Api.Core.RateLimiter;
 using TwitchLib.Api.Helix.Models.Games;
@@ -22,7 +23,6 @@ using TwitchLib.Api.Helix.Models.Users.GetUsers;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
-using TwitchLib.Api.V5.Models.Auth;
 
 namespace LiveBot.Watcher.Twitch
 {
@@ -316,7 +316,7 @@ namespace LiveBot.Watcher.Twitch
         {
             Log.Debug($"Refreshing Auth for {ServiceType}");
             var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-            RefreshResponse refreshResponse = await API.V5.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
+            RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
 
             var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
             await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);

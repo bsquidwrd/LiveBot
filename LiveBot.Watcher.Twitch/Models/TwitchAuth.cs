@@ -1,6 +1,6 @@
 ﻿using LiveBot.Core.Repository.Models;
 using LiveBot.Core.Repository.Static;
-using TwitchLib.Api.V5.Models.Auth;
+using TwitchLib.Api.Auth;
 
 namespace LiveBot.Watcher.Twitch.Models
 {
