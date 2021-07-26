@@ -32,7 +32,7 @@ namespace LiveBot.Watcher.Twitch
         public TwitchAPI API;
         public IServiceProvider services;
         public IBusControl _bus;
-        private readonly int RetryDelay = 1000 * 30; // 30 seconds
+        private readonly int RetryDelay = 1000 * 5; // 5 seconds
         private readonly int ApiRetryCount = 5; // How many times to retry API requests
 
         public string ClientId
