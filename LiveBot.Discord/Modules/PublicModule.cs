@@ -54,6 +54,8 @@ namespace LiveBot.Discord.Modules
             await ReplyAsync(msg);
         }
 
+#pragma warning disable 1998
+
         /// <summary>
         /// Provides a link to the GitHub Repository for the bot
         /// </summary>
@@ -83,5 +85,7 @@ namespace LiveBot.Discord.Modules
         {
             _interactivity.DelayedSendMessageAndDeleteAsync(Context.Channel, text: $"{Context.Message.Author.Mention}, Thank you so much for even considering donating! You can donate here: <{Basic.DonationLink}>", deleteDelay: TimeSpan.FromMinutes(1));
         }
+
+#pragma warning restore 1998
     }
 }
