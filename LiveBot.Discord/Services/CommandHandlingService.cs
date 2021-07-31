@@ -108,10 +108,42 @@ namespace LiveBot.Discord.Services
             //await context.Channel.SendMessageAsync($"error: {result.ToString()}");
         }
 
-        private Task LogAsync(LogMessage log)
+        private Task LogAsync(LogMessage msg)
         {
-            Log.Information(log.ToString());
-
+            string logText = $"{msg.Source}: {msg.Exception?.ToString() ?? msg.Message}";
+            switch (msg.Severity)
+            {
+                case LogSeverity.Critical:
+                    {
+                        Log.Error(logText);
+                        break;
+                    }
+                case LogSeverity.Warning:
+                    {
+                        Log.Warning(logText);
+                        break;
+                    }
+                case LogSeverity.Info:
+                    {
+                        Log.Information(logText);
+                        break;
+                    }
+                case LogSeverity.Verbose:
+                    {
+                        Log.Information(logText);
+                        break;
+                    }
+                case LogSeverity.Debug:
+                    {
+                        Log.Debug(logText);
+                        break;
+                    }
+                case LogSeverity.Error:
+                    {
+                        Log.Error(logText);
+                        break;
+                    }
+            }
             return Task.CompletedTask;
         }
     }

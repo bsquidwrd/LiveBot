@@ -14,9 +14,10 @@ namespace LiveBot.API
         public static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}")
                 .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
+                .Enrich.FromLogContext()
                 .CreateLogger();
 
             Log.Debug("-------------------------------------------------- Starting services... --------------------------------------------------");
