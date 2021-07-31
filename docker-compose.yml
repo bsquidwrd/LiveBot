@@ -12,6 +12,8 @@ services:
             - RabbitMQ_Password=${RabbitMQ_Password}
             - TwitchClientId=${TwitchClientId}
             - TwitchClientSecret=${TwitchClientSecret}
+            - Discord_ClientId=${Discord_ClientId}
+            - Discord_ClientSecret=${Discord_ClientSecret}
         deploy:
             replicas: 1
             update_config:
@@ -19,9 +21,14 @@ services:
                 delay: 10s
             restart_policy:
                 condition: on-failure
+                delay: 30s
+                max_attempts: 3
+                window: 120s
         ports:
             - 80:80
             - 443:443
+        extra_hosts:
+            - "livebotdb.lan:0.0.0.0"
       
 volumes:
   logs:
