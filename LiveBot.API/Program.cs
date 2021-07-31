@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Formatting.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -15,8 +16,8 @@ namespace LiveBot.API
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}")
-                .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
+                .WriteTo.Console(outputTemplate: "[LOG] {Message:lj}{NewLine}{Exception}")
+                .WriteTo.File(formatter: new JsonFormatter(), path: "logs/log-.json", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
                 .Enrich.FromLogContext()
                 .CreateLogger();
 
