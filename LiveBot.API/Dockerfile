@@ -14,7 +14,7 @@ ENV RabbitMQ_Password="guest"
 ENV TwitchClientId="replaceme"
 ENV TwitchClientSecret="replaceme"
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-buster AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 WORKDIR /src
 COPY ["LiveBot.API/LiveBot.API.csproj", "LiveBot.API/"]
 RUN dotnet restore "LiveBot.API/LiveBot.API.csproj"
