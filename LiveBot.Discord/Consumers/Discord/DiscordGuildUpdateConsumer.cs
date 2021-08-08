@@ -18,14 +18,15 @@ namespace LiveBot.Discord.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
             var message = context.Message;
-            DiscordGuild discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+            DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
-            if (discordGuild == null)
-                discordGuild = new DiscordGuild();
-
-            discordGuild.Name = message.GuildName;
-            discordGuild.IconUrl = message.IconUrl;
-            discordGuild.IsInBeta = discordGuild.IsInBeta;
+            DiscordGuild discordGuild = new DiscordGuild
+            {
+                DiscordId = message.GuildId,
+                Name = message.GuildName,
+                IconUrl = message.IconUrl,
+                IsInBeta = existingDiscordGuild?.IsInBeta ?? false
+            };
 
             await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
         }
