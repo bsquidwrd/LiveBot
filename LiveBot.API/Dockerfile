@@ -1,6 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0.8-buster-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
@@ -14,7 +14,7 @@ ENV RabbitMQ_Password="guest"
 ENV TwitchClientId="replaceme"
 ENV TwitchClientSecret="replaceme"
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0.8-buster AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-buster AS build
 WORKDIR /src
 COPY ["LiveBot.API/LiveBot.API.csproj", "LiveBot.API/"]
 RUN dotnet restore "LiveBot.API/LiveBot.API.csproj"
