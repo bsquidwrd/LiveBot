@@ -27,6 +27,7 @@ namespace LiveBot.Core.Repository.Base.Monitor
         }
 
         public DateTime StartTime { get; set; }
+        public uint AlertColor { get; set; }
 
         public Regex GetURLRegex(string pattern)
         {
@@ -55,5 +56,10 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public abstract bool AddChannel(ILiveBotUser user);
 
         public abstract bool RemoveChannel(ILiveBotUser user);
+
+        public uint GetAlertColor()
+        {
+            return AlertColor;
+        }
     }
 }

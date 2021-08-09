@@ -55,7 +55,7 @@ namespace LiveBot.Discord.Helpers
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>Discord Embed with Stream Information</returns>
-        public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
+        public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game, ILiveBotMonitor monitor)
         {
             // Build the Author of the Embed
             EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
@@ -69,7 +69,7 @@ namespace LiveBot.Discord.Helpers
 
             // Add Basic information to EmbedBuilder
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(Color.DarkPurple);
+            builder.WithColor(monitor.GetAlertColor());
 
             builder.WithAuthor(authorBuilder);
             builder.WithFooter(footerBuilder);

@@ -7,7 +7,6 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.Helpers;
 using MassTransit;
-using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -100,7 +99,7 @@ namespace LiveBot.Discord.Consumers.Streams
                     return;
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
-                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game, monitor: monitor);
 
                 StreamNotification newStreamNotification = new StreamNotification
                 {

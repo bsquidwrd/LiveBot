@@ -83,6 +83,7 @@ namespace LiveBot.Watcher.Twitch
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.TWITCH;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
+            AlertColor = 0x9146FF; // Twitch Purple
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
