@@ -13,7 +13,8 @@ namespace LiveBot.Discord.Helpers
                 .Replace("_", "\\_")
                 .Replace("*", "\\*")
                 .Replace("~", "\\~")
-                .Replace("`", "\\`");
+                .Replace("`", "\\`")
+                .Replace("|", "\\|");
         }
 
         /// <summary>
