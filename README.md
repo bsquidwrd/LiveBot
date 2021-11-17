@@ -3,7 +3,7 @@
 
 
 ## Running
-[Click here to have the bot added to your server](https://discordapp.com/oauth2/authorize?client_id=334870738257444865&scope=bot&permissions=518208)
+[Click here to have the bot added to your server](https://livebot.bsquid.io/invite)
 
 ### Example notification
 <img src="https://i.imgur.com/n2RXb1E.png" />
