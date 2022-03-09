@@ -1,46 +1,36 @@
 using Discord;
 using Discord.Net;
-using Discord.WebSocket;
+using Discord.Rest;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
-using LiveBot.Discord.Helpers;
+using LiveBot.Discord.SlashCommands.Helpers;
 using MassTransit;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 
-namespace LiveBot.Discord.Consumers.Streams
+namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
     public class StreamOnlineConsumer : IConsumer<IStreamOnline>
     {
-        private readonly DiscordShardedClient _client;
+        private readonly DiscordRestClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
-        private readonly IEnumerable<ILiveBotMonitor> _monitors;
 
-        public StreamOnlineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, IEnumerable<ILiveBotMonitor> monitors)
+        public StreamOnlineConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus)
         {
             _client = client;
             _work = factory.Create();
             _bus = bus;
-            _monitors = monitors;
         }
 
         public async Task Consume(ConsumeContext<IStreamOnline> context)
         {
             ILiveBotStream stream = context.Message.Stream;
-            ILiveBotMonitor monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
 
-            if (monitor == null)
-                return;
-
-            ILiveBotUser user = stream.User ?? await monitor.GetUserById(stream.UserId);
-            ILiveBotGame game = stream.Game ?? await monitor.GetGame(stream.GameId);
+            ILiveBotUser user = stream.User;
+            ILiveBotGame game = stream.Game;
 
             Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
@@ -92,14 +82,14 @@ namespace LiveBot.Discord.Consumers.Streams
                 var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
 
-                var guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
-                SocketTextChannel channel = (SocketTextChannel)_client.GetChannel(streamSubscription.DiscordChannel.DiscordId);
+                var guild = await _client.GetGuildAsync(streamSubscription.DiscordGuild.DiscordId);
+                RestTextChannel channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
 
                 if (guild == null)
                     return;
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
-                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game, monitor: monitor);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
                 StreamNotification newStreamNotification = new StreamNotification
                 {
@@ -161,11 +151,11 @@ namespace LiveBot.Discord.Consumers.Streams
 
                 // If the channel can't be found (null) and the shard
                 // is online, check if the Guild is online
-                if (channel == null && _client.GetShardFor(guild).LoginState == LoginState.LoggedIn)
+                if (channel == null)
                 {
                     // If the Guild is online, but the channel isn't found
                     // remove the subscription
-                    if (guild.IsConnected)
+                    if (guild != null)
                     {
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     }

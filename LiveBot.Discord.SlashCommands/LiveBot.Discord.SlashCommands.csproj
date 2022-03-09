@@ -4,22 +4,21 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>f746036b-aa4d-422f-bf91-b3e3ad917c6c</UserSecretsId>
+    <UserSecretsId>729cb599-611d-48de-8879-438c456e683f</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Discord.Net.Interactions" Version="3.4.0" />
     <PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="7.3.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
-    <PackageReference Include="TwitchLib.Api" Version="3.5.0" />
-    <PackageReference Include="TwitchLib.EventSub.Webhooks" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
     <ProjectReference Include="..\LiveBot.Repository\LiveBot.Repository.csproj" />
+    <ProjectReference Include="..\LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj" />
   </ItemGroup>
 
 </Project>

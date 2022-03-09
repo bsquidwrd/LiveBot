@@ -9,26 +9,26 @@ namespace LiveBot.Core.Repository.Static
             get => $"rabbitmq://{Environment.GetEnvironmentVariable("RabbitMQ_URL")}";
         }
 
-        public static string QueueUsername = Environment.GetEnvironmentVariable("RabbitMQ_Username");
-        public static string QueuePassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
+        public static readonly string QueueUsername = Environment.GetEnvironmentVariable("RabbitMQ_Username");
+        public static readonly string QueuePassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
 
-        public static ushort PrefetchCount = 32;
+        public static readonly ushort PrefetchCount = 32;
 
-        public static string DiscordAlert = "discord_alert";
-        public static string DiscordAlertChannel = "discord_alertchannel";
+        public static readonly string DiscordAlert = "discord_alert";
+        public static readonly string DiscordAlertChannel = "discord_alertchannel";
 
-        public static string DiscordGuildAvailable = "discord_guildavailable";
-        public static string DiscordGuildUpdate = "discord_guildupdate";
-        public static string DiscordGuildDelete = "discord_guilddelete";
-        public static string DiscordChannelUpdate = "discord_channelupdate";
-        public static string DiscordChannelDelete = "discord_channeldelete";
-        public static string DiscordRoleUpdate = "discord_roleupdate";
-        public static string DiscordRoleDelete = "discord_roledelete";
+        public static readonly string DiscordGuildAvailable = "discord_guildavailable";
+        public static readonly string DiscordGuildUpdate = "discord_guildupdate";
+        public static readonly string DiscordGuildDelete = "discord_guilddelete";
+        public static readonly string DiscordChannelUpdate = "discord_channelupdate";
+        public static readonly string DiscordChannelDelete = "discord_channeldelete";
+        public static readonly string DiscordRoleUpdate = "discord_roleupdate";
+        public static readonly string DiscordRoleDelete = "discord_roledelete";
 
-        public static string DiscordMemberLive = "discord_memberlive";
+        public static readonly string DiscordMemberLive = "discord_memberlive";
 
-        public static string StreamOnlineQueueName = "streamonline";
-        public static string StreamUpdateQueueName = "streamupdate";
-        public static string StreamOfflineQueueName = "streamoffline";
+        public static readonly string StreamOnlineQueueName = "streamonline";
+        public static readonly string StreamUpdateQueueName = "streamupdate";
+        public static readonly string StreamOfflineQueueName = "streamoffline";
     }
 }

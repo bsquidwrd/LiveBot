@@ -152,36 +152,36 @@ namespace LiveBot.Discord.Modules
         /// <param name="beforeGuildUser"></param>
         /// <param name="afterGuildUser"></param>
         /// <returns></returns>
-        public async Task GuildMemberUpdated(SocketGuildUser beforeGuildUser, SocketGuildUser afterGuildUser)
-        {
-            // I don't care about bots
-            if (beforeGuildUser.IsBot || afterGuildUser.IsBot)
-                return;
+        //public async Task GuildMemberUpdated(SocketUser socketUser, SocketPresence beforePresence, SocketPresence afterPresence)
+        //{
+        //    // I don't care about bots
+        //    if (socketUser.IsBot)
+        //        return;
 
-            // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
-            IActivity userActivity = afterGuildUser.Activity;
-            if (userActivity == null && userActivity?.Type != ActivityType.Streaming)
-            {
-                return;
-            }
+        //    // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
+        //    IActivity userActivity = afterPresence.Activity;
+        //    if (userActivity == null && userActivity?.Type != ActivityType.Streaming)
+        //    {
+        //        return;
+        //    }
 
-            // Check if the users activity is a Game
-            if (userActivity is StreamingGame userGame)
-            {
-                // Make sure the Stream is supported by the bot
-                var monitor = _monitors.Where(i => i.IsValid(userGame.Url)).FirstOrDefault();
-                if (monitor == null) return;
+        //    // Check if the users activity is a Game
+        //    if (userActivity is StreamingGame userGame)
+        //    {
+        //        // Make sure the Stream is supported by the bot
+        //        var monitor = _monitors.Where(i => i.IsValid(userGame.Url)).FirstOrDefault();
+        //        if (monitor == null) return;
 
-                // Publish a Member Live Event for more in-depth checking
-                var memberLivePayload = new DiscordMemberLive
-                {
-                    ServiceType = monitor.ServiceType,
-                    Url = userGame.Url,
-                    DiscordGuildId = afterGuildUser.Guild.Id,
-                    DiscordUserId = afterGuildUser.Id
-                };
-                await _bus.Publish(memberLivePayload);
-            }
-        }
+        //        // Publish a Member Live Event for more in-depth checking
+        //        var memberLivePayload = new DiscordMemberLive
+        //        {
+        //            ServiceType = monitor.ServiceType,
+        //            Url = userGame.Url,
+        //            DiscordGuildId = afterGuildUser.Guild.Id,
+        //            DiscordUserId = socketUser.Id
+        //        };
+        //        await _bus.Publish(memberLivePayload);
+        //    }
+        //}
     }
 }

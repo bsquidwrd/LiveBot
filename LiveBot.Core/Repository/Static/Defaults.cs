@@ -4,7 +4,7 @@ namespace LiveBot.Core.Repository.Static
 {
     public static class Defaults
     {
-        public static TimeSpan MessageTimeout = TimeSpan.FromMinutes(1);
-        public static string NotificationMessage = "{role} {name} is live and is playing {game}! {url}";
+        public static readonly TimeSpan MessageTimeout = TimeSpan.FromMinutes(1);
+        public static readonly string NotificationMessage = "{role} {name} is live and playing {game}! {url}";
     }
 }

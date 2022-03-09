@@ -1,20 +1,16 @@
 ﻿using Discord;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using System.Globalization;
 
-namespace LiveBot.Discord.Helpers
+namespace LiveBot.Discord.SlashCommands.Helpers
 {
     public static class NotificationHelpers
     {
         public static string EscapeSpecialDiscordCharacters(string input)
         {
-            return input
-                .Replace("_", "\\_")
-                .Replace("*", "\\*")
-                .Replace("~", "\\~")
-                .Replace("`", "\\`")
-                .Replace("|", "\\|");
+            return Format.Sanitize(input);
         }
 
         /// <summary>
@@ -23,7 +19,7 @@ namespace LiveBot.Discord.Helpers
         /// <param name="stream"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser user = null, ILiveBotGame game = null)
+        public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
             string RoleMention = "";
             if (subscription.DiscordRole != null)
@@ -46,7 +42,7 @@ namespace LiveBot.Discord.Helpers
                 .Replace("{Username}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(tempGame.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{URL}", stream.StreamURL ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Role}", RoleMention, ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Trim();
         }
@@ -56,21 +52,21 @@ namespace LiveBot.Discord.Helpers
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>Discord Embed with Stream Information</returns>
-        public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game, ILiveBotMonitor? monitor = null)
+        public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
         {
             // Build the Author of the Embed
-            EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
+            var authorBuilder = new EmbedAuthorBuilder();
             authorBuilder.WithName(user.DisplayName);
             authorBuilder.WithIconUrl(user.AvatarURL);
             authorBuilder.WithUrl(user.ProfileURL);
 
             // Build the Footer of the Embed
-            EmbedFooterBuilder footerBuilder = new EmbedFooterBuilder();
+            var footerBuilder = new EmbedFooterBuilder();
             footerBuilder.WithText("Stream start time");
 
             // Add Basic information to EmbedBuilder
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(monitor?.GetAlertColor() ?? Color.Default);
+            var builder = new EmbedBuilder();
+            builder.WithColor(stream.ServiceType.GetAlertColor());
 
             builder.WithAuthor(authorBuilder);
             builder.WithFooter(footerBuilder);
@@ -88,14 +84,14 @@ namespace LiveBot.Discord.Helpers
             //builder.AddField(statusBuilder);
 
             // Add Game field
-            EmbedFieldBuilder gameBuilder = new EmbedFieldBuilder();
+            var gameBuilder = new EmbedFieldBuilder();
             gameBuilder.WithIsInline(true);
             gameBuilder.WithName("Game");
             gameBuilder.WithValue(game.Name);
             builder.AddField(gameBuilder);
 
             // Add Stream URL field
-            EmbedFieldBuilder streamURLField = new EmbedFieldBuilder();
+            var streamURLField = new EmbedFieldBuilder();
             streamURLField.WithIsInline(true);
             streamURLField.WithName("Stream");
             streamURLField.WithValue(stream.StreamURL);

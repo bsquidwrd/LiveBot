@@ -77,7 +77,7 @@ namespace LiveBot.Discord
             client.RoleUpdated += LiveBotEventHandles.RoleUpdated;
 
             // User Events
-            client.GuildMemberUpdated += LiveBotEventHandles.GuildMemberUpdated;
+            //client.PresenceUpdated += LiveBotEventHandles.GuildMemberUpdated;
 
             // Populate Commands
             await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
@@ -93,6 +93,11 @@ namespace LiveBot.Discord
             }
 
             await client.StartAsync();
+        }
+
+        private Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> arg1, SocketGuildUser arg2)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
