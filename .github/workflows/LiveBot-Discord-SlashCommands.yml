@@ -18,5 +18,5 @@ jobs:
       uses: VaultVulp/gp-docker-action@1.1.6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        image-name: livebot
-        dockerfile: LiveBot.API/Dockerfile
+        image-name: livebot-discord-slashcommands
+        dockerfile: LiveBot.Discord.SlashCommands/Dockerfile

@@ -4,6 +4,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
+ENV LiveBot_connectionstring=""
+ENV RabbitMQ_URL=""
+ENV RabbitMQ_Username=""
+ENV RabbitMQ_Password=""
+ENV LiveBot_TwitchClientId=""
+ENV LiveBot_TwitchClientSecret=""
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
