@@ -5,6 +5,7 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
 using LiveBot.Discord.SlashCommands.Helpers;
 using System.Linq.Expressions;
@@ -94,7 +95,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StartStreamMonitor(
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel WhereToPost,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string LiveMessage,
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string LiveMessage = Defaults.NotificationMessage,
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
@@ -108,6 +109,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var monitor = GetMonitor(ProfileURL);
 
             LiveMessage = LiveMessage.Trim();
+            if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
+                LiveMessage = Defaults.NotificationMessage;
 
             var allowedMentions = new AllowedMentions()
             {
