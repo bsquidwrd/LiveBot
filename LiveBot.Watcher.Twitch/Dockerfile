@@ -14,16 +14,16 @@ ENV LiveBot_TwitchClientSecret=""
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["nuget.config", "."]
-COPY ["LiveBot.Water.Twitch/LiveBot.Water.Twitch.csproj", "LiveBot.Water.Twitch/"]
-RUN dotnet restore "LiveBot.Water.Twitch/LiveBot.Water.Twitch.csproj"
+COPY ["LiveBot.Watcher.Twitch/LiveBot.Watcher.Twitch.csproj", "LiveBot.Watcher.Twitch/"]
+RUN dotnet restore "LiveBot.Watcher.Twitch/LiveBot.Watcher.Twitch.csproj"
 COPY . .
-WORKDIR "/src/LiveBot.Water.Twitch"
-RUN dotnet build "LiveBot.Water.Twitch.csproj" -c Release -o /app/build
+WORKDIR "/src/LiveBot.Watcher.Twitch"
+RUN dotnet build "LiveBot.Watcher.Twitch.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "LiveBot.Water.Twitch.csproj" -c Release -o /app/publish
+RUN dotnet publish "LiveBot.Watcher.Twitch.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "LiveBot.Water.Twitch.dll"]
+ENTRYPOINT ["dotnet", "LiveBot.Watcher.Twitch.dll"]
