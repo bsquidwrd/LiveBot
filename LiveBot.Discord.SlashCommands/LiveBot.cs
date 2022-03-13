@@ -70,6 +70,12 @@ namespace LiveBot.Discord.SlashCommands
 
             app.MapInteractionService("/discord/interactions", app.Configuration.GetValue<string>("publickey"));
 
+            foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
+            {
+                var user = await monitor.GetUser(username: "bsquidwrd");
+                app.Logger.LogInformation("Got user {username} ({userId}) for monitor {monitor}", user.Username, user.Id, monitor.ServiceType);
+            }
+
             return app;
         }
 
