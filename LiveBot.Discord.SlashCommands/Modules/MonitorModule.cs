@@ -44,7 +44,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             Uri? ProfileURL = null;
             ITextChannel? WhereToPost = null;
             IRole? RoleToMention = null;
-            var AutoChannel = false;
 
             /* Parse for a profile url that was included (if any) */
             ProfileURL = UriUtils.FindFirstUri(LiveMessage);
@@ -61,7 +60,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             WhereToPost = guildChannels.Where(x => LiveMessage.Contains(x.Mention, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault<ITextChannel>();
             if (WhereToPost == null)
             {
-                AutoChannel = true;
                 WhereToPost = await Context.Guild.GetTextChannelAsync(Context.Channel.Id);
             }
             LiveMessage = LiveMessage.Replace(WhereToPost.Mention, "", StringComparison.InvariantCultureIgnoreCase);
@@ -81,19 +79,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var subscription = await SetupSubscription(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
-            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} with a live message of {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
-
-            if (AutoChannel)
-            {
-                var WarningEmoji = new Emoji("\u26A0");
-                ResponseMessage += @$"
-{WarningEmoji} Warning: Couldn't detect a channel automatically from your message, so I chose the one you're currently in.
-To change this, please run the {Format.Code("/monitor edit")} command
-";
-            }
-
-            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
+            await StartStreamMonitor(ProfileURL: ProfileURL, WhereToPost: WhereToPost, LiveMessage: LiveMessage, RoleToMention: RoleToMention);
         }
 
         /// <summary>
@@ -112,7 +98,12 @@ To change this, please run the {Format.Code("/monitor edit")} command
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            await DeferAsync(ephemeral: true);
+            try
+            {
+                // If this fails, I assume it's because it was run through an Auto parse
+                await DeferAsync(ephemeral: true);
+            }
+            catch { }
 
             var monitor = GetMonitor(ProfileURL);
 
