@@ -1,5 +1,5 @@
 ## Live Bot
-[![GitHub license](https://img.shields.io/github/license/bsquidwrd/LiveBot.svg)](https://github.com/bsquidwrd/LiveBot/blob/master/LICENSE) ![.NET Core](https://github.com/bsquidwrd/LiveBot/workflows/.NET%20Core/badge.svg) [![Discord](https://discordapp.com/api/guilds/350337137079746581/widget.png?style=shield)](https://discord.gg/zXkb4JP)
+[![GitHub license](https://img.shields.io/github/license/bsquidwrd/LiveBot.svg)](https://github.com/bsquidwrd/LiveBot/blob/master/LICENSE) [![.NET](https://github.com/bsquidwrd/LiveBot/actions/workflows/dotnet.yml/badge.svg)](https://github.com/bsquidwrd/LiveBot/actions/workflows/dotnet.yml) [![Discord](https://discordapp.com/api/guilds/350337137079746581/widget.png?style=shield)](https://discord.gg/zXkb4JP)
 
 
 ## Running
