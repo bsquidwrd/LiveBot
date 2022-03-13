@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-publish-latest:
+  build-and-publish-discord-slashcommands-latest:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' # Running this job only for main branch
 
@@ -22,6 +22,13 @@ jobs:
         image-tag: discord-slashcommands-latest
         dockerfile: LiveBot.Discord.SlashCommands/Dockerfile
 
+  build-and-publish-discord-socket-latest:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Running this job only for main branch
+
+    steps:
+    - uses: actions/checkout@v2 # Checking out the repo
+
     - name: Build and Publish LiveBot Socket
       uses: VaultVulp/gp-docker-action@1.1.6
       with:
@@ -29,6 +36,13 @@ jobs:
         image-name: livebot
         image-tag: discord-socket-latest
         dockerfile: LiveBot.Discord.Socket/Dockerfile
+
+  build-and-publish-watcher-twitch-latest:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Running this job only for main branch
+
+    steps:
+    - uses: actions/checkout@v2 # Checking out the repo
 
     - name: Build and Publish LiveBot Tiwtch Watcher
       uses: VaultVulp/gp-docker-action@1.1.6
