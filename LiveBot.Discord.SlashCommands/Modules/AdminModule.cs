@@ -23,28 +23,5 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var timeDifference = DateTimeOffset.UtcNow - Context.Interaction.CreatedAt.ToUniversalTime();
             await RespondAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
         }
-
-        [SlashCommand(name: "test", description: "Random test command")]
-        public async Task TestAsync(string input)
-        {
-            var factory = _services.GetRequiredService<IUnitOfWorkFactory>();
-            var work = (UnitOfWork)factory.Create();
-            var context = work.GetContext();
-            var user = await context.StreamUser.Where(x => x.Deleted == false && x.Username == input).FirstOrDefaultAsync();
-
-            var message = "";
-            if (user == null)
-            {
-                message = $"Could not find a user with the username of {input}";
-            }
-            else
-            {
-                message = $"User: {user.DisplayName}";
-                var subscriptions = String.Join(", ", user.StreamSubscriptions.ToList().Select(x => x.DiscordChannel.Name));
-                message += $"\n{subscriptions}";
-            }
-
-            await RespondAsync(text: message, ephemeral: true);
-        }
     }
 }

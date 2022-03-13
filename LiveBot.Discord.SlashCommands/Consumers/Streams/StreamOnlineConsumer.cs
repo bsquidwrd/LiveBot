@@ -7,19 +7,20 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.SlashCommands.Helpers;
 using MassTransit;
-using Serilog;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
     public class StreamOnlineConsumer : IConsumer<IStreamOnline>
     {
+        private readonly ILogger<StreamOnlineConsumer> _logger;
         private readonly DiscordRestClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
 
-        public StreamOnlineConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus)
+        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus)
         {
+            _logger = logger;
             _client = client;
             _work = factory.Create();
             _bus = bus;
@@ -189,7 +190,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                     else
                     {
-                        Log.Error($"Error sending notification for {streamNotification.Id} {streamNotification.ServiceType} {streamNotification.User_Username} {streamNotification.DiscordGuild_DiscordId} {streamNotification.DiscordChannel_DiscordId} {streamNotification.DiscordRole_DiscordId} {streamNotification.Message}\n{e}");
+                        _logger.LogError("Error sending notification for {notificationId} {servicetype} {username} {guildId} {channelId} {roleId}, {message}\n{e}", streamNotification.Id, streamNotification.ServiceType, streamNotification.User_Username, streamNotification.DiscordGuild_DiscordId, streamNotification.DiscordChannel_DiscordId, streamNotification.DiscordRole_DiscordId, streamNotification.Message, e);
                     }
                 }
             }

@@ -6,7 +6,6 @@ using LiveBot.Core.Repository.Static;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
-using Serilog;
 using System.Collections.Concurrent;
 using System.Timers;
 using TwitchLib.Api;
@@ -25,6 +24,7 @@ namespace LiveBot.Watcher.Twitch
 {
     public class TwitchMonitor : BaseLiveBotMonitor
     {
+        private readonly ILogger<TwitchMonitor> _logger;
         public LiveStreamMonitorService Monitor;
         public TwitchAPI API;
         public IBusControl _bus;
@@ -74,9 +74,10 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public TwitchMonitor(IUnitOfWorkFactory factory, IBusControl bus, IConfiguration configuration)
+        public TwitchMonitor(ILogger<TwitchMonitor> logger, IUnitOfWorkFactory factory, IBusControl bus, IConfiguration configuration)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
+            _logger = logger;
             _factory = factory;
             _bus = bus;
             _configuration = configuration;
@@ -85,7 +86,6 @@ namespace LiveBot.Watcher.Twitch
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.Twitch;
             URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
-            AlertColor = 0x9146FF; // Twitch Purple
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
@@ -105,12 +105,12 @@ namespace LiveBot.Watcher.Twitch
 
         private void Monitor_OnServiceTick(object? sender, OnServiceTickArgs e)
         {
-            Log.Debug("Monitor_OnServiceTick was called");
+            _logger.LogDebug("Monitor_OnServiceTick was called");
         }
 
         public void Monitor_OnServiceStarted(object? sender, OnServiceStartedArgs e)
         {
-            Log.Debug("Monitor service successfully connected to Twitch!");
+            _logger.LogDebug("Monitor service successfully connected to Twitch!");
             RefreshUsersTimer.Start();
             ClearCacheTimer.Start();
         }
@@ -159,7 +159,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -169,7 +169,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
@@ -186,7 +186,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -196,7 +196,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
@@ -213,7 +213,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -223,7 +223,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
@@ -239,7 +239,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -249,7 +249,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUsersById(userIdList);
@@ -265,7 +265,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -275,7 +275,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
@@ -295,7 +295,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -305,7 +305,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                Log.Error($"{e}");
+                _logger.LogError($"{e}");
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetStream(user);
@@ -333,7 +333,7 @@ namespace LiveBot.Watcher.Twitch
         public async Task UpdateAuth()
         {
             if (!IsWatcher) await ReAuth();
-            Log.Debug($"Refreshing Auth for {ServiceType}");
+            _logger.LogDebug($"Refreshing Auth for {ServiceType}");
             var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
             AccessToken = oldAuth.AccessToken;
             RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
@@ -346,7 +346,7 @@ namespace LiveBot.Watcher.Twitch
             AccessToken = newAuth.AccessToken;
 
             var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
-            Log.Debug($"Expiration time: {ExpirationSeconds}");
+            _logger.LogDebug($"Expiration time: {ExpirationSeconds}");
 
             TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
             // Trigger it 5 minutes before expiration time to be safe
@@ -397,7 +397,7 @@ namespace LiveBot.Watcher.Twitch
                         }
                         catch (Exception e)
                         {
-                            Log.Error($"Error updating user {twitchUser.Username}: {e}");
+                            _logger.LogError($"Error updating user {twitchUser.Username}: {e}");
                         }
                     }
                 }
@@ -405,7 +405,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e)
             {
                 SetupUserTimer(1);
-                Log.Error($"Error updating users\n{e}");
+                _logger.LogError($"Error updating users\n{e}");
             }
         }
 
@@ -449,7 +449,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                Log.Error($"Error trying to publish StreamOnline:\n{e}");
+                _logger.LogError($"Error trying to publish StreamOnline:\n{e}");
             }
         }
 
@@ -461,7 +461,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                Log.Error($"Error trying to publish StreamUpdate:\n{e}");
+                _logger.LogError($"Error trying to publish StreamUpdate:\n{e}");
             }
         }
 
@@ -473,7 +473,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                Log.Error($"Error trying to publish StreamOffline:\n{e}");
+                _logger.LogError($"Error trying to publish StreamOffline:\n{e}");
             }
         }
 

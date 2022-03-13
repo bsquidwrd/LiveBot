@@ -104,16 +104,11 @@ namespace LiveBot.Discord.SlashCommands
                     .Build();
                 try
                 {
-                    await context.Interaction.RespondAsync(ephemeral: true, embed: embed);
+                    var originalResponse = await context.Interaction.GetOriginalResponseAsync();
+                    await originalResponse.DeleteAsync();
                 }
-                catch
-                {
-                    try
-                    {
-                        await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
-                    }
-                    catch { }
-                }
+                catch { }
+                await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
             }
             await Task.CompletedTask;
         }

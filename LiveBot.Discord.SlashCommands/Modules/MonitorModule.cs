@@ -3,8 +3,11 @@ using Discord.Interactions;
 using Discord.Rest;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Discord.SlashCommands.Attributes;
 using LiveBot.Discord.SlashCommands.Helpers;
+using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
@@ -78,7 +81,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var ResponseMessage = $"Success! Monitoring {Format.EscapeUrl(ProfileURL.AbsoluteUri)} with a live message of {Format.Code(LiveMessage)} in {WhereToPost.Mention} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
+            var subscription = await SetupSubscription(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
+            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} with a live message of {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
             if (AutoChannel)
             {
@@ -119,7 +123,8 @@ To change this, please run the {Format.Code("/monitor edit")} command
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var ResponseMessage = $"Success! Monitoring {Format.EscapeUrl(ProfileURL.AbsoluteUri)} with a live message of {Format.Code(LiveMessage)} in {WhereToPost.Mention} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
+            var subscription = await SetupSubscription(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
+            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} with a live message of {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
             if (RoleToMention != null && !LiveMessage.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -224,6 +229,46 @@ Example:
 You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/livebot-docs/tutorial-walkthrough/start-monitoring-a-stream")}
 ";
             await RespondAsync(message, ephemeral: true);
+        }
+
+        private async Task<StreamSubscription> SetupSubscription(ILiveBotMonitor monitor, Uri uri, string message, IGuild guild, ITextChannel channel, IRole? role = null)
+        {
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
+            var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(x => x.DiscordId == channel.Id);
+            DiscordRole? discordRole = null;
+            if (role != null)
+                discordRole = await _work.RoleRepository.SingleOrDefaultAsync(x => x.DiscordId == role.Id);
+
+            var monitorUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
+            StreamUser streamUser = new()
+            {
+                ServiceType = monitorUser.ServiceType,
+                SourceID = monitorUser.Id,
+                Username = monitorUser.Username,
+                DisplayName = monitorUser.DisplayName,
+                AvatarURL = monitorUser.AvatarURL,
+                ProfileURL = monitorUser.ProfileURL
+            };
+            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == monitorUser.ServiceType && i.SourceID == monitorUser.Id));
+            streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == monitorUser.ServiceType && i.SourceID == monitorUser.Id);
+
+            Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
+                i.User == streamUser &&
+                i.DiscordGuild == discordGuild
+            );
+
+            StreamSubscription newSubscription = new()
+            {
+                User = streamUser,
+                DiscordGuild = discordGuild,
+                DiscordChannel = discordChannel,
+                DiscordRole = discordRole,
+                Message = message
+            };
+
+            await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
+
+            return await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
         }
     }
 }
