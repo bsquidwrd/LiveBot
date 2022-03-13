@@ -324,33 +324,34 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        private async Task ReAuth()
-        {
-            var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-            AccessToken = activeAuth.AccessToken;
-        }
-
         public async Task UpdateAuth()
         {
-            if (!IsWatcher) await ReAuth();
-            _logger.LogDebug($"Refreshing Auth for {ServiceType}");
-            var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-            AccessToken = oldAuth.AccessToken;
-            RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
+            if (!IsWatcher)
+            {
+                var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+                AccessToken = activeAuth.AccessToken;
+            }
+            else
+            {
+                _logger.LogDebug($"Refreshing Auth for {ServiceType}");
+                var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+                AccessToken = oldAuth.AccessToken;
+                RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
 
-            var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
-            await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
+                var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
+                await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
 
-            oldAuth.Expired = true;
-            await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
-            AccessToken = newAuth.AccessToken;
+                oldAuth.Expired = true;
+                await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
+                AccessToken = newAuth.AccessToken;
 
-            var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
-            _logger.LogDebug($"Expiration time: {ExpirationSeconds}");
+                var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
+                _logger.LogDebug($"Expiration time: {ExpirationSeconds}");
 
-            TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
-            // Trigger it 5 minutes before expiration time to be safe
-            SetupAuthTimer(refreshAuthTimeSpan.Subtract(TimeSpan.FromMinutes(5)));
+                TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
+                // Trigger it 5 minutes before expiration time to be safe
+                SetupAuthTimer(refreshAuthTimeSpan.Subtract(TimeSpan.FromMinutes(5)));
+            }
         }
 
         private void SetupAuthTimer(TimeSpan timeSpan)
