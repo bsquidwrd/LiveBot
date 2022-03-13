@@ -328,8 +328,16 @@ namespace LiveBot.Watcher.Twitch
         {
             if (!IsWatcher)
             {
-                var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-                AccessToken = activeAuth.AccessToken;
+                try
+                {
+                    var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+                    AccessToken = activeAuth.AccessToken;
+                    _logger.LogDebug($"Set AccessToken to active auth");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Unable to update AccessToken {ex}");
+                }
             }
             else
             {
