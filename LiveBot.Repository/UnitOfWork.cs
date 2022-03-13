@@ -34,5 +34,8 @@ namespace LiveBot.Repository
             AuthRepository = new AuthRepository(context);
             GuildConfigRepository = new GuildConfigRepository(context);
         }
+
+        public LiveBotDBContext GetContext() =>
+            _context;
     }
 }

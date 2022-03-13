@@ -13,7 +13,6 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         public IUnitOfWorkFactory _factory { get; set; }
         public IUnitOfWork _work { get; }
         public DateTime StartTime { get; set; }
-        public uint AlertColor { get; set; }
 
         /// <summary>
         /// Gets the basic Regex object based on URLPattern
@@ -93,11 +92,5 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// <param name="user"></param>
         /// <returns></returns>
         public bool RemoveChannel(ILiveBotUser user);
-
-        /// <summary>
-        /// Used to get the color for an Alert message sent to discord
-        /// </summary>
-        /// <returns>uint for Hexadecimal color code</returns>
-        public uint GetAlertColor();
     }
 }

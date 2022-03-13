@@ -10,5 +10,10 @@
         /// </summary>
         /// <returns></returns>
         IUnitOfWork Create();
+
+        /// <summary>
+        /// Used to apply migrations to an instance of the Database
+        /// </summary>
+        void Migrate();
     }
 }

@@ -11,10 +11,26 @@ jobs:
     steps:
     - uses: actions/checkout@v2 # Checking out the repo
 
-    - name: Build and Publish Tag Docker image
+    - name: Build and Publish LiveBot Socket
       uses: VaultVulp/gp-docker-action@1.1.6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         image-name: livebot
-        image-tag: ${{ github.event.release.tag_name }}
-        dockerfile: LiveBot.API/Dockerfile
+        image-tag: discord-slashcommands-${{ github.event.release.tag_name }}
+        dockerfile: LiveBot.Discord.SlashCommands/Dockerfile
+
+    - name: Build and Publish LiveBot Socket
+      uses: VaultVulp/gp-docker-action@1.1.6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        image-name: livebot
+        image-tag: discord-socket-${{ github.event.release.tag_name }}
+        dockerfile: LiveBot.Discord.Socket/Dockerfile
+
+    - name: Build and Publish LiveBot Tiwtch Watcher
+      uses: VaultVulp/gp-docker-action@1.1.6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        image-name: livebot
+        image-tag: watcher-twitch-${{ github.event.release.tag_name }}
+        dockerfile: LiveBot.Watcher.Twitch/Dockerfile

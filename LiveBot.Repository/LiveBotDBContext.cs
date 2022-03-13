@@ -2,22 +2,24 @@
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace LiveBot.Repository
 {
     /// <inheritdoc/>
     public class LiveBotDBContext : DbContext
     {
-        public LiveBotDBContext() : base()
+        private readonly string _connectionstring;
+
+        public LiveBotDBContext(string connectionstring) : base()
         {
+            _connectionstring = connectionstring;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder
                 .UseLazyLoadingProxies()
-                .UseNpgsql(Environment.GetEnvironmentVariable("LiveBotConnectionString"));
+                .UseNpgsql(_connectionstring);
         }
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }

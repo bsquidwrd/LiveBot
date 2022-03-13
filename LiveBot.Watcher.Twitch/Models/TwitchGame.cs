@@ -10,7 +10,7 @@ namespace LiveBot.Watcher.Twitch.Models
     /// </summary>
     public class TwitchGame : BaseLiveBotGame
     {
-        public TwitchGame(string baseURL, ServiceEnum serviceType, Game game = null) : base(baseURL, serviceType)
+        public TwitchGame(string baseURL, ServiceEnum serviceType, Game? game = null) : base(baseURL, serviceType)
         {
             if (game == null)
             {
@@ -32,7 +32,7 @@ namespace LiveBot.Watcher.Twitch.Models
             }
         }
 
-        public TwitchGame(string baseURL, ServiceEnum serviceType, StreamGame game = null) : base(baseURL, serviceType)
+        public TwitchGame(string baseURL, ServiceEnum serviceType, StreamGame? game = null) : base(baseURL, serviceType)
         {
             if (game == null)
             {
