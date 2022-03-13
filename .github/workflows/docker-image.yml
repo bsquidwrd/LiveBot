@@ -1,13 +1,16 @@
-name: Tag Docker Image CI
+name: Latest Docker Image CI
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-publish-latest:
     runs-on: ubuntu-latest
-    
+    if: github.ref == 'refs/heads/main' # Running this job only for main branch
+
     steps:
     - uses: actions/checkout@v2 # Checking out the repo
 
@@ -16,7 +19,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         image-name: livebot
-        image-tag: discord-slashcommands-${{ github.event.release.tag_name }}
+        image-tag: discord-slashcommands-latest
         dockerfile: LiveBot.Discord.SlashCommands/Dockerfile
 
     - name: Build and Publish LiveBot Socket
@@ -24,7 +27,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         image-name: livebot
-        image-tag: discord-socket-${{ github.event.release.tag_name }}
+        image-tag: discord-socket-latest
         dockerfile: LiveBot.Discord.Socket/Dockerfile
 
     - name: Build and Publish LiveBot Tiwtch Watcher
@@ -32,5 +35,5 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         image-name: livebot
-        image-tag: watcher-twitch-${{ github.event.release.tag_name }}
+        image-tag: watcher-twitch-latest
         dockerfile: LiveBot.Watcher.Twitch/Dockerfile
