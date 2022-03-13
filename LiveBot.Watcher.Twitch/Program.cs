@@ -19,8 +19,7 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 var monitor = app.Services.GetRequiredService<TwitchMonitor>();
-monitor.IsWatcher = true;
-await monitor.StartAsync();
+await monitor.StartAsync(IsWatcher: true);
 
 app.MapGet("/", () => "Up");
 

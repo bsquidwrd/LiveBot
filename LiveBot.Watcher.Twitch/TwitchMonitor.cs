@@ -324,15 +324,23 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
+        public async Task SetActiveAuth()
+        {
+            var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+            AccessToken = activeAuth.AccessToken;
+        }
+
         public async Task UpdateAuth()
         {
             if (!IsWatcher)
             {
                 try
                 {
-                    var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-                    AccessToken = activeAuth.AccessToken;
+                    await SetActiveAuth();
                     _logger.LogDebug($"Set AccessToken to active auth");
+
+                    // Trigger it 5 minutes before expiration time to be safe
+                    SetupAuthTimer(TimeSpan.FromMinutes(5));
                 }
                 catch (Exception ex)
                 {
@@ -342,8 +350,8 @@ namespace LiveBot.Watcher.Twitch
             else
             {
                 _logger.LogDebug($"Refreshing Auth for {ServiceType}");
+                await SetActiveAuth();
                 var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-                AccessToken = oldAuth.AccessToken;
                 RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
 
                 var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
@@ -491,22 +499,25 @@ namespace LiveBot.Watcher.Twitch
         #region Interface Requirements
 
         /// <inheritdoc/>
-        public override async Task StartAsync()
+        public override async Task StartAsync(bool IsWatcher = false)
         {
+            this.IsWatcher = IsWatcher;
             await UpdateAuth();
+            if (IsWatcher)
+            {
+                var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
+                List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
 
-            var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
-            List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
+                if (channelList.Count() == 0)
+                    // Add myself so startup doesn't fail if there's no users in the database
+                    channelList.Add("22812120");
 
-            if (channelList.Count() == 0)
-                // Add myself so startup doesn't fail if there's no users in the database
-                channelList.Add("22812120");
+                Monitor.SetChannelsById(channelList);
+                RefreshUsersTimer = SetupUserTimer();
+                ClearCacheTimer = SetupCacheTimer();
 
-            Monitor.SetChannelsById(channelList);
-            RefreshUsersTimer = SetupUserTimer();
-            ClearCacheTimer = SetupCacheTimer();
-
-            await Task.Run(Monitor.Start);
+                await Task.Run(Monitor.Start);
+            }
         }
 
         /// <inheritdoc/>

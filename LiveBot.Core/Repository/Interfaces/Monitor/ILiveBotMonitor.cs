@@ -25,7 +25,7 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
         /// Runs the Monitoring Service
         /// </summary>
         /// <returns></returns>
-        public Task StartAsync();
+        public Task StartAsync(bool IsWatcher = false);
 
         /// <summary>
         /// Returns a <c>ILiveBotUser</c> object based on <paramref name="userId"/> from API Results

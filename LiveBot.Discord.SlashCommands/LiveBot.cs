@@ -72,8 +72,8 @@ namespace LiveBot.Discord.SlashCommands
 
             foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
             {
-                var user = await monitor.GetUser(username: "bsquidwrd");
-                app.Logger.LogInformation("Got user {username} ({userId}) for monitor {monitor}", user.Username, user.Id, monitor.ServiceType);
+                await monitor.StartAsync(IsWatcher: false);
+                app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
             }
 
             return app;
