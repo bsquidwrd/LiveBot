@@ -14,7 +14,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             _logger = logger;
         }
 
-        [SlashCommand(name: "ping", description: "Ping the bot", runMode: RunMode.Async)]
+        [SlashCommand(name: "ping", description: "Ping the bot")]
         public async Task PingAsync()
         {
             await DeferAsync(ephemeral: true);
