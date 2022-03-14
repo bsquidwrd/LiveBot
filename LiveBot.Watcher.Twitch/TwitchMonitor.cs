@@ -341,7 +341,7 @@ namespace LiveBot.Watcher.Twitch
                     _logger.LogInformation($"Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth");
 
                     // Trigger it 5 minutes before expiration time to be safe
-                    SetupAuthTimer(TimeSpan.FromMinutes(5));
+                    SetupAuthTimer(TimeSpan.FromHours(1));
                 }
                 catch (Exception ex)
                 {
