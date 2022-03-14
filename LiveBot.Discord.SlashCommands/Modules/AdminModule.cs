@@ -19,7 +19,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
         {
             await DeferAsync(ephemeral: true);
             var timeDifference = DateTimeOffset.UtcNow - Context.Interaction.CreatedAt.ToUniversalTime();
-            await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
+            await ModifyOriginalResponseAsync(m =>
+            {
+                m.Content = $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond";
+            });
+            //await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
         }
     }
 }
