@@ -8,7 +8,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [SlashCommand(name: "ping", description: "Ping the bot")]
         public async Task PingAsync()
         {
-            await DeferAsync();
+            await DeferAsync(ephemeral: true);
             await FollowupAsync("Pong!");
         }
     }

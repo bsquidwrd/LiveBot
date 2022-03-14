@@ -20,7 +20,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [SlashCommand(name: "help", description: "Get help")]
         public async Task HelpAsync()
         {
-            await DeferAsync();
+            await DeferAsync(ephemeral: true);
             var builder = new EmbedBuilder()
             {
                 Color = new Color(114, 137, 218),
