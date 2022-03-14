@@ -17,18 +17,16 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [SlashCommand(name: "ping", description: "Ping the bot")]
         public async Task PingAsync()
         {
-            await DeferAsync(ephemeral: true);
-            var timeDifference = DateTimeOffset.UtcNow - Context.Interaction.CreatedAt.ToUniversalTime();
-
-            var timeToWait = TimeSpan.FromSeconds(5);
-            _logger.LogInformation($"Waiting {timeToWait.TotalSeconds} seconds before continuing with the Admin Ping command");
-            await Task.Delay(timeToWait);
-
-            await ModifyOriginalResponseAsync(m =>
+            try
             {
-                m.Content = $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond";
-            });
-            //await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
+                await DeferAsync(ephemeral: true);
+                var timeDifference = DateTimeOffset.UtcNow - Context.Interaction.CreatedAt.ToUniversalTime();
+                await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to run admin ping command: {ex}");
+            }
         }
     }
 }
