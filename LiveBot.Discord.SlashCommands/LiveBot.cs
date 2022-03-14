@@ -24,7 +24,12 @@ namespace LiveBot.Discord.SlashCommands
 
             builder.Services.AddSingleton<IUnitOfWorkFactory>(new UnitOfWorkFactory(builder.Configuration));
 
-            var discord = new DiscordRestClient();
+            var IsDebug = builder.Configuration.GetValue<bool>("IsDebug", false);
+            var discordLogLevel = IsDebug ? LogSeverity.Verbose : LogSeverity.Info;
+            var discord = new DiscordRestClient(new DiscordRestConfig()
+            {
+                LogLevel = discordLogLevel
+            });
             var token = builder.Configuration.GetValue<string>("token");
             await discord.LoginAsync(TokenType.Bot, token);
 
@@ -33,7 +38,7 @@ namespace LiveBot.Discord.SlashCommands
             builder.Services.AddInteractionService(config =>
             {
                 config.UseCompiledLambda = true;
-                config.LogLevel = IsDebug() ? LogSeverity.Debug : LogSeverity.Info;
+                config.LogLevel = discordLogLevel;
             });
 
             // Setup MassTransit
@@ -58,7 +63,8 @@ namespace LiveBot.Discord.SlashCommands
             commands.AddTypeConverter<Uri>(new UriConverter());
             await commands.AddModulesAsync(Assembly.GetExecutingAssembly(), app.Services);
 
-            if (IsDebug())
+            var IsDebug = app.Configuration.GetValue<bool>("IsDebug", false);
+            if (IsDebug)
             {
                 var testGuildId = app.Configuration.GetValue<ulong>("testguild");
                 await commands.RegisterCommandsToGuildAsync(guildId: testGuildId, deleteMissing: true);
@@ -77,15 +83,6 @@ namespace LiveBot.Discord.SlashCommands
             }
 
             return app;
-        }
-
-        private static bool IsDebug()
-        {
-#if DEBUG
-            return true;
-#else
-            return false;
-#endif
         }
     }
 }
