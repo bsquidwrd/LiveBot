@@ -11,6 +11,7 @@ services:
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
             - DD_LOGS_INJECTION=true
+            - LiveBot_TopGG_API=${TopGG_API}
         deploy:
             replicas: 1
             update_config:

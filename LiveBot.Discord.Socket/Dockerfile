@@ -9,6 +9,7 @@ ENV LiveBot_connectionstring=""
 ENV RabbitMQ_URL=""
 ENV RabbitMQ_Username=""
 ENV RabbitMQ_Password=""
+ENV LiveBot_TopGG_API=""
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
