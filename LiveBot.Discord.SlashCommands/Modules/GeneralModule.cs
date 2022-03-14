@@ -6,10 +6,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
     public class GeneralModule : RestInteractionModuleBase<RestInteractionContext>
     {
         [SlashCommand(name: "ping", description: "Ping the bot")]
-        public async Task PingAsync()
-        {
-            await DeferAsync(ephemeral: true);
-            await FollowupAsync("Pong!");
-        }
+        public async Task PingAsync() =>
+            await RespondAsync("Pong!", ephemeral: true);
     }
 }
