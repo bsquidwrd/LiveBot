@@ -83,8 +83,6 @@ namespace LiveBot.Discord.SlashCommands
                 await RespondAsync(StatusCodes.Status200OK, pingInteraction.AcknowledgePing());
                 return;
             }
-            var deferMessage = interaction.Defer(ephemeral: true);
-            await RespondAsync(StatusCodes.Status200OK, deferMessage);
 
             var interactionCtx = new RestInteractionContext(_discord, interaction, (str) => RespondAsync(StatusCodes.Status200OK, str));
             var result = await _interactions.ExecuteCommandAsync(interactionCtx, _serviceProvider);
