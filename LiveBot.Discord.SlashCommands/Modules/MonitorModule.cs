@@ -40,8 +40,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             [Summary(name: "live-message", description: "An example of what you want the bot to send (don't mention a game name)")] string LiveMessage
         )
         {
-            await DeferAsync(ephemeral: true);
-
             Uri? ProfileURL = null;
             ITextChannel? WhereToPost = null;
             IRole? RoleToMention = null;
@@ -99,13 +97,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            try
-            {
-                // If this fails, I assume it's because it was run through an Auto parse
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var monitor = GetMonitor(ProfileURL);
 
             LiveMessage = LiveMessage.Trim();
@@ -150,8 +141,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            await DeferAsync(ephemeral: true);
-
             var CompletedMessage = "";
             if (WhereToPost == null && LiveMessage == null && RoleToMention == null)
                 CompletedMessage = $"Nothing was updated for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}";
@@ -180,8 +169,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
         )
         {
-            await DeferAsync(ephemeral: true);
-
             await FollowupAsync($"Deleted monitor for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}", ephemeral: true);
         }
 
@@ -192,8 +179,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
         [SlashCommand(name: "list", description: "List all stream monitors")]
         public async Task ListStreamMonitor(Uri uri)
         {
-            await DeferAsync(ephemeral: true);
-
             var monitor = GetMonitor(uri);
             var livebotUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
             var user = await _work.UserRepository.SingleOrDefaultAsync(x => x.SourceID == livebotUser.Id && x.ServiceType == livebotUser.ServiceType);
@@ -222,7 +207,7 @@ Example:
 
 You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/livebot-docs/tutorial-walkthrough/start-monitoring-a-stream")}
 ";
-            await RespondAsync(message, ephemeral: true);
+            await FollowupAsync(message, ephemeral: true);
         }
 
         private async Task<StreamSubscription> SetupSubscription(ILiveBotMonitor monitor, Uri uri, string message, IGuild guild, ITextChannel channel, IRole? role = null)

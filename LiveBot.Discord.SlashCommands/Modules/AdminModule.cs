@@ -1,8 +1,5 @@
 ﻿using Discord.Interactions;
 using Discord.Rest;
-using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Repository;
-using Microsoft.EntityFrameworkCore;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
@@ -21,7 +18,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task PingAsync()
         {
             var timeDifference = DateTimeOffset.UtcNow - Context.Interaction.CreatedAt.ToUniversalTime();
-            await RespondAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
+            await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
         }
     }
 }
