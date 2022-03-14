@@ -109,7 +109,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             };
 
             var subscription = await SetupSubscription(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
-            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} with a live message of {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
+            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
             if (RoleToMention != null && !LiveMessage.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
             {
