@@ -116,7 +116,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var subscription = await SetupSubscription(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
+            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
             var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
             if (RoleToMention != null && !LiveMessage.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
@@ -149,22 +149,38 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            await DeferAsync(ephemeral: true);
-            var CompletedMessage = "";
+            try
+            {
+                await DeferAsync(ephemeral: true);
+            }
+            catch { }
+
+            var monitor = GetMonitor(ProfileURL);
+
+            var ResponseMessage = "";
             if (WhereToPost == null && LiveMessage == null && RoleToMention == null)
-                CompletedMessage = $"Nothing was updated for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}";
+                ResponseMessage = $"Nothing was updated for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}. ";
             if (WhereToPost != null)
-                CompletedMessage += $"Updated channel to {WhereToPost.Mention}\n";
+                ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
             if (RoleToMention != null)
-                CompletedMessage += $"Updated role to {RoleToMention.Mention}\n";
+                ResponseMessage += $"Updated role to {RoleToMention.Mention}. ";
             if (LiveMessage != null)
-                CompletedMessage += $"Updated message to {Format.Code(LiveMessage)}\n";
+            {
+                if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
+                    LiveMessage = Defaults.NotificationMessage;
+                ResponseMessage += $"Updated message to {Format.Code(LiveMessage)}. ";
+            }
+
+            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
 
             var allowedMentions = new AllowedMentions()
             {
                 AllowedTypes = AllowedMentionTypes.None
             };
-            await FollowupAsync(CompletedMessage, ephemeral: true, allowedMentions: allowedMentions);
+
+            if (WhereToPost != null || LiveMessage != null || RoleToMention != null)
+                ResponseMessage = $"Successfuly updated monitor for {Format.Bold(subscription.User.DisplayName)}! {ResponseMessage}";
+            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
         /// <summary>
@@ -178,8 +194,26 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
         )
         {
-            await DeferAsync(ephemeral: true);
-            await FollowupAsync($"Deleted monitor for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}", ephemeral: true);
+            try
+            {
+                await DeferAsync(ephemeral: true);
+            }
+            catch { }
+
+            var monitor = GetMonitor(ProfileURL);
+
+            var streamUser = await GetStreamUserAsync(monitor: monitor, uri: ProfileURL);
+
+            var subscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.User == streamUser);
+            if (subscription != null)
+            {
+                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                await FollowupAsync($"Successfully deleted the monitor for {Format.Bold(streamUser.DisplayName)}", ephemeral: true);
+            }
+            else
+            {
+                await FollowupAsync($"No subscription found for {Format.Bold(streamUser.DisplayName)}");
+            }
         }
 
         /// <summary>
@@ -222,14 +256,8 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             await FollowupAsync(message, ephemeral: true);
         }
 
-        private async Task<StreamSubscription> SetupSubscription(ILiveBotMonitor monitor, Uri uri, string message, IGuild guild, ITextChannel channel, IRole? role = null)
+        private async Task<StreamUser> GetStreamUserAsync(ILiveBotMonitor monitor, Uri uri)
         {
-            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
-            var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(x => x.DiscordId == channel.Id);
-            DiscordRole? discordRole = null;
-            if (role != null)
-                discordRole = await _work.RoleRepository.SingleOrDefaultAsync(x => x.DiscordId == role.Id);
-
             var monitorUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
             StreamUser streamUser = new()
             {
@@ -240,8 +268,27 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 AvatarURL = monitorUser.AvatarURL,
                 ProfileURL = monitorUser.ProfileURL
             };
-            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == monitorUser.ServiceType && i.SourceID == monitorUser.Id));
-            streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == monitorUser.ServiceType && i.SourceID == monitorUser.Id);
+
+            Expression<Func<StreamUser, bool>> streamUserPredicate = (i =>
+                i.ServiceType == monitorUser.ServiceType &&
+                i.SourceID == monitorUser.Id
+            );
+
+            await _work.UserRepository.AddOrUpdateAsync(streamUser, streamUserPredicate);
+            return await _work.UserRepository.SingleOrDefaultAsync(streamUserPredicate);
+        }
+
+        private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, IRole? role = null, string? message = null)
+        {
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
+            DiscordChannel? discordChannel = null;
+            DiscordRole? discordRole = null;
+            if (channel != null)
+                discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(x => x.DiscordId == channel.Id);
+            if (role != null)
+                discordRole = await _work.RoleRepository.SingleOrDefaultAsync(x => x.DiscordId == role.Id);
+
+            var streamUser = await GetStreamUserAsync(monitor, uri);
 
             Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
                 i.User == streamUser &&
@@ -251,11 +298,15 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             StreamSubscription newSubscription = new()
             {
                 User = streamUser,
-                DiscordGuild = discordGuild,
-                DiscordChannel = discordChannel,
-                DiscordRole = discordRole,
-                Message = message
+                DiscordGuild = discordGuild
             };
+
+            if (discordChannel != null)
+                newSubscription.DiscordChannel = discordChannel;
+            if (discordRole != null)
+                newSubscription.DiscordRole = discordRole;
+            if (message != null)
+                newSubscription.Message = message;
 
             await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
 
