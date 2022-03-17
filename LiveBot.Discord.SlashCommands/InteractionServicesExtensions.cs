@@ -102,13 +102,15 @@ namespace LiveBot.Discord.SlashCommands
                     .WithTitle($"{WarningEmoji} Error!")
                     .WithDescription(result.ErrorReason)
                     .Build();
-                try
+
+                if (context.Interaction.HasResponded)
                 {
-                    var originalResponse = await context.Interaction.GetOriginalResponseAsync();
-                    await originalResponse.DeleteAsync();
+                    await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
                 }
-                catch { }
-                await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
+                else
+                {
+                    await context.Interaction.RespondAsync(ephemeral: true, embed: embed);
+                }
             }
             await Task.CompletedTask;
         }
