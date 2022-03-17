@@ -63,6 +63,7 @@ namespace LiveBot.Watcher.Twitch
         public System.Timers.Timer RefreshAuthTimer;
         public System.Timers.Timer RefreshUsersTimer;
         public System.Timers.Timer ClearCacheTimer;
+        public System.Timers.Timer RefreshMonitoredUsersTimer;
 
         // My caches
         private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
@@ -111,8 +112,6 @@ namespace LiveBot.Watcher.Twitch
         public void Monitor_OnServiceStarted(object? sender, OnServiceStartedArgs e)
         {
             _logger.LogDebug("Monitor service successfully connected to Twitch!");
-            RefreshUsersTimer.Start();
-            ClearCacheTimer.Start();
         }
 
         public async void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs e)
@@ -429,10 +428,11 @@ namespace LiveBot.Watcher.Twitch
 
         private System.Timers.Timer SetupUserTimer(double minutes = 5)
         {
-            TimeSpan timeSpan = TimeSpan.FromMinutes(minutes);
-            var timer = new System.Timers.Timer(timeSpan.TotalMilliseconds)
+            var timer = new System.Timers.Timer()
             {
-                AutoReset = true
+                AutoReset = true,
+                Enabled = true,
+                Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
             };
             timer.Elapsed += async (sender, e) => await UpdateUsers();
             return timer;
@@ -446,12 +446,36 @@ namespace LiveBot.Watcher.Twitch
 
         private System.Timers.Timer SetupCacheTimer()
         {
-            TimeSpan timeSpan = TimeSpan.FromMinutes(15);
-            var timer = new System.Timers.Timer(timeSpan.TotalMilliseconds)
+            var timer = new System.Timers.Timer()
             {
-                AutoReset = true
+                AutoReset = true,
+                Enabled = true,
+                Interval = TimeSpan.FromMinutes(15).TotalMilliseconds
             };
             timer.Elapsed += ClearCache;
+            return timer;
+        }
+
+        private async Task RefreshMonitoredUsers()
+        {
+            var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
+            List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
+
+            if (channelList.Count == 0)
+                // Add myself so startup doesn't fail if there's no users in the database
+                channelList.Add("22812120");
+            Monitor.SetChannelsById(channelList);
+        }
+
+        private System.Timers.Timer SetupRefreshMonitoredUsers(double minutes = 1)
+        {
+            var timer = new System.Timers.Timer()
+            {
+                AutoReset = true,
+                Enabled = true,
+                Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
+            };
+            timer.Elapsed += async (sender, e) => await RefreshMonitoredUsers();
             return timer;
         }
 
@@ -506,16 +530,10 @@ namespace LiveBot.Watcher.Twitch
             await UpdateAuth();
             if (IsWatcher)
             {
-                var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
-                List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
-
-                if (channelList.Count() == 0)
-                    // Add myself so startup doesn't fail if there's no users in the database
-                    channelList.Add("22812120");
-
-                Monitor.SetChannelsById(channelList);
+                await RefreshMonitoredUsers();
                 RefreshUsersTimer = SetupUserTimer();
                 ClearCacheTimer = SetupCacheTimer();
+                RefreshMonitoredUsersTimer = SetupRefreshMonitoredUsers();
 
                 await Task.Run(Monitor.Start);
             }
