@@ -14,7 +14,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 {
     [RequireBotManager]
     [Group(name: "monitor", description: "Commands for manipulating stream monitors")]
-    public class MonitorModule : RestInteractionModuleBase<RestInteractionContext>
+    public partial class MonitorModule : RestInteractionModuleBase<RestInteractionContext>
     {
         private readonly ILogger<MonitorModule> _logger;
         private readonly IUnitOfWork _work;
@@ -214,20 +214,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             {
                 await FollowupAsync($"No subscription found for {Format.Bold(streamUser.DisplayName)}");
             }
-        }
-
-        /// <summary>
-        /// List all stream monitors in the Guild
-        /// </summary>
-        /// <returns></returns>
-        [SlashCommand(name: "list", description: "List all stream monitors")]
-        public async Task ListStreamMonitor(Uri uri)
-        {
-            await DeferAsync(ephemeral: true);
-            var monitor = GetMonitor(uri);
-            var livebotUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
-            var user = await _work.UserRepository.SingleOrDefaultAsync(x => x.SourceID == livebotUser.Id && x.ServiceType == livebotUser.ServiceType);
-            await FollowupAsync($"Successfully retrieved {user.DisplayName} from the database with an ID of {user.SourceID} on {user.ServiceType}", ephemeral: true);
         }
 
         [SlashCommand(name: "help", description: "Get some help with setting up a stream monitor")]
