@@ -20,7 +20,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
 
-            await FollowupAsync("Ahhh", ephemeral: true);
+            await FollowupAsync($"Ahhh... got {subscriptions.LongCount()} subscriptions", ephemeral: true);
         }
     }
 }
