@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LiveBot.Core.HealthCheck\LiveBot.Core.HealthCheck.csproj" />
     <ProjectReference Include="..\LiveBot.Core\LiveBot.Core.csproj" />
     <ProjectReference Include="..\LiveBot.Repository\LiveBot.Repository.csproj" />
     <ProjectReference Include="..\LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj" />

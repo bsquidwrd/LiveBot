@@ -43,7 +43,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Discord.SlashComman
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Watcher.Twitch", "LiveBot.Watcher.Twitch\LiveBot.Watcher.Twitch.csproj", "{803A6AD8-B376-4C2C-83B3-13EF4C6D42FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Discord.Socket", "LiveBot.Discord.Socket\LiveBot.Discord.Socket.csproj", "{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LiveBot.Discord.Socket", "LiveBot.Discord.Socket\LiveBot.Discord.Socket.csproj", "{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "worflows", "worflows", "{ADD3D316-2522-42AB-88BD-5A82E945929E}"
 	ProjectSection(SolutionItems) = preProject
@@ -51,6 +51,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "worflows", "worflows", "{AD
 		.github\workflows\docker-image.yml = .github\workflows\docker-image.yml
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveBot.Core.HealthCheck", "LiveBot.Core.HealthCheck\LiveBot.Core.HealthCheck.csproj", "{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -78,6 +80,10 @@ Global
 		{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{803A6AD8-B376-4C2C-83B3-13EF4C6D42FD} = {5D9A8359-EF99-4F5E-8FC0-C5DA3C57E7D1}
 		{3F0DF5C1-96EC-4E2A-9176-1D7EF07F0E30} = {709C4AF2-3084-4B28-B42A-6EF4707704A3}
 		{ADD3D316-2522-42AB-88BD-5A82E945929E} = {731850A7-AF23-4CDC-843D-BC1943E7B719}
+		{2FD9B838-BB7D-4E60-B54C-E90B8BDF6D05} = {CDA9B861-8EC0-4693-93E9-2F700B9C85DC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7BEBFC2-84F3-4E31-B8D6-001D28DD3892}
