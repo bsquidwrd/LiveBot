@@ -26,5 +26,5 @@ RUN dotnet publish "LiveBot.Discord.Socket.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-HEALTHCHECK --interval=15s --timeout=3s CMD ["dotnet", "LiveBot.Core.HealthCheck.dll", " || exit 1"]
+HEALTHCHECK --interval=1m --timeout=5s CMD ["dotnet", "LiveBot.Core.HealthCheck.dll", " || exit 1"]
 ENTRYPOINT ["dotnet", "LiveBot.Discord.Socket.dll"]
