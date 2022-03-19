@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using LiveBot.Core.Repository.Interfaces;
 
 namespace LiveBot.Discord.SlashCommands.Attributes
 {
@@ -7,8 +8,8 @@ namespace LiveBot.Discord.SlashCommands.Attributes
     {
         public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, ICommandInfo commandInfo, IServiceProvider services)
         {
-            ulong managerRoleId = 946658451495456778;
-
+            var _work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
+            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(x => x.DiscordGuild.DiscordId == context.Guild.Id);
             var appinfo = await context.Client.GetApplicationInfoAsync();
             var guilduser = await context.Guild.GetUserAsync(context.User.Id);
             if (
@@ -16,7 +17,7 @@ namespace LiveBot.Discord.SlashCommands.Attributes
                 context.Guild.OwnerId == context.User.Id ||
                 guilduser.GuildPermissions.Administrator ||
                 guilduser.GuildPermissions.ManageGuild ||
-                guilduser.RoleIds.Contains(managerRoleId)
+                guilduser.RoleIds.Contains(guildConfig.AdminRole.DiscordId)
                 )
             {
                 return PreconditionResult.FromSuccess();
