@@ -26,7 +26,7 @@ namespace LiveBot.Discord.SlashCommands.Attributes
             if (adminRoleId != null)
             {
                 ulong? roleId = guilduser.RoleIds.Where(i => i == adminRoleId).FirstOrDefault();
-                if (roleId != null)
+                if (roleId == adminRoleId)
                     return PreconditionResult.FromSuccess();
             }
 
