@@ -100,6 +100,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var monitor = GetMonitor(ProfileURL);
 
             LiveMessage = LiveMessage.Trim();
+            if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = Defaults.NotificationMessage;
             if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
                 LiveMessage = Defaults.NotificationMessage;
 
@@ -145,13 +146,13 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             var monitor = GetMonitor(ProfileURL);
 
             var ResponseMessage = "";
-            if (WhereToPost == null && LiveMessage == null && RoleToMention == null)
+            if (WhereToPost == null && LiveMessage == null && RoleToMention == null && !RemoveRole)
                 ResponseMessage = $"Nothing was updated for {Format.EscapeUrl(ProfileURL.AbsoluteUri)}. ";
             if (WhereToPost != null)
                 ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
             if (RoleToMention != null)
                 ResponseMessage += $"Updated role to {RoleToMention.Mention}. ";
-            if (LiveMessage != null)
+            if (!String.IsNullOrWhiteSpace(LiveMessage))
             {
                 if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
                     LiveMessage = Defaults.NotificationMessage;
@@ -161,7 +162,7 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             if (RemoveRole)
             {
                 RoleToMention = null;
-                ResponseMessage += "Removing role ping. ";
+                ResponseMessage += "Removed role ping. ";
             }
 
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention, RemoveRole: RemoveRole);
