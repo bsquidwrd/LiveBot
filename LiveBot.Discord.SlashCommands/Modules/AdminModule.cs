@@ -4,6 +4,7 @@ using Discord.Rest;
 namespace LiveBot.Discord.SlashCommands.Modules
 {
     [RequireOwner]
+    [DontAutoRegister]
     [Group(name: "admin", description: "Administrative functions for the Bot Owner")]
     public class AdminModule : RestInteractionModuleBase<RestInteractionContext>
     {
