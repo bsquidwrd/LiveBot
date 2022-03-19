@@ -31,7 +31,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
             var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: 0, nextSpot: 1);
 
-            await FollowupAsync(text: "", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
+            await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
     }
 
@@ -86,7 +86,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
                 var updateResponse = component.Update(x =>
                 {
-                    x.Content = "";
+                    x.Content = $"Streams being monitored for this server";
                     x.Embed = subscriptionEmbed;
                     x.Components = messageComponents;
                 });
