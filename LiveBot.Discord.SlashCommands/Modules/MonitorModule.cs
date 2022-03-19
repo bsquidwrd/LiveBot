@@ -138,7 +138,8 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel? WhereToPost = null,
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string? LiveMessage = null,
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
+            [Summary(name: "remove-role-ping", description: "True means the role to ping will be removed, False will leave the role to be pinged")] bool RemoveRole = false
         )
         {
             var monitor = GetMonitor(ProfileURL);
@@ -157,14 +158,20 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
                 ResponseMessage += $"Updated message to {Format.Code(LiveMessage)}. ";
             }
 
-            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
+            if (RemoveRole)
+            {
+                RoleToMention = null;
+                ResponseMessage += "Removing role ping. ";
+            }
+
+            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention, RemoveRole: RemoveRole);
 
             var allowedMentions = new AllowedMentions()
             {
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            if (WhereToPost != null || LiveMessage != null || RoleToMention != null)
+            if (WhereToPost != null || LiveMessage != null || RoleToMention != null || RemoveRole)
                 ResponseMessage = $"Successfuly updated monitor for {Format.Bold(subscription.User.DisplayName)}! {ResponseMessage}";
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
@@ -243,7 +250,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             return await _work.UserRepository.SingleOrDefaultAsync(streamUserPredicate);
         }
 
-        private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, IRole? role = null, string? message = null)
+        private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, IRole? role = null, string? message = null, bool RemoveRole = false)
         {
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
             DiscordChannel? discordChannel = null;
@@ -269,7 +276,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             if (discordChannel != null)
                 newSubscription.DiscordChannel = discordChannel;
             if (discordRole != null)
-                newSubscription.DiscordRole = discordRole;
+                newSubscription.DiscordRole = RemoveRole ? null : discordRole;
             if (message != null)
                 newSubscription.Message = message;
 
