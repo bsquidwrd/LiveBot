@@ -76,7 +76,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 int nextSpot = currentSpot + 1;
 
                 if (previousSpot < 0)
-                    previousSpot = 0;
+                    previousSpot = subscriptions.Count() - 1;
 
                 if (nextSpot > subscriptions.Count())
                     nextSpot = 0;
@@ -157,6 +157,13 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithName("Message")
                 .WithValue(subscription.Message);
             builder.AddField(messageField);
+
+            // Add Profile field
+            var profileField = new EmbedFieldBuilder()
+                .WithIsInline(false)
+                .WithName("Profile")
+                .WithValue(subscription.User.ProfileURL);
+            builder.AddField(profileField);
 
             return builder.Build();
         }
