@@ -179,7 +179,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
         /// </summary>
         /// <param name="ProfileURL"></param>
         /// <returns></returns>
-        [RequireBotManager]
         [SlashCommand(name: "delete", description: "Delete a stream from being monitored")]
         public async Task DeleteStreamMonitor(
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
