@@ -160,10 +160,7 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             }
 
             if (RemoveRole)
-            {
-                RoleToMention = null;
                 ResponseMessage += "Removed role ping. ";
-            }
 
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention, RemoveRole: RemoveRole);
 
@@ -277,9 +274,11 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             if (discordChannel != null)
                 newSubscription.DiscordChannel = discordChannel;
             if (discordRole != null)
-                newSubscription.DiscordRole = RemoveRole ? null : discordRole;
+                newSubscription.DiscordRole = discordRole;
             if (message != null)
                 newSubscription.Message = message;
+            if (RemoveRole)
+                newSubscription.DiscordRole = null;
 
             await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
 
