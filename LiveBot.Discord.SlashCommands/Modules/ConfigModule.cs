@@ -24,8 +24,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task ConfigSetupAsync(
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel? WhereToPost = null,
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string LiveMessage = Defaults.NotificationMessage,
-            [Summary(name: "role-to-monitor", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMonitor = null,
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
+            [Summary(name: "role-to-monitor", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMonitor = null,
             [Summary(name: "admin-role", description: "The role to replace {role} with in the live message (default is none)")] IRole? AdminRole = null,
             [Summary(name: "stop-monitoring", description: "Stop monitoring a role")] bool StopMonitoring = false
         )
