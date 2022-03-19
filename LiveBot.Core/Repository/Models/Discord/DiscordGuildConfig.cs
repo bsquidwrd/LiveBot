@@ -8,5 +8,6 @@
         public virtual DiscordChannel DiscordChannel { get; set; }
         public virtual DiscordRole DiscordRole { get; set; }
         public virtual DiscordRole MonitorRole { get; set; }
+        public virtual DiscordRole AdminRole { get; set; }
     }
 }

@@ -19,6 +19,7 @@ namespace LiveBot.Discord.Socket
         {
             builder.Configuration.AddEnvironmentVariables(prefix: "LiveBot_");
 
+            builder.Services.AddScoped<LiveBotDBContext>(_ => new LiveBotDBContext(builder.Configuration.GetValue<string>("connectionstring")));
             builder.Services.AddSingleton<IUnitOfWorkFactory>(new UnitOfWorkFactory(builder.Configuration));
             builder.Services.AddSingleton<LiveBotDiscordEventHandlers>();
 
