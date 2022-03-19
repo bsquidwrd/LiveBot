@@ -9,8 +9,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// List all stream monitors in the Guild
         /// </summary>
         /// <returns></returns>
-        [SlashCommand(name: "list", description: "List all stream monitors", runMode: RunMode.Async)]
-        public async Task ListStreamMonitor()
+        [SlashCommand(name: "list", description: "List all stream monitors")]
+        public async Task ListStreamMonitorAsync()
         {
             try
             {
