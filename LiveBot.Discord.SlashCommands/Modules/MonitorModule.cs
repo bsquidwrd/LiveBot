@@ -265,22 +265,26 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 i.DiscordGuild == discordGuild
             );
 
-            StreamSubscription newSubscription = new()
+            var subscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+            if (subscription == null)
             {
-                User = streamUser,
-                DiscordGuild = discordGuild
-            };
+                subscription = new()
+                {
+                    User = streamUser,
+                    DiscordGuild = discordGuild
+                };
+            }
 
             if (discordChannel != null)
-                newSubscription.DiscordChannel = discordChannel;
+                subscription.DiscordChannel = discordChannel;
             if (discordRole != null)
-                newSubscription.DiscordRole = discordRole;
+                subscription.DiscordRole = discordRole;
             if (message != null)
-                newSubscription.Message = message;
+                subscription.Message = message;
             if (RemoveRole)
-                newSubscription.DiscordRole = null;
+                subscription.DiscordRole = null;
 
-            await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
+            await _work.SubscriptionRepository.AddOrUpdateAsync(subscription, streamSubscriptionPredicate);
 
             return await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
         }
