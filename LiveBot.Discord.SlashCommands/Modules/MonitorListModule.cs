@@ -17,12 +17,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [SlashCommand(name: "list", description: "List all stream monitors")]
         public async Task ListStreamMonitorAsync()
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
             subscriptions = subscriptions.OrderBy(i => i.User.Username);
 
@@ -104,11 +98,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [ComponentInteraction(customId: "monitordelete:*")]
         public async Task MonitorDeleteAsync(long subscriptionId)
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
+            await DeferAsync(ephemeral: true);
             var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
             var displayName = subscription.User.DisplayName;
             await _work.SubscriptionRepository.RemoveAsync(subscription.Id);

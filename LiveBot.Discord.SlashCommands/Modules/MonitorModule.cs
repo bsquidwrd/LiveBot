@@ -40,8 +40,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             [Summary(name: "live-message", description: "An example of what you want the bot to send (don't mention a game name)")] string LiveMessage
         )
         {
-            await DeferAsync(ephemeral: true);
-
             Uri? ProfileURL = null;
             ITextChannel? WhereToPost = null;
             IRole? RoleToMention = null;
@@ -99,12 +97,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var monitor = GetMonitor(ProfileURL);
 
             LiveMessage = LiveMessage.Trim();
@@ -149,12 +141,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var monitor = GetMonitor(ProfileURL);
 
             var ResponseMessage = "";
@@ -194,12 +180,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
         )
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var monitor = GetMonitor(ProfileURL);
 
             var streamUser = await GetStreamUserAsync(monitor: monitor, uri: ProfileURL);
@@ -219,7 +199,6 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
         [SlashCommand(name: "help", description: "Get some help with setting up a stream monitor")]
         public async Task HelpStreamMonitor()
         {
-            await DeferAsync(ephemeral: true);
             var message = @$"
 With the {Format.Code("live-message")} portion of the commands, you can use the below placeholders (including the {Format.Code("{")} and {Format.Code("}")}.
 Using these placeholders {Format.Bold("AS IS")} will {Format.Bold("AUTOMATICALLY")} replace them when the bot sends a message

@@ -30,12 +30,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             [Summary(name: "stop-monitoring", description: "Stop monitoring a role")] bool StopMonitoring = false
         )
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-            }
-            catch { }
-
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
             if (discordGuild == null)
             {
