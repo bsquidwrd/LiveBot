@@ -8,10 +8,12 @@ namespace LiveBot.Discord.Socket
     public class LiveBotDiscordEventHandlers
     {
         private readonly IBusControl _bus;
+        private readonly ILogger<LiveBotDiscordEventHandlers> _logger;
 
-        public LiveBotDiscordEventHandlers(IBusControl bus)
+        public LiveBotDiscordEventHandlers(IBusControl bus, ILogger<LiveBotDiscordEventHandlers> logger)
         {
             _bus = bus;
+            _logger = logger;
         }
 
         /// <summary>
@@ -23,6 +25,7 @@ namespace LiveBot.Discord.Socket
         {
             await client.SetStatusAsync(UserStatus.Online);
             await client.SetGameAsync(name: "Your Stream!", type: ActivityType.Watching);
+            _logger.LogInformation("Shard {shardId} ready", client.ShardId);
         }
 
         /// <summary>
@@ -34,6 +37,7 @@ namespace LiveBot.Discord.Socket
         {
             var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name, IconUrl = guild.IconUrl };
             await _bus.Publish(context);
+            _logger.LogInformation("Joined guild {name} ({id})", guild.Name, guild.Id);
         }
 
         /// <summary>
@@ -60,6 +64,7 @@ namespace LiveBot.Discord.Socket
         {
             var context = new DiscordGuildDelete { GuildId = guild.Id };
             await _bus.Publish(context);
+            _logger.LogInformation("Left guild {name} ({id})", guild.Name, guild.Id);
         }
 
         /// <summary>
