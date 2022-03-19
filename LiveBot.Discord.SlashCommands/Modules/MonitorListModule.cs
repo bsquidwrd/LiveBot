@@ -68,7 +68,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 }
 
                 if (currentSpot > subscriptions.Count() - 1)
-                    currentSpot = 0;
+                    currentSpot -= subscriptions.Count();
+                if (currentSpot < 0)
+                    currentSpot = subscriptions.Count() - 1;
 
                 var subscription = subscriptions.ToList()[currentSpot];
 
@@ -78,11 +80,26 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 if (previousSpot < 0)
                     previousSpot = subscriptions.Count() - 1;
 
-                if (nextSpot > subscriptions.Count())
+                if (nextSpot > subscriptions.Count() - 1)
                     nextSpot = 0;
 
+                if (subscriptions.Count() <= 2)
+                {
+                    if (currentSpot == 0)
+                    {
+                        previousSpot = -1;
+                        nextSpot = 1;
+                    }
+
+                    if (currentSpot == 1)
+                    {
+                        previousSpot = 0;
+                        nextSpot = 2;
+                    }
+                }
+
                 var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
-                var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription, previousSpot: previousSpot, nextSpot: nextSpot);
+                var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: previousSpot, nextSpot: nextSpot);
 
                 var updateResponse = component.Update(x =>
                 {
@@ -98,11 +115,18 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [ComponentInteraction(customId: "monitordelete:*")]
         public async Task MonitorDeleteAsync(long subscriptionId)
         {
-            await DeferAsync(ephemeral: true);
-            var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
-            var displayName = subscription.User.DisplayName;
-            await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
-            await FollowupAsync(text: $"Monitor for {Format.Bold(displayName)} has been deleted", ephemeral: true);
+            try
+            {
+                await DeferAsync(ephemeral: true);
+                var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
+                var displayName = subscription.User.DisplayName;
+                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                await FollowupAsync(text: $"Monitor for {Format.Bold(displayName)} has been deleted", ephemeral: true);
+            }
+            catch
+            {
+                await FollowupAsync(text: $"Unable to remove subscription", ephemeral: true);
+            }
         }
     }
 
