@@ -37,7 +37,6 @@ namespace LiveBot.Discord.Socket
         {
             var context = new DiscordGuildAvailable { GuildId = guild.Id, GuildName = guild.Name, IconUrl = guild.IconUrl };
             await _bus.Publish(context);
-            _logger.LogInformation("Joined guild {name} ({id})", guild.Name, guild.Id);
         }
 
         /// <summary>
@@ -64,7 +63,6 @@ namespace LiveBot.Discord.Socket
         {
             var context = new DiscordGuildDelete { GuildId = guild.Id };
             await _bus.Publish(context);
-            _logger.LogInformation("Left guild {name} ({id})", guild.Name, guild.Id);
         }
 
         /// <summary>
