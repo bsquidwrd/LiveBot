@@ -64,8 +64,10 @@ namespace LiveBot.Discord.SlashCommands
             await commands.AddModulesAsync(Assembly.GetExecutingAssembly(), app.Services);
 
             var IsDebug = app.Configuration.GetValue<bool>("IsDebug", false);
+
             if (IsDebug)
             {
+                app.Logger.LogInformation("Starting bot in debug mode...");
                 var testGuildId = app.Configuration.GetValue<ulong>("testguild");
                 await commands.RegisterCommandsToGuildAsync(guildId: testGuildId, deleteMissing: true);
             }
@@ -74,7 +76,7 @@ namespace LiveBot.Discord.SlashCommands
                 await commands.RegisterCommandsGloballyAsync(deleteMissing: true);
             }
 
-            app.MapInteractionService("/discord/interactions", app.Configuration.GetValue<string>("publickey"));
+            app.MapInteractionService("/interactions", app.Configuration.GetValue<string>("publickey"));
 
             foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
             {
