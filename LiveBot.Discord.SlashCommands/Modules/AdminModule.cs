@@ -28,5 +28,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 _logger.LogError($"Unable to run admin ping command: {ex}");
             }
         }
+
+        [SlashCommand(name: "divide", description: "Divide two numbers")]
+        public async Task DivideAsync(int number1, int number2)
+        {
+            await FollowupAsync(text: $"Result: {number1 / number2}", ephemeral: true);
+        }
     }
 }
