@@ -6,6 +6,8 @@ EXPOSE 80
 EXPOSE 443
 ENV LiveBot_token=""
 ENV LiveBot_connectionstring=""
+ENV LiveBot_IsDebug="True"
+ENV LiveBot_datadogapikey=""
 ENV RabbitMQ_URL=""
 ENV RabbitMQ_Username=""
 ENV RabbitMQ_Password=""
