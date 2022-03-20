@@ -92,13 +92,17 @@ namespace LiveBot.Discord.SlashCommands
             var result = await _interactions.ExecuteCommandAsync(interactionCtx, _serviceProvider);
         }
 
-        public async Task SlashCommandExecuted(SlashCommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
+        public Task SlashCommandExecuted(SlashCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
+            HandleErrorExecution(info: info, context: context, result: result);
+
+        public Task ComponentCommandExecuted(ComponentCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
+            HandleErrorExecution(info: info, context: context, result: result);
+
+        public async Task HandleErrorExecution(ICommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
         {
             if (!result.IsSuccess && result.Error != null)
             {
-                var userDisplay = $"{Format.UsernameAndDiscriminator(context.User)} ({context.User.Id})";
-                var guildDisplay = $"{context.Guild.Name} ({context.Guild.Id})";
-                _logger.LogError(message: "Error running {Command} for {User} in {Guild} - {Error}: {ErrorReason}", info.Name, userDisplay, guildDisplay, result.Error, result.ErrorReason);
+                _logger.LogError(message: "Error running {CommandName} for {Username} ({UserId}) in {GuildName} ({GuidId}) - {ErrorType}: {ErrorReason} {Exception}", info.Name, Format.UsernameAndDiscriminator(context.User), context.User.Id, context.Guild.Name, context.Guild.Id, result.Error, result.ErrorReason, result.GetType().GetProperty("Exception")?.GetValue(result, null));
 
                 var WarningEmoji = new Emoji("\u26A0");
                 var embed = new EmbedBuilder()
@@ -108,26 +112,6 @@ namespace LiveBot.Discord.SlashCommands
                     .Build();
 
                 await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
-            }
-            await Task.CompletedTask;
-        }
-
-        public async Task ComponentCommandExecuted(ComponentCommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
-        {
-            if (!result.IsSuccess && result.Error != null)
-            {
-                var userDisplay = $"{Format.UsernameAndDiscriminator(context.User)} ({context.User.Id})";
-                var guildDisplay = $"{context.Guild.Name} ({context.Guild.Id})";
-                _logger.LogError(message: "Error running {Command} for {User} in {Guild} - {Error}: {ErrorReason}", info?.Name, userDisplay, guildDisplay, result.Error, result.ErrorReason);
-
-                var WarningEmoji = new Emoji("\u26A0");
-                var embed = new EmbedBuilder()
-                    .WithColor(Color.Red)
-                    .WithTitle($"{WarningEmoji} Error!")
-                    .WithDescription(result.ErrorReason)
-                    .Build();
-
-                await context.Interaction.RespondAsync(ephemeral: true, embed: embed);
             }
             await Task.CompletedTask;
         }
