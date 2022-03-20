@@ -1,17 +1,9 @@
 using LiveBot.Watcher.Twitch;
 using Serilog;
-using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((ctx, lc) =>
-    lc
-        .MinimumLevel.Information()
-        .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-        .WriteTo.File(formatter: new JsonFormatter(), path: "logs/log-.json", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31)
-        .Enrich.FromLogContext()
-);
-builder.SetupLiveBotDatabase();
+builder.SetupLiveBot();
 builder.Services.AddSingleton<TwitchMonitor>();
 
 var app = builder.Build();
