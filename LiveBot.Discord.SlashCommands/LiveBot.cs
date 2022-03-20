@@ -80,21 +80,22 @@ namespace LiveBot.Discord.SlashCommands
             await commands.AddModulesAsync(Assembly.GetExecutingAssembly(), app.Services);
 
             var IsDebug = app.Configuration.GetValue<bool>("IsDebug", false);
-            var adminGuildId = app.Configuration.GetValue<ulong>("adminguild");
+            var testGuildId = app.Configuration.GetValue<ulong>("testguild");
 
             if (IsDebug)
             {
                 app.Logger.LogInformation("Starting bot in debug mode...");
-                var testGuildId = app.Configuration.GetValue<ulong>("testguild");
-                adminGuildId = testGuildId;
                 await commands.RegisterCommandsToGuildAsync(guildId: testGuildId, deleteMissing: true);
             }
             else
             {
                 await commands.RegisterCommandsGloballyAsync(deleteMissing: true);
+
+                var emptyArray = new List<ApplicationCommandProperties>().ToArray();
+                await commands.RestClient.BulkOverwriteGuildCommands(emptyArray, testGuildId);
             }
 
-            var adminGuild = await commands.RestClient.GetGuildAsync(adminGuildId);
+            var adminGuild = await commands.RestClient.GetGuildAsync(testGuildId);
             await commands.AddModulesToGuildAsync(adminGuild, modules: commands.GetModuleInfo<AdminModule>());
 
             app.MapInteractionService("/interactions", app.Configuration.GetValue<string>("publickey"));
