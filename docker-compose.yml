@@ -14,7 +14,7 @@ services:
         deploy:
             replicas: 1
             update_config:
-                parallelism: 2
+                parallelism: 1
                 delay: 10s
             restart_policy:
                 condition: on-failure
@@ -37,9 +37,9 @@ services:
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
         deploy:
-            replicas: 1
+            replicas: 3
             update_config:
-                parallelism: 2
+                parallelism: 1
                 delay: 10s
             restart_policy:
                 condition: on-failure
@@ -64,7 +64,7 @@ services:
         deploy:
             replicas: 1
             update_config:
-                parallelism: 2
+                parallelism: 1
                 delay: 10s
             restart_policy:
                 condition: on-failure
