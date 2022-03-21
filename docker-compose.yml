@@ -2,15 +2,14 @@ version: '3'
 services:
     discord_socket:
         image: docker.pkg.github.com/bsquidwrd/livebot/livebot:discord-socket-latest
-        volumes:
-            - discord_socket_logs:/app/logs/
         environment:
             - LiveBot_connectionstring=${connectionstring}
             - LiveBot_token=${token}
+            - LiveBot_IsDebug=${IsDebug}
+            - LiveBot_datadogapikey=${datadogapikey}
             - RabbitMQ_URL=${RabbitMQ_URL}
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
-            - DD_LOGS_INJECTION=true
             - LiveBot_TopGG_API=${TopGG_API}
         deploy:
             replicas: 1
@@ -22,13 +21,9 @@ services:
                 delay: 30s
                 max_attempts: 3
                 window: 120s
-        labels:
-            com.datadoghq.ad.logs: '[{"type": "file", "source": "csharp", "service": "livebot-discord-socket", "path": "/var/log/livebot-discord-socket/*.json"}]'
 
     discord_slashcommands:
         image: docker.pkg.github.com/bsquidwrd/livebot/livebot:discord-slashcommands-latest
-        volumes:
-            - discord_slashcommands_logs:/app/logs/
         environment:
             - LiveBot_connectionstring=${connectionstring}
             - LiveBot_token=${token}
@@ -36,10 +31,11 @@ services:
             - LiveBot_testguild=${testguild}
             - LiveBot_TwitchClientId=${TwitchClientId}
             - LiveBot_TwitchClientSecret=${TwitchClientSecret}
+            - LiveBot_IsDebug=${IsDebug}
+            - LiveBot_datadogapikey=${datadogapikey}
             - RabbitMQ_URL=${RabbitMQ_URL}
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
-            - DD_LOGS_INJECTION=true
         deploy:
             replicas: 1
             update_config:
@@ -53,21 +49,18 @@ services:
         ports:
             - 8080:80
             - 8443:443
-        labels:
-            com.datadoghq.ad.logs: '[{"type": "file", "source": "csharp", "service": "livebot-discord-slashcommands", "path": "/var/log/livebot-discord-slashcommands/*.json"}]'
 
     watcher_twitch:
         image: docker.pkg.github.com/bsquidwrd/livebot/livebot:watcher-twitch-latest
-        volumes:
-            - watcher_twitch_logs:/app/logs/
         environment:
             - LiveBot_connectionstring=${connectionstring}
             - LiveBot_TwitchClientId=${TwitchClientId}
             - LiveBot_TwitchClientSecret=${TwitchClientSecret}
+            - LiveBot_IsDebug=${IsDebug}
+            - LiveBot_datadogapikey=${datadogapikey}
             - RabbitMQ_URL=${RabbitMQ_URL}
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
-            - DD_LOGS_INJECTION=true
         deploy:
             replicas: 1
             update_config:
@@ -78,10 +71,3 @@ services:
                 delay: 30s
                 max_attempts: 3
                 window: 120s
-        labels:
-            com.datadoghq.ad.logs: '[{"type": "file", "source": "csharp", "service": "livebot-watcher-twitch", "path": "/var/log/livebot-watcher-twitch/*.json"}]'
-
-volumes:
-  discord_socket_logs:
-  discord_slashcommands_logs:
-  watcher_twitch_logs:
