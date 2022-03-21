@@ -199,7 +199,7 @@ If you would like to actually ping {RoleToMention?.Mention}, please run the foll
         public async Task HelpStreamMonitor()
         {
             var message = @$"
-With the {Format.Code("live-message")} portion of the commands, you can use the below placeholders (including the {Format.Code("{")} and {Format.Code("}")}.
+With the {Format.Code("live-message")} portion of the commands, you can use the below placeholders (including the {Format.Code("{")} and {Format.Code("}")}).
 Using these placeholders {Format.Bold("AS IS")} will {Format.Bold("AUTOMATICALLY")} replace them when the bot sends a message
 
 Example:
