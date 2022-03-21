@@ -135,8 +135,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
         internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, int previousSpot = 0, int nextSpot = 1)
         {
             return new ComponentBuilder()
-                .WithButton(label: "Back", customId: $"monitorlist:{previousSpot}", style: ButtonStyle.Primary)
-                .WithButton(label: "Next", customId: $"monitorlist:{nextSpot}", style: ButtonStyle.Primary)
+                .WithButton(label: "Back", customId: $"monitorlist:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
+                .WithButton(label: "Next", customId: $"monitorlist:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
                 .WithButton(label: "Delete", customId: $"monitordelete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
                 .Build();
         }
