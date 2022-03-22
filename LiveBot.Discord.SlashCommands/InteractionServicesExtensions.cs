@@ -102,9 +102,7 @@ namespace LiveBot.Discord.SlashCommands
         {
             if (!result.IsSuccess && result.Error != null)
             {
-                var eventId = new EventId();
                 _logger.LogError(
-                    eventId: eventId,
                     exception: (Exception?)result.GetType()?.GetProperty("Exception")?.GetValue(result, null),
                     message: "Error running {CommandName} for {Username} ({UserId}) in {GuildName} ({GuidId}) - {ErrorType}: {ErrorReason}",
                     info.Name,
@@ -121,7 +119,6 @@ namespace LiveBot.Discord.SlashCommands
                     .WithColor(Color.Red)
                     .WithTitle($"{WarningEmoji} Error!")
                     .WithDescription(result.ErrorReason)
-                    .WithFooter($"Event Id: {eventId.Id}")
                     .Build();
 
                 await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
