@@ -7,7 +7,6 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
-using LiveBot.Discord.SlashCommands.Helpers;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -27,58 +26,18 @@ namespace LiveBot.Discord.SlashCommands.Modules
             _monitors = monitors;
         }
 
+        /// <summary>
+        /// Get the appropriate <see cref="ILiveBotMonitor"/> for the given <see cref="Uri"/>
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <returns><see cref="ILiveBotMonitor"/></returns>
+        /// <exception cref="ArgumentException"></exception>
         private ILiveBotMonitor GetMonitor(Uri uri)
         {
             var monitor = _monitors.Where(x => x.IsValid(uri.AbsoluteUri)).FirstOrDefault();
             if (monitor == null)
                 throw new ArgumentException($"Invalid/unsupported Profile URL {Format.EscapeUrl(uri.AbsoluteUri)}");
             return monitor;
-        }
-
-        [SlashCommand(name: "autocreate", description: "Try to automatically setup a monitor")]
-        public async Task AutoStartStreamMonitor(
-            [Summary(name: "live-message", description: "An example of what you want the bot to send (don't mention a game name)")] string LiveMessage
-        )
-        {
-            Uri? ProfileURL = null;
-            ITextChannel? WhereToPost = null;
-            IRole? RoleToMention = null;
-
-            /* Parse for a profile url that was included (if any) */
-            ProfileURL = UriUtils.FindFirstUri(LiveMessage);
-            if (ProfileURL == null)
-            {
-                await FollowupAsync(text: "Could not automatically parse a Profile URL from your message. Please try again", ephemeral: true);
-                return;
-            }
-            var monitor = GetMonitor(ProfileURL);
-            LiveMessage = LiveMessage.Replace(ProfileURL.AbsoluteUri, "{url}", StringComparison.InvariantCultureIgnoreCase);
-
-            /* Parse for a channel that was mentioned (if any) */
-            var guildChannels = await Context.Guild.GetTextChannelsAsync();
-            WhereToPost = guildChannels.Where(x => LiveMessage.Contains(x.Mention, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault<ITextChannel>();
-            if (WhereToPost == null)
-            {
-                WhereToPost = await Context.Guild.GetTextChannelAsync(Context.Channel.Id);
-            }
-            LiveMessage = LiveMessage.Replace(WhereToPost.Mention, "", StringComparison.InvariantCultureIgnoreCase);
-
-            /* Parse for a role that was mentioned (if any) */
-            var mentionedRole = Context.Guild.Roles.Where(x => LiveMessage.Contains(x.Mention, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault<IRole>();
-            if (mentionedRole != null)
-            {
-                RoleToMention = mentionedRole;
-                LiveMessage = LiveMessage.Replace(mentionedRole.Mention, "{role}", StringComparison.InvariantCultureIgnoreCase);
-            }
-
-            LiveMessage = LiveMessage.Trim();
-
-            var allowedMentions = new AllowedMentions()
-            {
-                AllowedTypes = AllowedMentionTypes.None
-            };
-
-            await StartStreamMonitor(ProfileURL: ProfileURL, WhereToPost: WhereToPost, LiveMessage: LiveMessage, RoleToMention: RoleToMention);
         }
 
         /// <summary>
@@ -159,7 +118,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         }
 
         /// <summary>
-        /// Delete a stream monitor
+        /// Delete a stream monitor with the given <see cref="Uri"/>
         /// </summary>
         /// <param name="ProfileURL"></param>
         /// <returns></returns>
@@ -184,6 +143,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
             }
         }
 
+        /// <summary>
+        /// Return help information to better explain placeholders
+        /// for the Live Message that can be sent
+        /// </summary>
+        /// <returns></returns>
         [SlashCommand(name: "help", description: "Get some help with setting up a stream monitor")]
         public async Task HelpStreamMonitor()
         {
@@ -209,6 +173,12 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             await FollowupAsync(message, ephemeral: true);
         }
 
+        /// <summary>
+        /// Returns <see cref="StreamUser"/> from the given <see cref="ILiveBotMonitor"/> and <see cref="Uri"/>
+        /// </summary>
+        /// <param name="monitor"></param>
+        /// <param name="uri"></param>
+        /// <returns><see cref="StreamUser"/></returns>
         private async Task<StreamUser> GetStreamUserAsync(ILiveBotMonitor monitor, Uri uri)
         {
             var monitorUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
@@ -231,6 +201,17 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             return await _work.UserRepository.SingleOrDefaultAsync(streamUserPredicate);
         }
 
+        /// <summary>
+        /// Edit portions of a <see cref="StreamSubscription"/>
+        /// </summary>
+        /// <param name="monitor"></param>
+        /// <param name="uri"></param>
+        /// <param name="guild"></param>
+        /// <param name="channel"></param>
+        /// <param name="role"></param>
+        /// <param name="message"></param>
+        /// <param name="RemoveRole"></param>
+        /// <returns><see cref="StreamSubscription"/></returns>
         private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, IRole? role = null, string? message = null, bool RemoveRole = false)
         {
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
