@@ -29,7 +29,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = subscriptions.First();
 
             var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: 0, nextSpot: 1);
+            var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
