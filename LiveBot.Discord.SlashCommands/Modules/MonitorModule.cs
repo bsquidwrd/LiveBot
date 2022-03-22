@@ -52,7 +52,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StartStreamMonitor(
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel WhereToPost,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string LiveMessage = Defaults.NotificationMessage,
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")] string LiveMessage = Defaults.NotificationMessage,
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
         )
         {
@@ -86,7 +86,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task EditStreamMonitor(
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel? WhereToPost = null,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check help for more info)")] string? LiveMessage = null,
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")] string? LiveMessage = null,
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
             [Summary(name: "remove-role-ping", description: "True means the role to ping will be removed, False will leave the role to be pinged")] bool RemoveRolePing = false
         )
