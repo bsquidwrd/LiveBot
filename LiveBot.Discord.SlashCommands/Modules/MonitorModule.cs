@@ -112,17 +112,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
             var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
-            if (RoleToMention != null && !LiveMessage.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var WarningEmoji = new Emoji("\u26A0");
-                ResponseMessage += @$"
-
-{WarningEmoji} Warning: Looks like you want to mention {RoleToMention.Mention}, but didn't put the placeholder {Format.Code("{role}")} in your live message.
-With this current setup, nobody will be pinged. If this is what you would like, no further modifications are required.
-If you would like to actually ping {RoleToMention?.Mention}, please run the following command:
-{Format.Code($"/monitor edit profile-url: {ProfileURL} live-message: {"{role} " + LiveMessage}")}
-";
-            }
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
@@ -279,6 +268,9 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 subscription.Message = message;
             if (RemoveRole)
                 subscription.DiscordRole = null;
+
+            if (subscription.DiscordRole != null && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
+                subscription.Message = "{role} " + subscription.Message;
 
             await _work.SubscriptionRepository.UpdateAsync(subscription);
 
