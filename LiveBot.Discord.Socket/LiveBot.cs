@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Discord.Socket.DiscordStats;
 using LiveBot.Repository;
 using Serilog;
 
@@ -43,8 +44,12 @@ namespace LiveBot.Discord.Socket
                 SuppressUnknownDispatchWarnings = true,
             });
 
+            // Add Discord Client
             builder.Services.AddSingleton(discord);
             builder.Services.AddHostedService<LiveBotService>();
+
+            // Add Stats
+            builder.Services.AddHostedService<TopGG>();
 
             // Setup MassTransit
             builder.Services.AddLiveBotQueueing();

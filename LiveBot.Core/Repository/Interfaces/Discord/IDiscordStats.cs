@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using System.Timers;
+using System.Threading.Tasks;
 
 namespace LiveBot.Core.Repository.Interfaces.Discord
 {
@@ -9,6 +9,6 @@ namespace LiveBot.Core.Repository.Interfaces.Discord
         /// Used to update stats
         /// </summary>
         /// <returns></returns>
-        public void UpdateStats(object sender = null, ElapsedEventArgs e = null);
+        public Task UpdateStats();
     }
 }
