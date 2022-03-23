@@ -104,7 +104,7 @@ namespace LiveBot.Discord.SlashCommands
             {
                 _logger.LogError(
                     exception: (Exception?)result.GetType()?.GetProperty("Exception")?.GetValue(result, null),
-                    message: "Error running {CommandName} for {Username} ({UserId}) in {GuildName} ({GuidId}) - {ErrorType}: {ErrorReason}",
+                    message: "Error running {CommandName} for {Username} ({UserId}) in {GuildName} ({GuildId}) - {ErrorType}: {ErrorReason}",
                     info.Name,
                     Format.UsernameAndDiscriminator(context.User),
                     context.User.Id,
