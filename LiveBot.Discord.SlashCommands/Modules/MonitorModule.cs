@@ -152,21 +152,21 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task HelpStreamMonitor()
         {
             var message = @$"
-With the {Format.Code("live-message")} portion of the commands, you can use the below placeholders (including the {Format.Code("{")} and {Format.Code("}")}).
-Using these placeholders {Format.Bold("AS IS")} will {Format.Bold("AUTOMATICALLY")} replace them when the bot sends a message
+With the {Format.Code("live-message")} portion of the commands, you can use the placeholders below and must include the {Format.Code("{")} and {Format.Code("}")}.
+Using these placeholders {Format.Bold("AS IS")} will {Format.Bold("AUTOMATICALLY")} replace them with their respective values when the bot sends a message
 
-Example:
-{Format.Code("{role} {name} is live and playing {game}! {url}")}
+Example (default):
+{Format.Code(Defaults.NotificationMessage)}
 
-**will AUTOMATICALLY turn into**
+{Format.Bold("will AUTOMATICALLY turn into")}
 
 {Format.Code("@Live bsquidwrd is live and playing Valorant! https://twitch.tv/bsquidwrd")}
 
-{Format.Code("role")} = The role that you setup to be pinged
-{Format.Code("name")} = The display name of the Streamer
-{Format.Code("game")} = Game at the time of going live
-{Format.Code("url")} = Link to the stream
-{Format.Code("title")} = Stream title at time of going live
+{Format.Code("{role}")} = The role that you setup to be pinged (if applicable)
+{Format.Code("{name}")} = The display name of the Streamer
+{Format.Code("{game}")} = Game being played at the time of going live
+{Format.Code("{url}")} = Link to the stream
+{Format.Code("{title}")} = Stream title at the time of going live
 
 You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/livebot-docs/tutorial-walkthrough/start-monitoring-a-stream")}
 ";
