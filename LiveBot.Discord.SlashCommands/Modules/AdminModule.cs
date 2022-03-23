@@ -50,6 +50,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             var adminGuild = await commands.RestClient.GetGuildAsync(testGuildId);
             await commands.AddModulesToGuildAsync(guild: adminGuild, deleteMissing: false, modules: commands.GetModuleInfo<AdminModule>());
+
+            await FollowupAsync(text: "Finished registering commands", ephemeral: true);
         }
 
         [SlashCommand(name: "beta", description: "Change beta status for a given Guild Id")]
