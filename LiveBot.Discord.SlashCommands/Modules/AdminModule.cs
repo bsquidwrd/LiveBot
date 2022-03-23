@@ -55,11 +55,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
         }
 
         [SlashCommand(name: "beta", description: "Change beta status for a given Guild Id")]
-        public async Task BetaSettingAsync(ulong guildId, bool enabled)
+        public async Task BetaSettingAsync(string guildId, bool enabled)
         {
-            var guild = await Context.Client.GetGuildAsync(guildId);
+            _ = ulong.TryParse(guildId, out var parsedGuildId);
+            var guild = await Context.Client.GetGuildAsync(parsedGuildId);
             if (guild == null)
-                throw new Exception($"Guild not found with Id {guildId}");
+                throw new Exception($"Guild not found with Id {parsedGuildId}");
 
             var discordGuild = await work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
             if (discordGuild == null)
