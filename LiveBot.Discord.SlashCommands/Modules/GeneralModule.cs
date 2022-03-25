@@ -1,11 +1,30 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.Rest;
+using LiveBot.Core.Repository.Static;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
     public class GeneralModule : RestInteractionModuleBase<RestInteractionContext>
     {
+        #region Misc commands
+
+        [SlashCommand(name: "source-code", description: "Get a link to the Source Code for the bot")]
+        public Task SourceCommandAsync() =>
+            FollowupAsync(text: $"You can find my source code here: {Basic.SourceLink}", ephemeral: true);
+
+        [SlashCommand(name: "support", description: "Get an invite link to the support server")]
+        public Task SupportCommandAsync() =>
+            FollowupAsync(text: $"You can find support for me here: {Basic.SupportInvite}", ephemeral: true);
+
+        [SlashCommand(name: "tip", description: "Get information on how to tip for running the bot")]
+        public Task TipCommandAsync() =>
+            FollowupAsync(text: $"Thank you so much for thinking about tipping to help keep the bot running.\nTips are accepted via PayPal: {Basic.DonationLink}", ephemeral: true);
+
+        #endregion Misc commands
+
+        #region Perms Check command
+
         /// <summary>
         /// Check permissions against a channel (if provided)
         /// to ensure the bot has the appropriate permissions
@@ -21,25 +40,52 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var guildUser = await Context.Guild.GetCurrentUserAsync();
             var perms = guildUser.GetPermissions(channel);
 
-            var missingPermissions = new List<string>();
+            var yesEmoji = new Emoji("\uD83D\uDFE9");
+            var noEmoji = new Emoji("\uD83D\uDFE5");
 
-            if (!perms.ViewChannel)
-                missingPermissions.Add("View Channel");
-            if (!perms.SendMessages)
-                missingPermissions.Add("Send Messages");
-            if (!perms.EmbedLinks)
-                missingPermissions.Add("Embed Links");
-            if (!perms.UseExternalEmojis)
-                missingPermissions.Add("Use External Emojis");
-            if (!perms.ReadMessageHistory)
-                missingPermissions.Add("Read Message History");
-            if (!perms.MentionEveryone)
-                missingPermissions.Add("Mention Everyone");
+            var embedBuilder = new EmbedBuilder()
+                .WithColor(color: Color.Blue)
+                .WithDescription($"Permissions for {channel.Mention}\n{yesEmoji} = Set\n{noEmoji} = Not Set");
 
-            var permissionsResult = "All permissions are set correctly!";
-            if (missingPermissions.Any())
-                permissionsResult = $"Missing Permissions in {channel.Mention}: {string.Join(", ", missingPermissions)}";
-            await FollowupAsync(text: permissionsResult, ephemeral: true);
+            var viewChannelField = new EmbedFieldBuilder()
+                .WithName("View Channel")
+                .WithValue(perms.ViewChannel ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(viewChannelField);
+
+            var sendMessagesField = new EmbedFieldBuilder()
+                .WithName("Send Messages")
+                .WithValue(perms.SendMessages ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(sendMessagesField);
+
+            var embedLinksField = new EmbedFieldBuilder()
+                .WithName("Embed Links")
+                .WithValue(perms.EmbedLinks ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(embedLinksField);
+
+            var useExternalEmojisField = new EmbedFieldBuilder()
+                .WithName("Use External Emojis")
+                .WithValue(perms.UseExternalEmojis ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(useExternalEmojisField);
+
+            var readMessageHistoryField = new EmbedFieldBuilder()
+                .WithName("Read Message History")
+                .WithValue(perms.ReadMessageHistory ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(readMessageHistoryField);
+
+            var mentionEveryoneField = new EmbedFieldBuilder()
+                .WithName("Mention Everyone")
+                .WithValue(perms.MentionEveryone ? yesEmoji : noEmoji)
+                .WithIsInline(true);
+            embedBuilder.AddField(mentionEveryoneField);
+
+            await FollowupAsync(text: "", embed: embedBuilder.Build(), ephemeral: true);
         }
+
+        #endregion Perms Check command
     }
 }
