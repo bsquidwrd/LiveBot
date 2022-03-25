@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordBotsList.Api;
-using LiveBot.Core.Repository.Interfaces.Discord;
+using LiveBot.Core.Interfaces.Discord;
 
 namespace LiveBot.Discord.Socket.DiscordStats
 {
