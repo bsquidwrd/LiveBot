@@ -180,6 +180,11 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
 
         #region Check command
 
+        /// <summary>
+        /// Run a force check to see if a stream is live or not
+        /// </summary>
+        /// <param name="ProfileURL"></param>
+        /// <returns></returns>
         [SlashCommand(name: "check", description: "Check that the bot can tell someone is live")]
         public async Task CheckStreamAsync(
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
