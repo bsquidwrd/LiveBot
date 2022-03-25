@@ -6,10 +6,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
 {
     public class GeneralModule : RestInteractionModuleBase<RestInteractionContext>
     {
-        [SlashCommand(name: "ping", description: "Ping the bot")]
-        public async Task PingAsync() =>
-            await FollowupAsync(text: "Pong!", ephemeral: true);
-
+        /// <summary>
+        /// Check permissions against a channel (if provided)
+        /// to ensure the bot has the appropriate permissions
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         [SlashCommand(name: "perm-check", description: "Confirm the bot has the necessary permissions to post in a channel")]
         public async Task PermCheckAsync(ITextChannel? channel = null)
         {
