@@ -26,19 +26,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
             _monitors = monitors;
         }
 
-        /// <summary>
-        /// Get the appropriate <see cref="ILiveBotMonitor"/> for the given <see cref="Uri"/>
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <returns><see cref="ILiveBotMonitor"/></returns>
-        /// <exception cref="ArgumentException"></exception>
-        private ILiveBotMonitor GetMonitor(Uri uri)
-        {
-            var monitor = _monitors.Where(x => x.IsValid(uri.AbsoluteUri)).FirstOrDefault();
-            if (monitor == null)
-                throw new ArgumentException($"Invalid/unsupported Profile URL {Format.EscapeUrl(uri.AbsoluteUri)}");
-            return monitor;
-        }
+        #region Slash Commands
+
+        #region Create command
 
         /// <summary>
         /// Create a stream to monitor
@@ -73,6 +63,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
+
+        #endregion Create command
+
+        #region Edit command
 
         /// <summary>
         /// Edit a stream monitor
@@ -117,6 +111,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
+        #endregion Edit command
+
+        #region Delete command
+
         /// <summary>
         /// Delete a stream monitor with the given <see cref="Uri"/>
         /// </summary>
@@ -142,6 +140,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 await FollowupAsync($"No subscription found for {Format.Bold(streamUser.DisplayName)}");
             }
         }
+
+        #endregion Delete command
+
+        #region Help command
 
         /// <summary>
         /// Return help information to better explain placeholders
@@ -171,6 +173,26 @@ Example (default):
 You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/livebot-docs/tutorial-walkthrough/start-monitoring-a-stream")}
 ";
             await FollowupAsync(message, ephemeral: true);
+        }
+
+        #endregion Help command
+
+        #endregion Slash Commands
+
+        #region Misc Helpers
+
+        /// <summary>
+        /// Get the appropriate <see cref="ILiveBotMonitor"/> for the given <see cref="Uri"/>
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <returns><see cref="ILiveBotMonitor"/></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private ILiveBotMonitor GetMonitor(Uri uri)
+        {
+            var monitor = _monitors.Where(x => x.IsValid(uri.AbsoluteUri)).FirstOrDefault();
+            if (monitor == null)
+                throw new ArgumentException($"Invalid/unsupported Profile URL {Format.EscapeUrl(uri.AbsoluteUri)}");
+            return monitor;
         }
 
         /// <summary>
@@ -257,5 +279,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
 
             return await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
         }
+
+        #endregion Misc Helpers
     }
 }

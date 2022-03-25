@@ -24,6 +24,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
             this.work = factory.Create();
         }
 
+        #region Ping command
+
         [SlashCommand(name: "ping", description: "Ping the bot")]
         public async Task PingAsync()
         {
@@ -31,11 +33,19 @@ namespace LiveBot.Discord.SlashCommands.Modules
             await FollowupAsync(text: $"Took {timeDifference:hh\\:mm\\:ss\\.fff} to respond", ephemeral: true);
         }
 
+        #endregion Ping command
+
+        #region Divide command
+
         [SlashCommand(name: "divide", description: "Divide two numbers")]
         public async Task DivideAsync(int number1, int number2)
         {
             await FollowupAsync(text: $"Result: {number1 / number2}", ephemeral: true);
         }
+
+        #endregion Divide command
+
+        #region Register command
 
         [SlashCommand(name: "register", description: "Force a re-registration of the bot commands")]
         public async Task RegisterCommandsAsync()
@@ -53,6 +63,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync(text: "Finished registering commands", ephemeral: true);
         }
+
+        #endregion Register command
+
+        #region Beta command
 
         [SlashCommand(name: "beta", description: "Change beta status for a given Guild Id")]
         public async Task BetaSettingAsync(string guildId, bool enabled)
@@ -83,5 +97,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync(text: $"I have updated the beta status for {Format.Code(discordGuild.Name)} to {Format.Code(discordGuild.IsInBeta.ToString())}", ephemeral: true);
         }
+
+        #endregion Beta command
     }
 }

@@ -20,6 +20,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
             _work = factory.Create();
         }
 
+        #region Config command
+
         [SlashCommand(name: "config", description: "Configure some general settings for the server")]
         public async Task ConfigSetupAsync(
             [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel? WhereToPost = null,
@@ -85,5 +87,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync($"Updated config information for {Format.Bold(Context.Guild.Name)}", ephemeral: true);
         }
+
+        #endregion Config command
     }
 }

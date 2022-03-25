@@ -10,6 +10,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 {
     public partial class MonitorModule : RestInteractionModuleBase<RestInteractionContext>
     {
+        #region list command
+
         /// <summary>
         /// List all stream monitors in the Guild
         /// </summary>
@@ -33,6 +35,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
+
+        #endregion list command
     }
 
     public class MonitorListModule : RestInteractionModuleBase<RestInteractionContext>
@@ -46,8 +50,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
             _work = factory.Create();
         }
 
+        #region monitor.list
+
         [RequireBotManager]
-        [ComponentInteraction(customId: "monitorlist:*")]
+        [ComponentInteraction(customId: "monitor.list:*")]
         public async Task MonitorListAsync(int currentSpot)
         {
             if (Context.Interaction is RestMessageComponent component)
@@ -111,8 +117,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
             }
         }
 
+        #endregion monitor.list
+
+        #region monitor.delete
+
         [RequireBotManager]
-        [ComponentInteraction(customId: "monitordelete:*")]
+        [ComponentInteraction(customId: "monitor.delete:*")]
         public async Task MonitorDeleteAsync(long subscriptionId)
         {
             try
@@ -128,6 +138,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 await FollowupAsync(text: $"Unable to remove subscription", ephemeral: true);
             }
         }
+
+        #endregion monitor.delete
     }
 
     internal static class MonitorListUtils
@@ -135,9 +147,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
         internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, int previousSpot = 0, int nextSpot = 1)
         {
             return new ComponentBuilder()
-                .WithButton(label: "Back", customId: $"monitorlist:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
-                .WithButton(label: "Next", customId: $"monitorlist:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
-                .WithButton(label: "Delete", customId: $"monitordelete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
+                .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
+                .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
+                .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
                 .Build();
         }
 
