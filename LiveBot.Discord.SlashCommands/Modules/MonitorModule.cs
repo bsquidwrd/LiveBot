@@ -7,6 +7,7 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
+using LiveBot.Discord.SlashCommands.Helpers;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -176,6 +177,31 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         }
 
         #endregion Help command
+
+        #region Check command
+
+        [SlashCommand(name: "check", description: "Check that the bot can tell someone is live")]
+        public async Task CheckStreamAsync(
+            [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
+        )
+        {
+            var monitor = GetMonitor(uri: ProfileURL);
+            var user = await monitor.GetUser(profileURL: ProfileURL.AbsoluteUri);
+            var stream = await monitor.GetStream_Force(user: user);
+            if (stream == null)
+            {
+                await FollowupAsync(text: $"Looks like {user.DisplayName} is not live right now", ephemeral: true);
+            }
+            else
+            {
+                var streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: stream.User, game: stream.Game);
+                var bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
+                var notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: bogusSubscription);
+                await FollowupAsync(text: notificationMessage, embed: streamEmbed, ephemeral: true);
+            }
+        }
+
+        #endregion Check command
 
         #endregion Slash Commands
 
