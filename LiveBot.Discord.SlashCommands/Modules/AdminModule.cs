@@ -50,6 +50,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [SlashCommand(name: "register", description: "Force a re-registration of the bot commands")]
         public async Task RegisterCommandsAsync()
         {
+            var startTime = DateTime.UtcNow;
             var IsDebug = configuration.GetValue<bool>("IsDebug", false);
             var testGuildId = configuration.GetValue<ulong>("testguild");
 
@@ -61,7 +62,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var adminGuild = await commands.RestClient.GetGuildAsync(testGuildId);
             await commands.AddModulesToGuildAsync(guild: adminGuild, deleteMissing: false, modules: commands.GetModuleInfo<AdminModule>());
 
-            await FollowupAsync(text: "Finished registering commands", ephemeral: true);
+            var endTime = DateTime.UtcNow;
+            var timeDifference = endTime - startTime;
+
+            await FollowupAsync(text: $"Finished registering commands. Took {timeDifference:hh\\:mm\\:ss\\.fff}", ephemeral: true);
         }
 
         #endregion Register command
