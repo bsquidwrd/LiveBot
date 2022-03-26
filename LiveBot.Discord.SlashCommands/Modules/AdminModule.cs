@@ -145,13 +145,38 @@ namespace LiveBot.Discord.SlashCommands.Modules
             embedBuilder.AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"}", inline: false);
 
             foreach (var serviceType in notifications.Select(i => i.ServiceType).Distinct())
-            {
-                embedBuilder.AddField(name: $"{serviceType}", value: notifications.Where(i => i.ServiceType == serviceType).Count(), inline: false);
-            }
+                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: notifications.Count(i => i.ServiceType == serviceType), inline: false);
 
             await FollowupAsync(text: $"Guild information for {Format.Bold(guild.Name)}", embed: embedBuilder.Build(), ephemeral: true);
         }
 
         #endregion Info command
+
+        #region Stats command
+
+        [SlashCommand(name: "stats", description: "Get some general statistics of the bot")]
+        public async Task StatsCommandAsync()
+        {
+            var appInfo = await Context.Client.GetApplicationInfoAsync();
+            var guilds = await Context.Client.GetGuildsAsync();
+            var streamSubscriptions = await work.SubscriptionRepository.GetAllAsync();
+            var notifications = await work.NotificationRepository.FindAsync(i => i.TimeStamp >= DateTime.UtcNow.AddDays(-1) && i.Success == true);
+
+            var embedBuilder = new EmbedBuilder()
+                .WithAuthor(appInfo.Owner)
+                .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
+                .WithColor(Color.Green);
+
+            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count}", inline: false);
+            embedBuilder.AddField(name: "Total Subscriptions", value: $"{streamSubscriptions.Count()}", inline: false);
+            embedBuilder.AddField(name: "Notifications in the last 24 hours", value: $"{notifications.Count()}", inline: false);
+
+            foreach (var serviceType in streamSubscriptions.Select(i => i.User.ServiceType).Distinct())
+                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: streamSubscriptions.Count(i => i.User.ServiceType == serviceType), inline: false);
+
+            await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
+        }
+
+        #endregion Stats command
     }
 }
