@@ -139,13 +139,13 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithThumbnailUrl(guild.IconUrl)
                 .WithDescription($"");
 
-            embedBuilder.AddField(name: "Creation Date", value: $"{guild.CreatedAt.UtcDateTime.ToString("u", CultureInfo.GetCultureInfo("en-US"))}", inline: false);
-            embedBuilder.AddField(name: "Subscription Count", value: $"{discordGuild.StreamSubscriptions.Count}", inline: false);
-            embedBuilder.AddField(name: "Notification Count", value: $"{notifications.Count()}", inline: false);
-            embedBuilder.AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"}", inline: false);
+            embedBuilder.AddField(name: "Creation Date", value: $"{guild.CreatedAt.UtcDateTime.ToString("u", CultureInfo.GetCultureInfo("en-US"))}", inline: true);
+            embedBuilder.AddField(name: "Subscription Count", value: $"{discordGuild.StreamSubscriptions.Count}", inline: true);
+            embedBuilder.AddField(name: "Notification Count", value: $"{notifications.Count()}", inline: true);
+            embedBuilder.AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"}", inline: true);
 
             foreach (var serviceType in notifications.Select(i => i.ServiceType).Distinct())
-                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: notifications.Count(i => i.ServiceType == serviceType), inline: false);
+                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: notifications.Count(i => i.ServiceType == serviceType), inline: true);
 
             await FollowupAsync(text: $"Guild information for {Format.Bold(guild.Name)}", embed: embedBuilder.Build(), ephemeral: true);
         }
@@ -167,12 +167,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count}", inline: false);
-            embedBuilder.AddField(name: "Total Subscriptions", value: $"{streamSubscriptions.Count()}", inline: false);
-            embedBuilder.AddField(name: "Notifications in the last 24 hours", value: $"{notifications.Count()}", inline: false);
+            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count}", inline: true);
+            embedBuilder.AddField(name: "Total Subscriptions", value: $"{streamSubscriptions.Count()}", inline: true);
+            embedBuilder.AddField(name: "Notifications in the last 24 hours", value: $"{notifications.Count()}", inline: true);
 
             foreach (var serviceType in streamSubscriptions.Select(i => i.User.ServiceType).Distinct())
-                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: streamSubscriptions.Count(i => i.User.ServiceType == serviceType), inline: false);
+                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: streamSubscriptions.Count(i => i.User.ServiceType == serviceType), inline: true);
 
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
         }
