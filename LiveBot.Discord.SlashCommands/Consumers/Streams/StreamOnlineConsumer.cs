@@ -84,10 +84,22 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 var discordGuild = streamSubscription.DiscordGuild;
 
                 var guild = await _client.GetGuildAsync(streamSubscription.DiscordGuild.DiscordId);
-                RestTextChannel channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
+                RestTextChannel? channel = null;
+                try
+                {
+                    channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
+                }
+                catch (HttpException e)
+                {
+                    if (e.DiscordCode == DiscordErrorCode.MissingPermissions)
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        continue;
+                    }
+                }
 
                 if (guild == null)
-                    return;
+                    continue;
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
@@ -147,7 +159,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                 // If there is already 1 or more notifications that were successful in the past hour
                 // mark this current one as a success
-                if (previousNotifications.Count() > 0)
+                if (previousNotifications.Any())
                     newStreamNotification.Success = true;
 
                 // If the channel can't be found (null) and the shard

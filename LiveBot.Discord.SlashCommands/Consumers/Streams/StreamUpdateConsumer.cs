@@ -69,7 +69,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
             }
 
-            if (streamSubscriptions.Count() == 0)
+            if (!streamSubscriptions.Any())
                 return;
 
             List<StreamSubscription> unsentSubscriptions = new List<StreamSubscription>();
@@ -96,13 +96,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 );
 
                 var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-                if (previousNotifications.Count() > 0)
+                if (previousNotifications.Any())
                     continue;
 
                 unsentSubscriptions.Add(streamSubscription);
             }
 
-            if (unsentSubscriptions.Count() > 0)
+            if (unsentSubscriptions.Count > 0)
             {
                 await _bus.Publish<IStreamOnline>(new { Stream = stream });
             }
