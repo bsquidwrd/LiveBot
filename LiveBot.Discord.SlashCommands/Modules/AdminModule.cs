@@ -159,8 +159,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
         {
             var appInfo = await Context.Client.GetApplicationInfoAsync();
             var guilds = await Context.Client.GetGuildsAsync();
-            var streamSubscriptions = await work.SubscriptionRepository.GetAllAsync();
-            var notifications = await work.NotificationRepository.FindAsync(i => i.TimeStamp >= DateTime.UtcNow.AddDays(-1) && i.Success == true);
 
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor(appInfo.Owner)
@@ -168,12 +166,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithColor(Color.Green);
 
             embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count}", inline: true);
-            embedBuilder.AddField(name: "Total Subscriptions", value: $"{streamSubscriptions.Count()}", inline: true);
-            embedBuilder.AddField(name: "Notifications in the last 24 hours", value: $"{notifications.Count()}", inline: true);
-
-            foreach (var serviceType in streamSubscriptions.Select(i => i.User.ServiceType).Distinct())
-                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: streamSubscriptions.Count(i => i.User.ServiceType == serviceType), inline: true);
-
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
         }
 
