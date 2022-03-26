@@ -96,10 +96,6 @@ namespace LiveBot.Discord.Socket.Consumers.Streams
 
             // Check that it was created
             StreamSubscription streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
-
-            // If it was created, add them to the Monitor
-            if (streamSubscription != null)
-                monitor.AddChannel(user);
         }
     }
 }
