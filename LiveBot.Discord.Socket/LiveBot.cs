@@ -49,6 +49,10 @@ namespace LiveBot.Discord.Socket
             builder.Services.AddHostedService<LiveBotService>();
 
             // Add Stats
+            builder.Services.AddHostedService<BotsForDiscord>();
+            builder.Services.AddHostedService<BotsOnDiscord>();
+            builder.Services.AddHostedService<DiscordBotList>();
+            builder.Services.AddHostedService<DiscordBots>();
             builder.Services.AddHostedService<TopGG>();
 
             // Setup MassTransit
