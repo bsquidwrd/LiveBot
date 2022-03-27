@@ -11,6 +11,10 @@ services:
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
             - LiveBot_TopGG_API=${TopGG_API}
+            - LiveBot_BotsForDiscord_API=${BotsForDiscord_API}
+            - LiveBot_BotsOnDiscord_API=${BotsOnDiscord_API}
+            - LiveBot_DiscordBotList_API=${DiscordBotList_API}
+            - LiveBot_DiscordBots_API=${DiscordBots_API}
         deploy:
             replicas: 1
             update_config:
