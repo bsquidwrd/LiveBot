@@ -80,7 +80,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
 
             try
             {
-                var endpoint = string.Format(UpdateUrl, _discordClient.CurrentUser.Id);
+                var endpoint = UpdateUrl.Replace("{BotId}", _discordClient.CurrentUser.Id.ToString());
                 var response = await httpClient.PostAsync(requestUri: endpoint, content: content);
                 response.EnsureSuccessStatusCode();
                 _logger.LogInformation(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
