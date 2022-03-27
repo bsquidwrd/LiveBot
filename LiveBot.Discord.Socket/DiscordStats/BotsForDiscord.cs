@@ -20,7 +20,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
 
     public class BotsForDiscord : IDiscordStats
     {
-        private readonly ILogger<TopGG> _logger;
+        private readonly ILogger<BotsForDiscord> _logger;
         private readonly IConfiguration _configuration;
         private readonly DiscordShardedClient _discordClient;
         private System.Timers.Timer? _timer = null;
@@ -30,7 +30,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
         private readonly string ApiConfigName = "BotsForDiscord_API";
         private readonly string UpdateUrl = "https://discords.com/bots/api/bot/{BotId}";
 
-        public BotsForDiscord(ILogger<TopGG> logger, IConfiguration configuration, DiscordShardedClient discordClient)
+        public BotsForDiscord(ILogger<BotsForDiscord> logger, IConfiguration configuration, DiscordShardedClient discordClient)
         {
             _logger = logger;
             _configuration = configuration;

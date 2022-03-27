@@ -20,7 +20,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
 
     public class BotsOnDiscord : IDiscordStats
     {
-        private readonly ILogger<TopGG> _logger;
+        private readonly ILogger<BotsOnDiscord> _logger;
         private readonly IConfiguration _configuration;
         private readonly DiscordShardedClient _discordClient;
         private System.Timers.Timer? _timer = null;
@@ -30,7 +30,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
         private readonly string ApiConfigName = "BotsOnDiscord_API";
         private readonly string UpdateUrl = "https://bots.ondiscord.xyz/bot-api/bots/{BotId}/guilds";
 
-        public BotsOnDiscord(ILogger<TopGG> logger, IConfiguration configuration, DiscordShardedClient discordClient)
+        public BotsOnDiscord(ILogger<BotsOnDiscord> logger, IConfiguration configuration, DiscordShardedClient discordClient)
         {
             _logger = logger;
             _configuration = configuration;
