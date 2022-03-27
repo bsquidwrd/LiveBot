@@ -7,10 +7,12 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
     public class DiscordChannelDeleteConsumer : IConsumer<IDiscordChannelDelete>
     {
         private readonly IUnitOfWork _work;
+        private readonly ILogger<DiscordChannelDeleteConsumer> _logger;
 
-        public DiscordChannelDeleteConsumer(IUnitOfWorkFactory factory)
+        public DiscordChannelDeleteConsumer(IUnitOfWorkFactory factory, ILogger<DiscordChannelDeleteConsumer> logger)
         {
             _work = factory.Create();
+            _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<IDiscordChannelDelete> context)

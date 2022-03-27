@@ -8,10 +8,12 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
     public class DiscordChannelUpdateConsumer : IConsumer<IDiscordChannelUpdate>
     {
         private readonly IUnitOfWork _work;
+        private readonly ILogger<DiscordChannelUpdateConsumer> _logger;
 
-        public DiscordChannelUpdateConsumer(IUnitOfWorkFactory factory)
+        public DiscordChannelUpdateConsumer(IUnitOfWorkFactory factory, ILogger<DiscordChannelUpdateConsumer> logger)
         {
             _work = factory.Create();
+            _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<IDiscordChannelUpdate> context)
