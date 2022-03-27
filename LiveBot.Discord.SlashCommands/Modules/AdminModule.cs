@@ -158,14 +158,14 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StatsCommandAsync()
         {
             var appInfo = await Context.Client.GetApplicationInfoAsync();
-            var guilds = await Context.Client.GetGuildsAsync();
+            var guildCount = await Context.Client.GetGuildSummariesAsync().CountAsync();
 
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor(appInfo.Owner)
                 .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count}", inline: true);
+            embedBuilder.AddField(name: "Guild Count", value: $"{guildCount}", inline: true);
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
         }
 
