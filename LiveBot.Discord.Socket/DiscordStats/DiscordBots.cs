@@ -74,7 +74,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
                 return;
 
             HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", apiKey);
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
