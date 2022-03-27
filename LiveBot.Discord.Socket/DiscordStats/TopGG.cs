@@ -10,7 +10,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
     internal class TopGGPayload
     {
         [JsonPropertyName("server_count")]
-        internal int guildCount;
+        public int guildCount { get; set; }
 
         public TopGGPayload(int count)
         {
@@ -68,7 +68,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
                 return;
 
             var guilds = _discordClient.Guilds;
-            var payload = new BotsForDiscordPayload(guilds.Count);
+            var payload = new TopGGPayload(guilds.Count);
             var apiKey = _configuration.GetValue<string>(ApiConfigName);
             if (apiKey == null)
                 return;

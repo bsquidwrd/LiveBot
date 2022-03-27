@@ -10,7 +10,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
     internal class DiscordBotsPayload
     {
         [JsonPropertyName("guildCount")]
-        internal int guildCount;
+        public int guildCount { get; set; }
 
         public DiscordBotsPayload(int count)
         {
