@@ -15,26 +15,33 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordChannelDelete> context)
         {
-            var message = context.Message;
-            var channel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
-
-            if (channel == null)
-                return;
-
-            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
-            foreach (var subscription in subscriptions)
+            try
             {
-                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
-            }
+                var message = context.Message;
+                var channel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
 
-            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-            if (guildConfig != null && guildConfig?.DiscordChannel == channel)
+                if (channel == null)
+                    return;
+
+                var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
+                foreach (var subscription in subscriptions)
+                {
+                    await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                }
+
+                var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+                if (guildConfig != null && guildConfig?.DiscordChannel == channel)
+                {
+                    guildConfig.DiscordChannel = null;
+                    await _work.GuildConfigRepository.UpdateAsync(guildConfig);
+                }
+
+                await _work.ChannelRepository.RemoveAsync(channel.Id);
+            }
+            catch (Exception ex)
             {
-                guildConfig.DiscordChannel = null;
-                await _work.GuildConfigRepository.UpdateAsync(guildConfig);
+                _logger.LogError(exception: ex, message: "Error processing Discord Channel Delete Event");
             }
-
-            await _work.ChannelRepository.RemoveAsync(channel.Id);
         }
     }
 }

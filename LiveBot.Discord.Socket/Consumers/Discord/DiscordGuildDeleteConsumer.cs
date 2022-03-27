@@ -17,18 +17,18 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)
         {
-            var message = context.Message;
-            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
-
-            if (discordGuild == null)
-                return;
-
-            var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-            var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-
             try
             {
+                var message = context.Message;
+                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
+
+                if (discordGuild == null)
+                    return;
+
+                var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+                var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+                var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+
                 // Remove Discord Guild Config
                 if (discordGuild.Config != null)
                     await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
@@ -48,9 +48,9 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
                 // Remove Discord Guild
                 await _work.GuildRepository.RemoveAsync(discordGuild.Id);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.LogError("Unable to remove Guild {guildId} {guildName}\n{exception}", discordGuild.DiscordId, discordGuild.Name, e);
+                _logger.LogError(exception: ex, message: "Unable to remove Guild {guildId}", context.Message.GuildId);
             }
         }
     }

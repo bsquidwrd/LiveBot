@@ -10,18 +10,27 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private readonly DiscordRestClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
+        private readonly ILogger<StreamOfflineConsumer> _logger;
 
-        public StreamOfflineConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus)
+        public StreamOfflineConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus, ILogger<StreamOfflineConsumer> logger)
         {
             _client = client;
             _work = factory.Create();
             _bus = bus;
+            _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<IStreamOffline> context)
         {
-            // TODO: Implement StreamOffline.Consume
-            await Task.CompletedTask;
+            try
+            {
+                // TODO: Implement StreamOffline.Consume
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Unable to process Stream Offline event");
+            }
         }
     }
 }

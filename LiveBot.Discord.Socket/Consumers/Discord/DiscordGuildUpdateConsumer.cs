@@ -8,26 +8,35 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
     public class DiscordGuildUpdateConsumer : IConsumer<IDiscordGuildUpdate>
     {
         private readonly IUnitOfWork _work;
+        private readonly ILogger<DiscordGuildUpdateConsumer> _logger;
 
-        public DiscordGuildUpdateConsumer(IUnitOfWorkFactory factory)
+        public DiscordGuildUpdateConsumer(IUnitOfWorkFactory factory, ILogger<DiscordGuildUpdateConsumer> logger)
         {
             _work = factory.Create();
+            _logger = logger;
         }
 
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
-            var message = context.Message;
-            DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
-
-            DiscordGuild discordGuild = new DiscordGuild
+            try
             {
-                DiscordId = message.GuildId,
-                Name = message.GuildName,
-                IconUrl = message.IconUrl,
-                IsInBeta = existingDiscordGuild?.IsInBeta ?? false
-            };
+                var message = context.Message;
+                DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
+                DiscordGuild discordGuild = new DiscordGuild
+                {
+                    DiscordId = message.GuildId,
+                    Name = message.GuildName,
+                    IconUrl = message.IconUrl,
+                    IsInBeta = existingDiscordGuild?.IsInBeta ?? false
+                };
+
+                await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Unable to process Discord Guild Update event");
+            }
         }
     }
 }

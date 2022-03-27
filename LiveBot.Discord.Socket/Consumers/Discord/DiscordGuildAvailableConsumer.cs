@@ -52,14 +52,14 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
                 foreach (SocketGuildChannel channel in guild.TextChannels)
                 {
                     var existingChannels = dbChannels.ToList().Where(i => i.DiscordId == channel.Id && i.Name == channel.Name);
-                    if (existingChannels.Count() > 0)
+                    if (existingChannels.Any())
                         continue;
                     DiscordChannelUpdate channelUpdateContext = new DiscordChannelUpdate { GuildId = guild.Id, ChannelId = channel.Id, ChannelName = channel.Name };
                     await _bus.Publish(channelUpdateContext);
                 }
 
                 List<ulong> channelIDs = guild.TextChannels.Select(i => i.Id).Distinct().ToList();
-                if (dbChannels.Count() > 0)
+                if (dbChannels.Any())
                 {
                     foreach (var channelId in dbChannels.Select(i => i.DiscordId).Distinct().Except(channelIDs))
                     {
@@ -77,14 +77,14 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
                 foreach (SocketRole role in guild.Roles)
                 {
                     var existingRoles = dbRoles.ToList().Where(i => i.DiscordId == role.Id && i.Name == role.Name);
-                    if (existingRoles.Count() > 0)
+                    if (existingRoles.Any())
                         continue;
                     DiscordRoleUpdate roleUpdateContext = new DiscordRoleUpdate { GuildId = guild.Id, RoleId = role.Id, RoleName = role.Name };
                     await _bus.Publish(roleUpdateContext);
                 }
 
                 List<ulong> roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
-                if (dbRoles.Count() > 0)
+                if (dbRoles.Any())
                 {
                     foreach (var roleId in dbRoles.Select(i => i.DiscordId).Distinct().Except(roleIDs))
                     {
@@ -95,9 +95,9 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
                 #endregion Handle Roles
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.LogError("Error processing Member Live Event: {exception}", e);
+                _logger.LogError(exception: ex, message: "Error processing Discord Guild Available Event");
             }
         }
     }
