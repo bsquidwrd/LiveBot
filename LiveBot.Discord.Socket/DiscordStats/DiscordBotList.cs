@@ -68,7 +68,7 @@ namespace LiveBot.Discord.Socket.DiscordStats
                 return;
 
             var guilds = _discordClient.Guilds;
-            var payload = new BotsForDiscordPayload(guilds.Count);
+            var payload = new DiscordBotListPayload(guilds.Count);
             var apiKey = _configuration.GetValue<string>(ApiConfigName);
             if (apiKey == null)
                 return;
