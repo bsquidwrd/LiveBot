@@ -1,22 +1,34 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using DiscordBotsList.Api;
 using LiveBot.Core.Interfaces.Discord;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LiveBot.Discord.Socket.DiscordStats
 {
+    internal class TopGGPayload
+    {
+        [JsonPropertyName("server_count")]
+        internal int guildCount;
+
+        public TopGGPayload(int count)
+        {
+            guildCount = count;
+        }
+    }
+
     public class TopGG : IDiscordStats
     {
         private readonly ILogger<TopGG> _logger;
         private readonly IConfiguration _configuration;
         private readonly DiscordShardedClient _discordClient;
         private System.Timers.Timer? _timer = null;
-        private AuthDiscordBotListApi? _api = null;
         private readonly bool IsDebug = false;
 
         private readonly string SiteName = "TopGG";
         private readonly string ApiConfigName = "TopGG_API";
-        private readonly string UpdateUrl = "";
+        private readonly string UpdateUrl = "https://top.gg/api/bots/{BotId}/stats";
 
         public TopGG(ILogger<TopGG> logger, IConfiguration configuration, DiscordShardedClient discordClient)
         {
@@ -56,24 +68,31 @@ namespace LiveBot.Discord.Socket.DiscordStats
                 return;
 
             var guilds = _discordClient.Guilds;
+            var payload = new BotsForDiscordPayload(guilds.Count);
             var apiKey = _configuration.GetValue<string>(ApiConfigName);
             if (apiKey == null)
                 return;
 
-            if (_api == null)
-                _api = new AuthDiscordBotListApi(_discordClient.CurrentUser.Id, apiKey);
+            HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", apiKey);
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             try
             {
-                var me = await _api.GetMeAsync();
-                await me.UpdateStatsAsync(guildCount: guilds.Count);
+                var endpoint = string.Format(UpdateUrl, _discordClient.CurrentUser.Id);
+                var response = await httpClient.PostAsync(requestUri: endpoint, content: content);
+                response.EnsureSuccessStatusCode();
                 _logger.LogInformation(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
             }
             catch (Exception ex)
             {
                 _logger.LogError(exception: ex, message: "Unable to update stats for {StatsSiteName}", SiteName);
             }
-            finally { }
+            finally
+            {
+                httpClient.Dispose();
+            }
         }
     }
 }
