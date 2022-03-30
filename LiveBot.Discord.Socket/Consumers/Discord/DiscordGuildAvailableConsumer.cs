@@ -1,20 +1,20 @@
-﻿using Discord.Rest;
+﻿using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
-using LiveBot.Discord.SlashCommands.Contracts.Discord;
+using LiveBot.Discord.Socket.Contracts;
 using MassTransit;
 
-namespace LiveBot.Discord.SlashCommands.Consumers.Discord
+namespace LiveBot.Discord.Socket.Consumers.Discord
 {
     public class DiscordGuildAvailableConsumer : IConsumer<IDiscordGuildAvailable>
     {
         private readonly ILogger<DiscordGuildAvailableConsumer> _logger;
         private readonly IUnitOfWork _work;
-        private readonly DiscordRestClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly IBusControl _bus;
 
-        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWorkFactory factory, DiscordRestClient client, IBusControl bus)
+        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWorkFactory factory, DiscordShardedClient client, IBusControl bus)
         {
             _logger = logger;
             _work = factory.Create();
@@ -25,7 +25,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordGuildAvailable> context)
         {
             var message = context.Message;
-            var guild = await _client.GetGuildAsync(message.GuildId);
+            var guild = _client.GetGuild(message.GuildId);
 
             if (guild == null)
                 return;
@@ -47,7 +47,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             var dbChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild == discordGuild);
 
-            var guildTextChannels = await guild.GetTextChannelsAsync();
+            var guildTextChannels = guild.TextChannels;
             foreach (var channel in guildTextChannels)
             {
                 var existingChannels = dbChannels.Where(i => i.DiscordId == channel.Id && i.Name == channel.Name);

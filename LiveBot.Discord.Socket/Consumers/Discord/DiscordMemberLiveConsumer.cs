@@ -1,4 +1,4 @@
-﻿using Discord.Rest;
+﻿using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
@@ -6,16 +6,16 @@ using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
 using System.Linq.Expressions;
 
-namespace LiveBot.Discord.SlashCommands.Consumers.Discord
+namespace LiveBot.Discord.Socket.Consumers.Discord
 {
     public class DiscordMemberLiveConsumer : IConsumer<IDiscordMemberLive>
     {
-        private readonly DiscordRestClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
         private readonly ILogger<DiscordMemberLiveConsumer> _logger;
 
-        public DiscordMemberLiveConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors, ILogger<DiscordMemberLiveConsumer> logger)
+        public DiscordMemberLiveConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors, ILogger<DiscordMemberLiveConsumer> logger)
         {
             _client = client;
             _work = factory.Create();
@@ -63,11 +63,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             var existingSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
 
-            var guild = await _client.GetGuildAsync(context.Message.DiscordGuildId);
+            var guild = _client.GetGuild(context.Message.DiscordGuildId);
             if (guild == null) return;
-            var guildMember = await guild.GetUserAsync(context.Message.DiscordUserId);
+            var guildMember = guild.GetUser(context.Message.DiscordUserId);
 
-            var userHasMonitorRole = guildMember.RoleIds.Contains(guildConfig.MonitorRole.DiscordId);
+            var userHasMonitorRole = guildMember.Roles.Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
 
             // If there's an existing subscription, check that they still have the role
             if (existingSubscription != null)
