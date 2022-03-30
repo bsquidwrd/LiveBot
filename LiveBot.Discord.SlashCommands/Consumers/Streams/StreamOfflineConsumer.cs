@@ -72,12 +72,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 var newEmbed = embed.ToEmbedBuilder();
-                newEmbed.WithColor(Color.LightGrey);
-                newEmbed.WithDescription($"[OFFLINE] {newEmbed.Description}");
+                newEmbed.WithColor(new Color(0x36393F)); // Discord dark mode grey
+                newEmbed.WithDescription($"{Format.Bold("[OFFLINE]")} {newEmbed.Description}");
 
                 await channel.ModifyMessageAsync(messageId: message.Id, i =>
                 {
-                    i.Content = string.IsNullOrWhiteSpace(message.Content) ? $"[OFFLINE] {message.Content}" : "";
+                    i.Content = string.IsNullOrWhiteSpace(message.Content) ? "" : $"{Format.Bold("[OFFLINE]")} {message.Content}";
                     i.Embed = newEmbed.Build();
                 });
             }
