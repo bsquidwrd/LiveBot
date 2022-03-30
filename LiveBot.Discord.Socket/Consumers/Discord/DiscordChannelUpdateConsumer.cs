@@ -18,22 +18,15 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordChannelUpdate> context)
         {
-            try
+            var message = context.Message;
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
+            var discordChannel = new DiscordChannel
             {
-                var message = context.Message;
-                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
-                var discordChannel = new DiscordChannel
-                {
-                    DiscordGuild = discordGuild,
-                    DiscordId = message.ChannelId,
-                    Name = message.ChannelName
-                };
-                await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, i => i.DiscordGuild == discordGuild && i.DiscordId == message.ChannelId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(exception: ex, message: "Error processing Discord Channel Update Event");
-            }
+                DiscordGuild = discordGuild,
+                DiscordId = message.ChannelId,
+                Name = message.ChannelName
+            };
+            await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, i => i.DiscordGuild == discordGuild && i.DiscordId == message.ChannelId);
         }
     }
 }

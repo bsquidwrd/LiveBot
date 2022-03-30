@@ -17,41 +17,34 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)
         {
-            try
-            {
-                var message = context.Message;
-                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
+            var message = context.Message;
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
 
-                if (discordGuild == null)
-                    return;
+            if (discordGuild == null)
+                return;
 
-                var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-                var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-                var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
 
-                // Remove Discord Guild Config
-                if (discordGuild.Config != null)
-                    await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
+            // Remove Discord Guild Config
+            if (discordGuild.Config != null)
+                await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
 
-                // Remove Stream Subscriptions for this Guild
-                foreach (var streamSubscription in streamSubscriptions.ToList())
-                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+            // Remove Stream Subscriptions for this Guild
+            foreach (var streamSubscription in streamSubscriptions.ToList())
+                await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
 
-                // Remove Discord Roles for this Guild
-                foreach (var discordRole in discordRoles.ToList())
-                    await _work.RoleRepository.RemoveAsync(discordRole.Id);
+            // Remove Discord Roles for this Guild
+            foreach (var discordRole in discordRoles.ToList())
+                await _work.RoleRepository.RemoveAsync(discordRole.Id);
 
-                // Remove Discord Channels for this Guild
-                foreach (var discordChannel in discordChannels.ToList())
-                    await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
+            // Remove Discord Channels for this Guild
+            foreach (var discordChannel in discordChannels.ToList())
+                await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
 
-                // Remove Discord Guild
-                await _work.GuildRepository.RemoveAsync(discordGuild.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(exception: ex, message: "Unable to remove Guild {guildId}", context.Message.GuildId);
-            }
+            // Remove Discord Guild
+            await _work.GuildRepository.RemoveAsync(discordGuild.Id);
         }
     }
 }

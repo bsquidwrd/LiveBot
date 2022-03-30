@@ -22,15 +22,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         public async Task Consume(ConsumeContext<IStreamOffline> context)
         {
-            try
-            {
-                // TODO: Implement StreamOffline.Consume
-                await Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(exception: ex, message: "Unable to process Stream Offline event");
-            }
+            // TODO: Implement StreamOffline.Consume
+            await Task.CompletedTask;
         }
     }
 }

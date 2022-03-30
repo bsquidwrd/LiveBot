@@ -18,22 +18,15 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordRoleUpdate> context)
         {
-            try
+            var message = context.Message;
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
+            var discordRole = new DiscordRole
             {
-                var message = context.Message;
-                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
-                var discordRole = new DiscordRole
-                {
-                    DiscordGuild = discordGuild,
-                    DiscordId = message.RoleId,
-                    Name = message.RoleName
-                };
-                await _work.RoleRepository.AddOrUpdateAsync(discordRole, i => i.DiscordGuild == discordGuild && i.DiscordId == message.RoleId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(exception: ex, message: "Unable to process Discord Role Update event");
-            }
+                DiscordGuild = discordGuild,
+                DiscordId = message.RoleId,
+                Name = message.RoleName
+            };
+            await _work.RoleRepository.AddOrUpdateAsync(discordRole, i => i.DiscordGuild == discordGuild && i.DiscordId == message.RoleId);
         }
     }
 }

@@ -18,25 +18,18 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
-            try
-            {
-                var message = context.Message;
-                DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+            var message = context.Message;
+            DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
-                DiscordGuild discordGuild = new DiscordGuild
-                {
-                    DiscordId = message.GuildId,
-                    Name = message.GuildName,
-                    IconUrl = message.IconUrl,
-                    IsInBeta = existingDiscordGuild?.IsInBeta ?? false
-                };
-
-                await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
-            }
-            catch (Exception ex)
+            DiscordGuild discordGuild = new DiscordGuild
             {
-                _logger.LogError(exception: ex, message: "Unable to process Discord Guild Update event");
-            }
+                DiscordId = message.GuildId,
+                Name = message.GuildName,
+                IconUrl = message.IconUrl,
+                IsInBeta = existingDiscordGuild?.IsInBeta ?? false
+            };
+
+            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
         }
     }
 }

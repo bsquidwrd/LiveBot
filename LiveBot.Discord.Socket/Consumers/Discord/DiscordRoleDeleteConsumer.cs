@@ -17,46 +17,39 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordRoleDelete> context)
         {
-            try
+            var message = context.Message;
+            var role = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
+
+            if (role == null)
+                return;
+
+            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordRole.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
+            foreach (var subscription in subscriptions)
             {
-                var message = context.Message;
-                var role = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
+                subscription.DiscordRole = null;
+                await _work.SubscriptionRepository.UpdateAsync(subscription);
+            }
 
-                if (role == null)
-                    return;
-
-                var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordRole.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
-                foreach (var subscription in subscriptions)
+            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
+            if (guildConfig != null)
+            {
+                bool update = false;
+                if (guildConfig.DiscordRole == role)
                 {
-                    subscription.DiscordRole = null;
-                    await _work.SubscriptionRepository.UpdateAsync(subscription);
+                    guildConfig.DiscordRole = null;
+                    update = true;
+                }
+                if (guildConfig.MonitorRole == role)
+                {
+                    guildConfig.MonitorRole = null;
+                    update = true;
                 }
 
-                var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-                if (guildConfig != null)
-                {
-                    bool update = false;
-                    if (guildConfig.DiscordRole == role)
-                    {
-                        guildConfig.DiscordRole = null;
-                        update = true;
-                    }
-                    if (guildConfig.MonitorRole == role)
-                    {
-                        guildConfig.MonitorRole = null;
-                        update = true;
-                    }
-
-                    if (update)
-                        await _work.GuildConfigRepository.UpdateAsync(guildConfig);
-                }
-
-                await _work.RoleRepository.RemoveAsync(role.Id);
+                if (update)
+                    await _work.GuildConfigRepository.UpdateAsync(guildConfig);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(exception: ex, message: "Unable to process Discord Role Delete event");
-            }
+
+            await _work.RoleRepository.RemoveAsync(role.Id);
         }
     }
 }
