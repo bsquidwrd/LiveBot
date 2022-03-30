@@ -93,12 +93,12 @@ namespace LiveBot.Discord.SlashCommands
         }
 
         public Task SlashCommandExecuted(SlashCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
-            HandleErrorExecution(info: info, context: context, result: result);
+            HandlePostExecution(info: info, context: context, result: result);
 
         public Task ComponentCommandExecuted(ComponentCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
-            HandleErrorExecution(info: info, context: context, result: result);
+            HandlePostExecution(info: info, context: context, result: result);
 
-        public async Task HandleErrorExecution(ICommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
+        public async Task HandlePostExecution(ICommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
         {
             if (!result.IsSuccess && result.Error != null)
             {
