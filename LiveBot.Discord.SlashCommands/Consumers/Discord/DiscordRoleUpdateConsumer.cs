@@ -3,7 +3,7 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
 
-namespace LiveBot.Discord.Socket.Consumers.Discord
+namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
     public class DiscordRoleUpdateConsumer : IConsumer<IDiscordRoleUpdate>
     {

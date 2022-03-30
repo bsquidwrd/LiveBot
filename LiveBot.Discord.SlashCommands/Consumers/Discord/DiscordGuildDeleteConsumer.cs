@@ -2,7 +2,7 @@
 using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
 
-namespace LiveBot.Discord.Socket.Consumers.Discord
+namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
     public class DiscordGuildDeleteConsumer : IConsumer<IDiscordGuildDelete>
     {
@@ -32,15 +32,15 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
                 await _work.GuildConfigRepository.RemoveAsync(discordGuild.Config.Id);
 
             // Remove Stream Subscriptions for this Guild
-            foreach (var streamSubscription in streamSubscriptions.ToList())
+            foreach (var streamSubscription in streamSubscriptions)
                 await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
 
             // Remove Discord Roles for this Guild
-            foreach (var discordRole in discordRoles.ToList())
+            foreach (var discordRole in discordRoles)
                 await _work.RoleRepository.RemoveAsync(discordRole.Id);
 
             // Remove Discord Channels for this Guild
-            foreach (var discordChannel in discordChannels.ToList())
+            foreach (var discordChannel in discordChannels)
                 await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
 
             // Remove Discord Guild

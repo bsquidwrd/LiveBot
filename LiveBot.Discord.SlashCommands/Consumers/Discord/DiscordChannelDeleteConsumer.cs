@@ -2,7 +2,7 @@
 using LiveBot.Core.Repository.Interfaces;
 using MassTransit;
 
-namespace LiveBot.Discord.Socket.Consumers.Discord
+namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
     public class DiscordChannelDeleteConsumer : IConsumer<IDiscordChannelDelete>
     {

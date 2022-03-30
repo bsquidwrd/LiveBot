@@ -3,7 +3,7 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
 
-namespace LiveBot.Discord.Socket.Consumers.Discord
+namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
     public class DiscordGuildUpdateConsumer : IConsumer<IDiscordGuildUpdate>
     {
@@ -19,9 +19,9 @@ namespace LiveBot.Discord.Socket.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
             var message = context.Message;
-            DiscordGuild existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
+            var existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
-            DiscordGuild discordGuild = new DiscordGuild
+            var discordGuild = new DiscordGuild
             {
                 DiscordId = message.GuildId,
                 Name = message.GuildName,
