@@ -5,6 +5,7 @@ using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Discord.SlashCommands.Contracts.Discord;
 using LiveBot.Discord.SlashCommands.Helpers;
 using MassTransit;
 using System.Linq.Expressions;
@@ -83,23 +84,59 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
 
-                var guild = await _client.GetGuildAsync(streamSubscription.DiscordGuild.DiscordId);
-                RestTextChannel? channel = null;
+                RestGuild? guild = null;
                 try
                 {
-                    channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
+                    guild = await _client.GetGuildAsync(streamSubscription.DiscordGuild.DiscordId);
                 }
-                catch (HttpException e)
+                catch (HttpException ex)
                 {
-                    if (e.DiscordCode == DiscordErrorCode.MissingPermissions)
+                    if (
+                        ex.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                        || ex.DiscordCode == DiscordErrorCode.MissingPermissions
+                        || ex.DiscordCode == DiscordErrorCode.UnknownGuild
+                    )
                     {
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        await _bus.Publish(new DiscordGuildDelete()
+                        {
+                            GuildId = streamSubscription.DiscordGuild.DiscordId,
+                        });
                         continue;
                     }
                 }
 
                 if (guild == null)
                     continue;
+
+                RestTextChannel? channel = null;
+                try
+                {
+                    channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
+                }
+                catch (HttpException ex)
+                {
+                    if (
+                        ex.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                        || ex.DiscordCode == DiscordErrorCode.MissingPermissions
+                    )
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                        continue;
+                    }
+                    else if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
+                    {
+                        await _bus.Publish(new DiscordChannelDelete()
+                        {
+                            GuildId = streamSubscription.DiscordGuild.DiscordId,
+                            ChannelId = streamSubscription.DiscordChannel.DiscordId,
+                        });
+                        continue;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
 
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
@@ -194,7 +231,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     if (e is HttpException discordError)
                     {
                         // You lack permissions to perform that action
-                        if (discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                        if (
+                            discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                            || discordError.DiscordCode == DiscordErrorCode.MissingPermissions
+                        )
                         {
                             // I'm tired of seeing errors for Missing Permissions
                             continue;
@@ -202,7 +242,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                     else
                     {
-                        _logger.LogError("Error sending notification for {notificationId} {servicetype} {username} {guildId} {channelId} {roleId}, {message}\n{e}", streamNotification.Id, streamNotification.ServiceType, streamNotification.User_Username, streamNotification.DiscordGuild_DiscordId, streamNotification.DiscordChannel_DiscordId, streamNotification.DiscordRole_DiscordId, streamNotification.Message, e);
+                        _logger.LogError("Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message}\n{e}", streamNotification.Id, streamNotification.ServiceType, streamNotification.User_Username, streamNotification.DiscordGuild_DiscordId, streamNotification.DiscordChannel_DiscordId, streamNotification.DiscordRole_DiscordId, streamNotification.Message, e);
                     }
                 }
             }
