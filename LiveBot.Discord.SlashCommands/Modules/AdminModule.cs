@@ -158,7 +158,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StatsCommandAsync()
         {
             var appInfo = await Context.Client.GetApplicationInfoAsync();
-            var guilds = await work.GuildConfigRepository.GetAllAsync();
+            var guilds = await work.GuildRepository.GetAllAsync();
             var subscriptions = await work.SubscriptionRepository.GetAllAsync();
 
             var embedBuilder = new EmbedBuilder()
