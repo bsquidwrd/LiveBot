@@ -72,8 +72,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 var newEmbed = embed.ToEmbedBuilder();
-                newEmbed.WithColor(new Color(0x36393F)); // Discord dark mode grey
-                newEmbed.WithDescription($"{Format.Bold("[OFFLINE]")} {newEmbed.Description}");
+                newEmbed.WithColor(Color.LightGrey);
 
                 await channel.ModifyMessageAsync(messageId: message.Id, i =>
                 {
