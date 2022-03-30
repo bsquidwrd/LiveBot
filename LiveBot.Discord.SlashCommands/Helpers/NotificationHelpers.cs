@@ -72,7 +72,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             builder.WithFooter(footerBuilder);
 
             builder.WithTimestamp(stream.StartTime);
-            builder.WithDescription(stream.Title);
+            builder.WithDescription(EscapeSpecialDiscordCharacters(stream.Title));
             builder.WithUrl(stream.StreamURL);
             builder.WithThumbnailUrl(user.AvatarURL);
 
