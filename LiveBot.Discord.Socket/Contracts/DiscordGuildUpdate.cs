@@ -1,5 +1,4 @@
-﻿
-using LiveBot.Core.Contracts.Discord;
+﻿using LiveBot.Core.Contracts.Discord;
 
 namespace LiveBot.Discord.Socket.Contracts
 {
