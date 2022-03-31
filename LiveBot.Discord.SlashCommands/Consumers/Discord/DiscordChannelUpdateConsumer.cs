@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
+using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
@@ -20,13 +21,31 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         {
             var message = context.Message;
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == message.GuildId);
-            var discordChannel = new DiscordChannel
+            if (discordGuild == null)
+                return;
+
+            Expression<Func<DiscordChannel, bool>> predicate = (i =>
+                    i.DiscordGuild.DiscordId == message.GuildId &&
+                    i.DiscordId == message.ChannelId
+                );
+
+            var discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(predicate);
+
+            if (discordChannel == null)
             {
-                DiscordGuild = discordGuild,
-                DiscordId = message.ChannelId,
-                Name = message.ChannelName
-            };
-            await _work.ChannelRepository.AddOrUpdateAsync(discordChannel, i => i.DiscordGuild == discordGuild && i.DiscordId == message.ChannelId);
+                var newChannel = new DiscordChannel
+                {
+                    DiscordGuild = discordGuild,
+                    DiscordId = message.ChannelId,
+                    Name = message.ChannelName
+                };
+                await _work.ChannelRepository.AddAsync(newChannel);
+                discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(predicate);
+            }
+
+            discordChannel.Name = message.ChannelName;
+
+            await _work.ChannelRepository.UpdateAsync(discordChannel);
         }
     }
 }

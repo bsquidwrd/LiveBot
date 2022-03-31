@@ -2,6 +2,7 @@
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
+using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
@@ -19,17 +20,30 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordGuildUpdate> context)
         {
             var message = context.Message;
-            var existingDiscordGuild = await _work.GuildRepository.SingleOrDefaultAsync(d => d.DiscordId == message.GuildId);
 
-            var discordGuild = new DiscordGuild
+            Expression<Func<DiscordGuild, bool>> predicate = (i =>
+                    i.DiscordId == message.GuildId
+                );
+
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(predicate);
+
+            if (discordGuild == null)
             {
-                DiscordId = message.GuildId,
-                Name = message.GuildName,
-                IconUrl = message.IconUrl,
-                IsInBeta = existingDiscordGuild?.IsInBeta ?? false
-            };
+                var newGuild = new DiscordGuild
+                {
+                    DiscordId = message.GuildId,
+                    Name = message.GuildName,
+                    IconUrl = message.IconUrl,
+                    IsInBeta = false
+                };
+                await _work.GuildRepository.AddAsync(newGuild);
+                discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(predicate);
+            }
 
-            await _work.GuildRepository.AddOrUpdateAsync(discordGuild, (d => d.DiscordId == message.GuildId));
+            discordGuild.Name = message.GuildName;
+            discordGuild.IconUrl = message.IconUrl;
+
+            await _work.GuildRepository.UpdateAsync(discordGuild);
         }
     }
 }
