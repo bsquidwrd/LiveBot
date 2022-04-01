@@ -8,9 +8,9 @@ namespace LiveBot.Discord.Socket.DiscordStats
         public DiscordBotList(ILogger<DiscordBotList> logger, IConfiguration configuration, DiscordShardedClient discordClient)
             : base(logger, configuration, discordClient)
         {
-            SiteName = "BotsForDiscord";
-            ApiConfigName = "BotsForDiscord_API";
-            UpdateUrl = "https://discords.com/bots/api/bot/{BotId}";
+            SiteName = "DiscordBotList";
+            ApiConfigName = "DiscordBotList_API";
+            UpdateUrl = "https://discordbotlist.com/api/v1/bots/{BotId}/stats";
             GuildCountFieldName = "guilds";
         }
 
