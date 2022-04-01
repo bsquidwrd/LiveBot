@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.Rest;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Static;
 using System.Globalization;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -166,11 +167,15 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count()}.", inline: true);
-            embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptions.Count()}.", inline: true);
-            embedBuilder.AddField(name: "Unique Subscription Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}.", inline: true);
-            foreach (var serviceType in subscriptions.Select(i => i.User.ServiceType).Distinct())
-                embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: $"{subscriptions.Count(i => i.User.ServiceType == serviceType)}", inline: true);
+            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count()}", inline: true);
+            embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptions.Count()}", inline: true);
+            embedBuilder.AddField(name: "Unique Subscription Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}", inline: true);
+
+            Enum.GetValues<ServiceEnum>().ToList().ForEach(service =>
+            {
+                embedBuilder.AddField(name: $"{service} Subscriptions", value: $"{subscriptions.Count(i => i.User.ServiceType == service)}", inline: true);
+            });
+
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
         }
 
