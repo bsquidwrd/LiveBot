@@ -55,47 +55,33 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         public static Embed GetStreamEmbed(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
         {
             // Build the Author of the Embed
-            var authorBuilder = new EmbedAuthorBuilder();
-            authorBuilder.WithName(user.DisplayName);
-            authorBuilder.WithIconUrl(user.AvatarURL);
-            authorBuilder.WithUrl(user.ProfileURL);
+            var authorBuilder = new EmbedAuthorBuilder()
+                .WithName(user.DisplayName)
+                .WithIconUrl(user.AvatarURL)
+                .WithUrl(user.ProfileURL);
 
             // Build the Footer of the Embed
-            var footerBuilder = new EmbedFooterBuilder();
-            footerBuilder.WithText("Stream start time");
+            var footerBuilder = new EmbedFooterBuilder()
+                .WithText("Stream start time");
 
             // Add Basic information to EmbedBuilder
-            var builder = new EmbedBuilder();
-            builder.WithColor(stream.ServiceType.GetAlertColor());
-
-            builder.WithAuthor(authorBuilder);
-            builder.WithFooter(footerBuilder);
-
-            builder.WithTimestamp(stream.StartTime);
-            builder.WithDescription(EscapeSpecialDiscordCharacters(stream.Title));
-            builder.WithUrl(stream.StreamURL);
-            builder.WithThumbnailUrl(user.AvatarURL);
-
-            // Add Status Field
-            //EmbedFieldBuilder statusBuilder = new EmbedFieldBuilder();
-            //statusBuilder.WithIsInline(false);
-            //statusBuilder.WithName("Status");
-            //statusBuilder.WithValue("");
-            //builder.AddField(statusBuilder);
+            var builder = new EmbedBuilder()
+                .WithColor(stream.ServiceType.GetAlertColor())
+                .WithAuthor(authorBuilder)
+                .WithFooter(footerBuilder)
+                .WithTimestamp(stream.StartTime)
+                .WithDescription(EscapeSpecialDiscordCharacters(stream.Title))
+                .WithUrl(stream.StreamURL)
+                .WithThumbnailUrl(user.AvatarURL);
 
             // Add Game field
-            var gameBuilder = new EmbedFieldBuilder();
-            gameBuilder.WithIsInline(true);
-            gameBuilder.WithName("Game");
-            gameBuilder.WithValue(game.Name);
-            builder.AddField(gameBuilder);
+            builder.AddField(name: "Game", value: game.Name, inline: true);
 
             // Add Stream URL field
-            var streamURLField = new EmbedFieldBuilder();
-            streamURLField.WithIsInline(true);
-            streamURLField.WithName("Stream");
-            streamURLField.WithValue(stream.StreamURL);
-            builder.AddField(streamURLField);
+            builder.AddField(name: "Stream", value: stream.StreamURL, inline: true);
+
+            // Add Status Field
+            //builder.AddField(name: "Status", value: "", inline: false);
 
             return builder.Build();
         }
