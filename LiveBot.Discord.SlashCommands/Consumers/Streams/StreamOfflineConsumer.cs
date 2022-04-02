@@ -74,9 +74,18 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 var newEmbed = embed.ToEmbedBuilder();
                 newEmbed.WithColor(Color.LightGrey);
 
+                var offlineTimestamp = TimestampTag.FromDateTime(DateTime.UtcNow, TimestampTagStyles.Relative);
+                var statusMessage = $"Offline at {offlineTimestamp}";
+                var statusField = newEmbed.Fields.Where(i => i.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+
+                if (statusField == null)
+                    newEmbed.AddField(name: "Status", value: statusMessage, inline: false);
+                else
+                    statusField.WithValue(statusMessage).WithIsInline(false);
+
                 await channel.ModifyMessageAsync(messageId: message.Id, i =>
                 {
-                    i.Content = string.IsNullOrWhiteSpace(message.Content) ? "" : $"{Format.Bold("[OFFLINE]")} {message.Content}";
+                    //i.Content = string.IsNullOrWhiteSpace(message.Content) ? "" : $"{Format.Bold("[OFFLINE]")} {message.Content}";
                     i.Embed = newEmbed.Build();
                 });
             }
