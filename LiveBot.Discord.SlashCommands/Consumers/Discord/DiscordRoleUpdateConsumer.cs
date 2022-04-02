@@ -27,7 +27,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 return;
 
             Expression<Func<DiscordRole, bool>> predicate = (i =>
-                    i.DiscordGuild.DiscordId == message.GuildId &&
                     i.DiscordId == message.RoleId
                 );
 
@@ -45,6 +44,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 discordRole = await _work.RoleRepository.SingleOrDefaultAsync(predicate);
             }
 
+            discordRole.DiscordGuild = discordGuild;
             discordRole.Name = message.RoleName;
 
             await _work.RoleRepository.UpdateAsync(discordRole);

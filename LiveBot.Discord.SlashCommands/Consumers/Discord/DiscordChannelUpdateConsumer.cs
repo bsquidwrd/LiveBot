@@ -25,7 +25,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 return;
 
             Expression<Func<DiscordChannel, bool>> predicate = (i =>
-                    i.DiscordGuild.DiscordId == message.GuildId &&
                     i.DiscordId == message.ChannelId
                 );
 
@@ -43,6 +42,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(predicate);
             }
 
+            discordChannel.DiscordGuild = discordGuild;
             discordChannel.Name = message.ChannelName;
 
             await _work.ChannelRepository.UpdateAsync(discordChannel);
