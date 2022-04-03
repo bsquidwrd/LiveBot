@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.Rest;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
@@ -26,7 +27,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         public async Task Consume(ConsumeContext<IStreamOffline> context)
         {
             var stream = context.Message.Stream;
-
             var user = stream.User;
 
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
@@ -59,15 +59,60 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 if (lastNotification.DiscordMessage_DiscordId == null)
                     continue;
 
-                var guild = await _client.GetGuildAsync(subscription.DiscordGuild.DiscordId);
-                var channel = await guild.GetTextChannelAsync(subscription.DiscordChannel.DiscordId);
-                var message = await channel.GetMessageAsync((ulong)lastNotification.DiscordMessage_DiscordId);
+                // Try to get the guild
+                RestGuild? guild = null;
+                try
+                {
+                    guild = await _client.GetGuildAsync(subscription.DiscordGuild.DiscordId);
+                }
+                catch (HttpException ex)
+                {
+                    // If it's an unknown/invalid guild, just continue on
+                    if (
+                        ex.DiscordCode == DiscordErrorCode.UnknownGuild ||
+                        ex.DiscordCode == DiscordErrorCode.InvalidGuild
+                    )
+                        continue;
+                    // Throw any error that wasn't expected
+                    throw;
+                }
+                if (guild == null)
+                    continue;
 
-                if (message.Author.Id != _client.CurrentUser.Id)
+                // Try to get the channel
+                RestTextChannel? channel = null;
+                try
+                {
+                    channel = await guild.GetTextChannelAsync(subscription.DiscordChannel.DiscordId);
+                }
+                catch (HttpException ex)
+                {
+                    // If it's an unknown channel, just continue on
+                    if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
+                        continue;
+                    throw;
+                }
+                if (channel == null)
+                    continue;
+
+                // Try to get the message
+                RestMessage? message = null;
+                try
+                {
+                    message = await channel.GetMessageAsync((ulong)lastNotification.DiscordMessage_DiscordId);
+                }
+                catch (HttpException ex)
+                {
+                    // If it's an unknown message, just continue on
+                    if (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+                        continue;
+                    throw;
+                }
+
+                if (message == null || message?.Author?.Id != _client.CurrentUser.Id)
                     continue;
 
                 var embed = message.Embeds.FirstOrDefault();
-
                 if (embed == null)
                     continue;
 
@@ -85,7 +130,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                 await channel.ModifyMessageAsync(messageId: message.Id, i =>
                 {
-                    //i.Content = string.IsNullOrWhiteSpace(message.Content) ? "" : $"{Format.Bold("[OFFLINE]")} {message.Content}";
                     i.Embed = newEmbed.Build();
                 });
             }
