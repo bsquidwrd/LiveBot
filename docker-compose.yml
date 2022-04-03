@@ -1,31 +1,5 @@
 version: '3'
 services:
-    discord_socket:
-        image: docker.pkg.github.com/bsquidwrd/livebot/livebot:discord-socket-latest
-        environment:
-            - LiveBot_connectionstring=${connectionstring}
-            - LiveBot_token=${token}
-            - LiveBot_IsDebug=${IsDebug}
-            - LiveBot_datadogapikey=${datadogapikey}
-            - RabbitMQ_URL=${RabbitMQ_URL}
-            - RabbitMQ_Username=${RabbitMQ_Username}
-            - RabbitMQ_Password=${RabbitMQ_Password}
-            - LiveBot_TopGG_API=${TopGG_API}
-            - LiveBot_BotsForDiscord_API=${BotsForDiscord_API}
-            - LiveBot_BotsOnDiscord_API=${BotsOnDiscord_API}
-            - LiveBot_DiscordBotList_API=${DiscordBotList_API}
-            - LiveBot_DiscordBots_API=${DiscordBots_API}
-        deploy:
-            replicas: 1
-            update_config:
-                parallelism: 1
-                delay: 10s
-            restart_policy:
-                condition: on-failure
-                delay: 30s
-                max_attempts: 3
-                window: 120s
-
     discord_slashcommands:
         image: docker.pkg.github.com/bsquidwrd/livebot/livebot:discord-slashcommands-latest
         environment:
@@ -40,31 +14,11 @@ services:
             - RabbitMQ_URL=${RabbitMQ_URL}
             - RabbitMQ_Username=${RabbitMQ_Username}
             - RabbitMQ_Password=${RabbitMQ_Password}
-        deploy:
-            replicas: 3
-            update_config:
-                parallelism: 1
-                delay: 10s
-            restart_policy:
-                condition: on-failure
-                delay: 30s
-                max_attempts: 3
-                window: 120s
-        ports:
-            - 8080:80
-            - 8443:443
-
-    watcher_twitch:
-        image: docker.pkg.github.com/bsquidwrd/livebot/livebot:watcher-twitch-latest
-        environment:
-            - LiveBot_connectionstring=${connectionstring}
-            - LiveBot_TwitchClientId=${TwitchClientId}
-            - LiveBot_TwitchClientSecret=${TwitchClientSecret}
-            - LiveBot_IsDebug=${IsDebug}
-            - LiveBot_datadogapikey=${datadogapikey}
-            - RabbitMQ_URL=${RabbitMQ_URL}
-            - RabbitMQ_Username=${RabbitMQ_Username}
-            - RabbitMQ_Password=${RabbitMQ_Password}
+            - LiveBot_BotsForDiscord_API=${BotsForDiscord_API}
+            - LiveBot_BotsOnDiscord_API=${BotsOnDiscord_API}
+            - LiveBot_DiscordBotList_API=${DiscordBotList_API}
+            - LiveBot_DiscordBots_API=${DiscordBots_API}
+            - LiveBot_TopGG_API=${TopGG_API}
         deploy:
             replicas: 1
             update_config:
