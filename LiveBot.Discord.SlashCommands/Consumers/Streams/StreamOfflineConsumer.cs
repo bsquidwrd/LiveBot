@@ -75,7 +75,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 newEmbed.WithColor(Color.LightGrey);
 
                 var offlineTimestamp = TimestampTag.FromDateTime(DateTime.UtcNow, TimestampTagStyles.Relative);
-                var statusMessage = $"Offline at {offlineTimestamp}";
+                var statusMessage = $"Offline {offlineTimestamp}";
                 var statusField = newEmbed.Fields.Where(i => i.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
 
                 if (statusField == null)
