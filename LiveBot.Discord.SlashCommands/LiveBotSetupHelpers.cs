@@ -10,7 +10,7 @@ using Serilog;
 
 namespace LiveBot.Discord.SlashCommands
 {
-    public static class LiveBotExtensions
+    public static class LiveBotSetupHelpers
     {
         /// <summary>
         /// Adds EnvironmentVariables to config, configures and adds
@@ -93,7 +93,7 @@ namespace LiveBot.Discord.SlashCommands
         {
             foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
             {
-                await monitor.StartAsync(IsWatcher: false);
+                await monitor.StartAsync(IsWatcher: true);
                 app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
             }
 
