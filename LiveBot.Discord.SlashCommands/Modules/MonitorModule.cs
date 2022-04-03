@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
@@ -14,7 +13,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 {
     [RequireBotManager]
     [Group(name: "monitor", description: "Commands for manipulating stream monitors")]
-    public partial class MonitorModule : RestInteractionModuleBase<RestInteractionContext>
+    public partial class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<MonitorModule> _logger;
         private readonly IUnitOfWork _work;
@@ -109,6 +108,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             if (WhereToPost != null || LiveMessage != null || RoleToMention != null || RemoveRolePing)
                 ResponseMessage = $"Successfuly updated monitor for {Format.Bold(subscription.User.DisplayName)}! {ResponseMessage}";
+            if (string.IsNullOrWhiteSpace(ResponseMessage))
+                ResponseMessage = $"Nothing was updated for {Format.Bold(subscription.User.DisplayName)}";
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
@@ -207,6 +208,89 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         }
 
         #endregion Check command
+
+        #region Role command
+
+        /// <summary>
+        /// Setup to monitor a role in the server
+        /// </summary>
+        /// <param name="WhereToPost"></param>
+        /// <param name="LiveMessage"></param>
+        /// <param name="RoleToMention"></param>
+        /// <param name="RoleToMonitor"></param>
+        /// <param name="StopMonitoring"></param>
+        /// <returns></returns>
+        [SlashCommand(name: "role", description: "Used to start monitoring a role instead of a specific user")]
+        public async Task MonitorRoleAsync(
+            [Summary(name: "where-to-post", description: "The channel to post live alerts to when this role goes live")] ITextChannel? WhereToPost = null,
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")] string LiveMessage = Defaults.NotificationMessage,
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
+            [Summary(name: "role-to-monitor", description: "The role to monitor for when they go live")] IRole? RoleToMonitor = null,
+            [Summary(name: "stop-monitoring", description: "Stop monitoring a role")] bool StopMonitoring = false
+        )
+        {
+            if (WhereToPost == null && LiveMessage == null && RoleToMention == null && RoleToMonitor == null && !StopMonitoring)
+            {
+                await FollowupAsync(text: $"Nothing was updated", ephemeral: true);
+                return;
+            }
+
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
+            if (discordGuild == null)
+            {
+                var newDiscordGuild = new DiscordGuild
+                {
+                    DiscordId = Context.Guild.Id,
+                    Name = Context.Guild.Name,
+                    IconUrl = Context.Guild.IconId
+                };
+                await _work.GuildRepository.AddOrUpdateAsync(newDiscordGuild, i => i.DiscordId == Context.Guild.Id);
+            }
+            discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
+
+            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
+            if (guildConfig == null)
+            {
+                var newGuildConfig = new DiscordGuildConfig
+                {
+                    DiscordGuild = discordGuild
+                };
+                await _work.GuildConfigRepository.AddOrUpdateAsync(newGuildConfig, i => i.DiscordGuild.DiscordId == Context.Guild.Id);
+            }
+            guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
+
+            if (WhereToPost != null)
+                guildConfig.DiscordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == WhereToPost.Id);
+
+            if (LiveMessage != null)
+            {
+                if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    LiveMessage = Defaults.NotificationMessage;
+                }
+                guildConfig.Message = LiveMessage;
+            }
+
+            if (RoleToMonitor != null)
+                guildConfig.MonitorRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == RoleToMonitor.Id);
+
+            if (RoleToMention != null)
+                guildConfig.DiscordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == RoleToMention.Id);
+
+            if (StopMonitoring)
+            {
+                guildConfig.MonitorRole = null;
+                guildConfig.DiscordRole = null;
+                guildConfig.DiscordChannel = null;
+                guildConfig.Message = null;
+            }
+
+            await _work.GuildConfigRepository.UpdateAsync(guildConfig);
+
+            await FollowupAsync(text: $"Updated role monitoring config", ephemeral: true);
+        }
+
+        #endregion Role command
 
         #endregion Slash Commands
 

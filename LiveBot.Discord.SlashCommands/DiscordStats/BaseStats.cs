@@ -4,7 +4,7 @@ using LiveBot.Core.Interfaces.Discord;
 using System.Text;
 using System.Text.Json;
 
-namespace LiveBot.Discord.Socket.DiscordStats
+namespace LiveBot.Discord.SlashCommands.DiscordStats
 {
     /// <summary>
     /// Class used to update stats on a Discord Bot site

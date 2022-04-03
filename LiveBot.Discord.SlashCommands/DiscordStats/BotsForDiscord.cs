@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace LiveBot.Discord.Socket.DiscordStats
+namespace LiveBot.Discord.SlashCommands.DiscordStats
 {
     /// <inheritdoc/>
     public class BotsForDiscord : BaseStats

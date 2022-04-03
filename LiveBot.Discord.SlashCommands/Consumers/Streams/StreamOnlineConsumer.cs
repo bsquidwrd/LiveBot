@@ -1,6 +1,6 @@
 using Discord;
 using Discord.Net;
-using Discord.Rest;
+using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
@@ -15,11 +15,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
     public class StreamOnlineConsumer : IConsumer<IStreamOnline>
     {
         private readonly ILogger<StreamOnlineConsumer> _logger;
-        private readonly DiscordRestClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
 
-        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus)
+        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus)
         {
             _logger = logger;
             _client = client;
@@ -84,10 +84,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
 
-                RestGuild? guild = null;
+                SocketGuild? guild = null;
                 try
                 {
-                    guild = await _client.GetGuildAsync(streamSubscription.DiscordGuild.DiscordId);
+                    guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
                 }
                 catch (HttpException ex)
                 {
@@ -108,10 +108,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 if (guild == null)
                     continue;
 
-                RestTextChannel? channel = null;
+                SocketTextChannel? channel = null;
                 try
                 {
-                    channel = await guild.GetTextChannelAsync(streamSubscription.DiscordChannel.DiscordId);
+                    channel = guild.GetTextChannel(streamSubscription.DiscordChannel.DiscordId);
                 }
                 catch (HttpException ex)
                 {

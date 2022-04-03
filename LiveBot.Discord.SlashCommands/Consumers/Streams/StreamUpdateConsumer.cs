@@ -1,4 +1,4 @@
-﻿using Discord.Rest;
+﻿using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
@@ -10,13 +10,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
     public class StreamUpdateConsumer : IConsumer<IStreamUpdate>
     {
-        private readonly DiscordRestClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
         private readonly ILogger<StreamUpdateConsumer> _logger;
 
-        public StreamUpdateConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus, IEnumerable<ILiveBotMonitor> monitors, ILogger<StreamUpdateConsumer> logger)
+        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, IEnumerable<ILiveBotMonitor> monitors, ILogger<StreamUpdateConsumer> logger)
         {
             _client = client;
             _work = factory.Create();

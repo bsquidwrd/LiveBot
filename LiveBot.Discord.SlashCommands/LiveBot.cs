@@ -1,102 +1,72 @@
 ﻿using Discord;
-using Discord.Interactions;
-using Discord.Rest;
+using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Discord.SlashCommands.Helpers;
-using LiveBot.Discord.SlashCommands.Modules;
-using LiveBot.Repository;
-using LiveBot.Watcher.Twitch;
-using Serilog;
-using System.Reflection;
 
 namespace LiveBot.Discord.SlashCommands
 {
-    public static class LiveBotExtensions
+    public class LiveBot : IHostedService
     {
-        /// <summary>
-        /// Adds EnvironmentVariables to config, configures and adds
-        /// <see cref="DiscordRestClient"/> and <see cref="InteractionService"/>
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <returns></returns>
-        public static async Task<WebApplicationBuilder> SetupLiveBot(this WebApplicationBuilder builder)
+        private readonly ILogger<LiveBot> _logger;
+        private readonly DiscordShardedClient _client;
+        private readonly InteractionHandler _interactionHandler;
+        private readonly IUnitOfWorkFactory _factory;
+        private readonly IConfiguration _configuration;
+        private readonly LiveBotDiscordEventHandlers _eventHandlers;
+        private readonly bool IsDebug;
+
+        public LiveBot(ILogger<LiveBot> logger, DiscordShardedClient discordSocketClient, InteractionHandler interactionHandler, IUnitOfWorkFactory factory, IConfiguration configuration, LiveBotDiscordEventHandlers eventHandlers)
         {
-            builder.Configuration.AddEnvironmentVariables(prefix: "LiveBot_");
-
-            string apiKey = builder.Configuration.GetValue<string>("datadogapikey");
-            string source = "csharp";
-            string service = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown";
-            string hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? System.Net.Dns.GetHostName();
-            string[] tags = new[] { builder.Configuration.GetValue<bool>("IsDebug", false) ? "Debug" : "Production" };
-
-            builder.Host.UseSerilog((ctx, lc) =>
-                lc
-                    .MinimumLevel.Information()
-                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                    .WriteTo.DatadogLogs(apiKey: apiKey, source: source, service: service, host: hostname, tags: tags)
-                    .Enrich.FromLogContext()
-            );
-
-            builder.Services.AddScoped<LiveBotDBContext>(_ => new LiveBotDBContext(builder.Configuration.GetValue<string>("connectionstring")));
-            builder.Services.AddSingleton<IUnitOfWorkFactory>(new UnitOfWorkFactory(builder.Configuration));
-
-            var IsDebug = builder.Configuration.GetValue<bool>("IsDebug", false);
-            var discordLogLevel = IsDebug ? LogSeverity.Verbose : LogSeverity.Info;
-            var discord = new DiscordRestClient(new DiscordRestConfig()
-            {
-                LogLevel = discordLogLevel
-            });
-            var token = builder.Configuration.GetValue<string>("token");
-            await discord.LoginAsync(TokenType.Bot, token);
-
-            builder.Services.AddRouting();
-            builder.Services.AddSingleton(discord);
-            builder.Services.AddInteractionService(config =>
-            {
-                config.UseCompiledLambda = true;
-                config.LogLevel = discordLogLevel;
-            });
-
-            // Setup MassTransit
-            builder.Services.AddLiveBotQueueing();
-
-            // Setup Monitors
-            builder.Services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
-
-            return builder;
+            _logger = logger;
+            _client = discordSocketClient;
+            _interactionHandler = interactionHandler;
+            _factory = factory;
+            _configuration = configuration;
+            _eventHandlers = eventHandlers;
+            IsDebug = _configuration.GetValue<bool>("IsDebug", false);
         }
 
-        /// <summary>
-        /// Registers bot Commands, maps http path for receiving Slash Commands
-        /// </summary>
-        /// <param name="app"></param>
-        /// <returns></returns>
-        public static async Task<WebApplication> RegisterLiveBot(this WebApplication app)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            app.Services.GetRequiredService<IUnitOfWorkFactory>().Migrate();
+            _factory.Migrate();
 
-            var commands = app.Services.GetRequiredService<InteractionService>();
-            commands.AddTypeConverter<Uri>(new UriConverter());
-            await commands.AddModulesAsync(Assembly.GetExecutingAssembly(), app.Services);
+            _client.Log += _interactionHandler.LogAsync;
+            _client.ShardReady += _eventHandlers.OnReady;
 
-            var IsDebug = app.Configuration.GetValue<bool>("IsDebug", false);
+            await _interactionHandler.InitializeAsync();
+
             if (IsDebug)
-                app.Logger.LogInformation("Starting bot in debug mode...");
+                _logger.LogInformation("Starting bot in debug mode...");
 
-            var testGuildId = app.Configuration.GetValue<ulong>("testguild");
-            var adminGuild = await commands.RestClient.GetGuildAsync(testGuildId);
-            await commands.AddModulesToGuildAsync(guild: adminGuild, deleteMissing: false, modules: commands.GetModuleInfo<AdminModule>());
+            var token = _configuration.GetValue<string>("token");
+            await _client.LoginAsync(TokenType.Bot, token);
 
-            app.MapInteractionService("/interactions", app.Configuration.GetValue<string>("publickey"));
+            // Guild Events
+            _client.GuildAvailable += _eventHandlers.GuildAvailable;
+            _client.GuildUpdated += _eventHandlers.GuildUpdated;
+            _client.JoinedGuild += _eventHandlers.GuildAvailable;
+            _client.LeftGuild += _eventHandlers.GuildLeave;
 
-            foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
-            {
-                await monitor.StartAsync(IsWatcher: false);
-                app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
-            }
+            // Channel Events
+            _client.ChannelCreated += _eventHandlers.ChannelCreated;
+            _client.ChannelDestroyed += _eventHandlers.ChannelDestroyed;
+            _client.ChannelUpdated += _eventHandlers.ChannelUpdated;
 
-            return app;
+            // Role Events
+            _client.RoleCreated += _eventHandlers.RoleCreated;
+            _client.RoleDeleted += _eventHandlers.RoleDeleted;
+            _client.RoleUpdated += _eventHandlers.RoleUpdated;
+
+            // User Events
+            _client.PresenceUpdated += _eventHandlers.PresenceUpdated;
+
+            await _client.StartAsync();
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation(message: "Stopping bot...");
+            await _client.LogoutAsync();
+            await _client.StopAsync();
         }
     }
 }

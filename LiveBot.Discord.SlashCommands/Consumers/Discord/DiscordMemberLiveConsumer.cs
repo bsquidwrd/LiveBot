@@ -6,7 +6,7 @@ using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
 using System.Linq.Expressions;
 
-namespace LiveBot.Discord.Socket.Consumers.Discord
+namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
     public class DiscordMemberLiveConsumer : IConsumer<IDiscordMemberLive>
     {

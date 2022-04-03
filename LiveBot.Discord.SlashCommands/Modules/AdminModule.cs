@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
@@ -11,7 +10,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
     [RequireOwner]
     [DontAutoRegister]
     [Group(name: "admin", description: "Administrative functions for the Bot Owner")]
-    public class AdminModule : RestInteractionModuleBase<RestInteractionContext>
+    public class AdminModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<AdminModule> logger;
         private readonly IConfiguration configuration;
@@ -78,7 +77,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task BetaSettingAsync(string guildId, bool enabled)
         {
             _ = ulong.TryParse(guildId, out var parsedGuildId);
-            var guild = await Context.Client.GetGuildAsync(parsedGuildId);
+            var guild = Context.Client.GetGuild(parsedGuildId);
             if (guild == null)
                 throw new Exception($"Guild not found with Id {parsedGuildId}");
 
@@ -125,7 +124,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             if (!ulong.TryParse(id, out var guildId))
                 throw new Exception("Could not parse Guild Id");
 
-            var guild = await Context.Client.GetGuildAsync(guildId);
+            var guild = Context.Client.GetGuild(guildId);
             if (guild == null)
                 throw new Exception($"Unable to find the Guild with Id {guildId}");
 
@@ -136,7 +135,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var embedBuilder = new EmbedBuilder()
                 .WithColor(Color.Green)
                 .WithCurrentTimestamp()
-                .WithAuthor(await guild.GetOwnerAsync())
+                .WithAuthor(guild.Owner)
                 .WithThumbnailUrl(guild.IconUrl)
                 .WithDescription($"");
 
