@@ -29,3 +29,8 @@ services:
                 delay: 30s
                 max_attempts: 3
                 window: 120s
+        healthcheck:
+            test: CMD ["dotnet", "LiveBot.Core.HealthCheck.dll"]
+            interval: 60s
+            retries: 5
+            timeout: 30s
