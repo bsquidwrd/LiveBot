@@ -7,7 +7,7 @@ on:
 jobs:
   build-and-publish-discord-slashcommands-latest:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v2 # Checking out the repo
 
@@ -18,20 +18,6 @@ jobs:
         image-name: livebot
         image-tag: discord-slashcommands-${{ github.event.release.tag_name }}
         dockerfile: LiveBot.Discord.SlashCommands/Dockerfile
-
-  build-and-publish-discord-socket-latest:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2 # Checking out the repo
-
-    - name: Build and Publish LiveBot Socket
-      uses: VaultVulp/gp-docker-action@1.1.6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        image-name: livebot
-        image-tag: discord-socket-${{ github.event.release.tag_name }}
-        dockerfile: LiveBot.Discord.Socket/Dockerfile
 
   build-and-publish-watcher-twitch-latest:
     runs-on: ubuntu-latest

@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using LiveBot.Discord.Socket.Contracts;
+using LiveBot.Discord.SlashCommands.Contracts.Discord;
 using MassTransit;
 
-namespace LiveBot.Discord.Socket
+namespace LiveBot.Discord.SlashCommands
 {
     public class LiveBotDiscordEventHandlers
     {
@@ -25,7 +25,7 @@ namespace LiveBot.Discord.Socket
         {
             await client.SetStatusAsync(UserStatus.Online);
             await client.SetGameAsync(name: "Your Stream!", type: ActivityType.Watching);
-            _logger.LogInformation("Shard {shardId} ready", client.ShardId);
+            _logger.LogInformation("Shard {ShardId} ready", client.ShardId);
         }
 
         /// <summary>

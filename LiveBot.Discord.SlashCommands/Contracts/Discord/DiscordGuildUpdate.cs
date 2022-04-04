@@ -1,6 +1,6 @@
 ﻿using LiveBot.Core.Contracts.Discord;
 
-namespace LiveBot.Discord.Socket.Contracts
+namespace LiveBot.Discord.SlashCommands.Contracts.Discord
 {
     public class DiscordGuildUpdate : IDiscordGuildUpdate
     {

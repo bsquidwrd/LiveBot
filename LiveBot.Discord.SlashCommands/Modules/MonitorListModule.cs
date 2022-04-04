@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.Rest;
+using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
@@ -8,7 +8,7 @@ using LiveBot.Discord.SlashCommands.Attributes;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    public partial class MonitorModule : RestInteractionModuleBase<RestInteractionContext>
+    public partial class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
     {
         #region list command
 
@@ -39,7 +39,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         #endregion list command
     }
 
-    public class MonitorListModule : RestInteractionModuleBase<RestInteractionContext>
+    public class MonitorListModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<MonitorListModule> _logger;
         private readonly IUnitOfWork _work;
@@ -56,20 +56,19 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [ComponentInteraction(customId: "monitor.list:*")]
         public async Task MonitorListAsync(int currentSpot)
         {
-            if (Context.Interaction is RestMessageComponent component)
+            if (Context.Interaction is SocketMessageComponent component)
             {
                 var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
                 subscriptions = subscriptions.OrderBy(i => i.User.Username);
 
                 if (!subscriptions.Any())
                 {
-                    var zeroCountResponse = component.Update(x =>
+                    await component.UpdateAsync(x =>
                     {
                         x.Content = "There are no subscriptions for this server!";
                         x.Embed = null;
                         x.Components = null;
                     });
-                    await Context.InteractionResponseCallback(zeroCountResponse);
                     return;
                 }
 
@@ -107,13 +106,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
                 var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: previousSpot, nextSpot: nextSpot);
 
-                var updateResponse = component.Update(x =>
+                await component.UpdateAsync(x =>
                 {
                     x.Content = $"Streams being monitored for this server";
                     x.Embed = subscriptionEmbed;
                     x.Components = messageComponents;
                 });
-                await Context.InteractionResponseCallback(updateResponse);
             }
         }
 

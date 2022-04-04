@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Net;
-using Discord.Rest;
+using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
@@ -11,12 +11,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
     public class StreamOfflineConsumer : IConsumer<IStreamOffline>
     {
-        private readonly DiscordRestClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
         private readonly IBusControl _bus;
         private readonly ILogger<StreamOfflineConsumer> _logger;
 
-        public StreamOfflineConsumer(DiscordRestClient client, IUnitOfWorkFactory factory, IBusControl bus, ILogger<StreamOfflineConsumer> logger)
+        public StreamOfflineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, ILogger<StreamOfflineConsumer> logger)
         {
             _client = client;
             _work = factory.Create();
@@ -60,10 +60,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 // Try to get the guild
-                RestGuild? guild = null;
+                SocketGuild? guild = null;
                 try
                 {
-                    guild = await _client.GetGuildAsync(subscription.DiscordGuild.DiscordId);
+                    guild = _client.GetGuild(subscription.DiscordGuild.DiscordId);
                 }
                 catch (HttpException ex)
                 {
@@ -80,10 +80,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 // Try to get the channel
-                RestTextChannel? channel = null;
+                SocketTextChannel? channel = null;
                 try
                 {
-                    channel = await guild.GetTextChannelAsync(subscription.DiscordChannel.DiscordId);
+                    channel = guild.GetTextChannel(subscription.DiscordChannel.DiscordId);
                 }
                 catch (HttpException ex)
                 {
@@ -96,7 +96,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 // Try to get the message
-                RestMessage? message = null;
+                IMessage? message = null;
                 try
                 {
                     message = await channel.GetMessageAsync((ulong)lastNotification.DiscordMessage_DiscordId);
@@ -109,7 +109,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     throw;
                 }
 
-                if (message == null || message?.Author?.Id != _client.CurrentUser.Id)
+                if (message == null || message?.Author?.Id != _client.CurrentUser.Id || message is not SocketUserMessage)
                     continue;
 
                 var embed = message.Embeds.FirstOrDefault();

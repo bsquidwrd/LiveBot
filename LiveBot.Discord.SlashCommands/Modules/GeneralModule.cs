@@ -1,11 +1,11 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using LiveBot.Core.Repository.Static;
+using LiveBot.Discord.SlashCommands.Attributes;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    public class GeneralModule : RestInteractionModuleBase<RestInteractionContext>
+    public class GeneralModule : InteractionModuleBase<ShardedInteractionContext>
     {
         #region Misc commands
 
@@ -31,13 +31,14 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// </summary>
         /// <param name="channel"></param>
         /// <returns></returns>
+        [RequireBotManager]
         [SlashCommand(name: "perm-check", description: "Confirm the bot has the necessary permissions to post in a channel")]
         public async Task PermCheckAsync(ITextChannel? channel = null)
         {
             if (channel == null)
                 channel = (ITextChannel)Context.Channel;
 
-            var guildUser = await Context.Guild.GetCurrentUserAsync();
+            var guildUser = Context.Guild.CurrentUser;
             var perms = guildUser.GetPermissions(channel);
 
             var yesEmoji = new Emoji("\uD83D\uDFE9");
@@ -47,41 +48,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithColor(color: Color.Blue)
                 .WithDescription($"Permissions for {channel.Mention}\n{yesEmoji} = Set\n{noEmoji} = Not Set");
 
-            var viewChannelField = new EmbedFieldBuilder()
-                .WithName("View Channel")
-                .WithValue(perms.ViewChannel ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(viewChannelField);
-
-            var sendMessagesField = new EmbedFieldBuilder()
-                .WithName("Send Messages")
-                .WithValue(perms.SendMessages ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(sendMessagesField);
-
-            var embedLinksField = new EmbedFieldBuilder()
-                .WithName("Embed Links")
-                .WithValue(perms.EmbedLinks ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(embedLinksField);
-
-            var useExternalEmojisField = new EmbedFieldBuilder()
-                .WithName("Use External Emojis")
-                .WithValue(perms.UseExternalEmojis ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(useExternalEmojisField);
-
-            var readMessageHistoryField = new EmbedFieldBuilder()
-                .WithName("Read Message History")
-                .WithValue(perms.ReadMessageHistory ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(readMessageHistoryField);
-
-            var mentionEveryoneField = new EmbedFieldBuilder()
-                .WithName("Mention Everyone")
-                .WithValue(perms.MentionEveryone ? yesEmoji : noEmoji)
-                .WithIsInline(true);
-            embedBuilder.AddField(mentionEveryoneField);
+            embedBuilder.AddField(name: "View Channel", value: (perms.ViewChannel ? yesEmoji : noEmoji), inline: true);
+            embedBuilder.AddField(name: "Send Messages", value: (perms.SendMessages ? yesEmoji : noEmoji), inline: true);
+            embedBuilder.AddField(name: "Embed Links", value: (perms.EmbedLinks ? yesEmoji : noEmoji), inline: true);
+            embedBuilder.AddField(name: "Use External Emojis", value: (perms.UseExternalEmojis ? yesEmoji : noEmoji), inline: true);
+            embedBuilder.AddField(name: "Read Message History", value: (perms.ReadMessageHistory ? yesEmoji : noEmoji), inline: true);
+            embedBuilder.AddField(name: "Mention Everyone", value: (perms.MentionEveryone ? yesEmoji : noEmoji), inline: true);
 
             await FollowupAsync(text: "", embed: embedBuilder.Build(), ephemeral: true);
         }
