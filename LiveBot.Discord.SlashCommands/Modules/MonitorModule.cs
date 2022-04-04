@@ -61,6 +61,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
             var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
 
+            var monitorUser = await monitor.GetUser(userId: subscription.User.SourceID);
+            monitor.AddChannel(monitorUser);
+
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
