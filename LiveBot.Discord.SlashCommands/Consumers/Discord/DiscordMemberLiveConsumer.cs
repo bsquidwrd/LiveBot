@@ -97,6 +97,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             // Check that it was created
             var streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
+            monitor.AddChannel(user);
         }
     }
 }
