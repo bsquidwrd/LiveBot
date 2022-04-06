@@ -41,21 +41,12 @@ namespace LiveBot.Discord.SlashCommands
 
             // Process the InteractionCreated payloads to execute Interactions commands
             _client.InteractionCreated += HandleInteraction;
-            _handler.SlashCommandExecuted += SlashCommandExecuted;
-            _handler.ComponentCommandExecuted += ComponentCommandExecuted;
+            _handler.InteractionExecuted += InteractionExecuted;
         }
 
         internal async Task LogAsync(LogMessage log)
         {
-            LogLevel logLevel = log.Severity switch
-            {
-                LogSeverity.Critical => LogLevel.Critical,
-                LogSeverity.Error => LogLevel.Error,
-                LogSeverity.Warning => LogLevel.Warning,
-                LogSeverity.Verbose => LogLevel.Debug,
-                LogSeverity.Debug => LogLevel.Debug,
-                _ => LogLevel.Information,
-            };
+            var logLevel = GetLogLevel(log.Severity);
             _logger.Log(logLevel: logLevel, exception: log.Exception, message: "{Source} {Message}", log.Source, log.Message);
             await Task.CompletedTask;
         }
@@ -99,22 +90,35 @@ namespace LiveBot.Discord.SlashCommands
             }
         }
 
-        private Task SlashCommandExecuted(SlashCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
-            HandlePostExecution(info: info, context: context, result: result);
-
-        private Task ComponentCommandExecuted(ComponentCommandInfo info, IInteractionContext context, DNetInteractions.IResult result) =>
-            HandlePostExecution(info: info, context: context, result: result);
-
-        private async Task HandlePostExecution(ICommandInfo info, IInteractionContext context, DNetInteractions.IResult result)
+        private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, DNetInteractions.IResult result)
         {
             if (!result.IsSuccess && result.Error != null)
             {
-                _logger.LogError(
+                try
+                {
+                    var WarningEmoji = new Emoji("\u26A0");
+                    var embed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle($"{WarningEmoji} Error!")
+                        .WithDescription(result.ErrorReason)
+                        .Build();
+
+                    await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
+                }
+                catch { }
+            }
+
+            var logLevel = LogLevel.Information;
+            if (!result.IsSuccess)
+                logLevel = LogLevel.Error;
+
+            _logger.Log(
+                    logLevel: logLevel,
                     exception: (Exception?)result.GetType()?.GetProperty("Exception")?.GetValue(result, null),
-                    message: "Error running {ModuleName} {CommandName} for {Username} ({UserId}) in {GuildName} ({GuildId}) - {ErrorType}: {ErrorReason}",
-                    info.Module.Name,
-                    info.Name,
-                    Format.UsernameAndDiscriminator(context.User),
+                    message: "Running {ModuleName} {CommandName} for {Username} ({UserId}) in {GuildName} ({GuildId}) - {ErrorType}: {ErrorReason}",
+                    commandInfo.Module.Name,
+                    commandInfo.Name,
+                    Format.UsernameAndDiscriminator(user: context.User, doBidirectional: true),
                     context.User.Id,
                     context.Guild.Name,
                     context.Guild.Id,
@@ -122,16 +126,18 @@ namespace LiveBot.Discord.SlashCommands
                     result.ErrorReason
                 );
 
-                var WarningEmoji = new Emoji("\u26A0");
-                var embed = new EmbedBuilder()
-                    .WithColor(Color.Red)
-                    .WithTitle($"{WarningEmoji} Error!")
-                    .WithDescription(result.ErrorReason)
-                    .Build();
-
-                await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
-            }
             await Task.CompletedTask;
         }
+
+        private static LogLevel GetLogLevel(LogSeverity logSeverity) =>
+            logSeverity switch
+            {
+                LogSeverity.Critical => LogLevel.Critical,
+                LogSeverity.Error => LogLevel.Error,
+                LogSeverity.Warning => LogLevel.Warning,
+                LogSeverity.Verbose => LogLevel.Debug,
+                LogSeverity.Debug => LogLevel.Debug,
+                _ => LogLevel.Information,
+            };
     }
 }
