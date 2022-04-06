@@ -42,12 +42,11 @@ namespace LiveBot.Discord.SlashCommands
             unitOfWorkFactory.Migrate();
 
             var IsDebug = builder.Configuration.GetValue<bool>("IsDebug", false);
-            var discordLogLevel = IsDebug ? LogSeverity.Debug : LogSeverity.Info;
 
             var discord = new DiscordShardedClient();
             var discordConfig = new DiscordSocketConfig()
             {
-                LogLevel = discordLogLevel,
+                LogLevel = LogSeverity.Info,
                 GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildPresences | GatewayIntents.GuildMembers,
                 SuppressUnknownDispatchWarnings = true,
                 AlwaysDownloadUsers = true,
