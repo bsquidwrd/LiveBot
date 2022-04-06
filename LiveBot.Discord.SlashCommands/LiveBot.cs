@@ -65,7 +65,6 @@ namespace LiveBot.Discord.SlashCommands
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation(message: "Stopping bot...");
-            await _client.LogoutAsync();
             await _client.StopAsync();
         }
     }
