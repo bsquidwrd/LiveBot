@@ -50,7 +50,6 @@ namespace LiveBot.Discord.SlashCommands
                     cfg.ReceiveEndpoint(Queues.DiscordMemberLive, ep => ep.Consumer<DiscordMemberLiveConsumer>(context));
                 });
             });
-            services.AddMassTransitHostedService();
             return services;
         }
     }

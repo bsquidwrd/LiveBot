@@ -20,7 +20,6 @@ namespace LiveBot.Watcher.Twitch
                     cfg.PrefetchCount = Queues.PrefetchCount;
                 });
             });
-            services.AddMassTransitHostedService();
             return services;
         }
     }
