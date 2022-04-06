@@ -33,8 +33,18 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// <returns></returns>
         [RequireBotManager]
         [SlashCommand(name: "perm-check", description: "Confirm the bot has the necessary permissions to post in a channel")]
-        public async Task PermCheckAsync(ITextChannel? channel = null)
+        public async Task PermCheckAsync(
+            [Summary(name: "channel", description: "The channel to check permissions against")]
+            [ChannelTypes(ChannelType.Text, ChannelType.News)]
+            IGuildChannel? guildChannel
+        )
         {
+            ITextChannel? channel = null;
+            if (guildChannel is not ITextChannel && guildChannel != null)
+                throw new ArgumentException("Channel must be a text channel");
+            if (guildChannel != null)
+                channel = (ITextChannel)guildChannel;
+
             if (channel == null)
                 channel = (ITextChannel)Context.Channel;
 

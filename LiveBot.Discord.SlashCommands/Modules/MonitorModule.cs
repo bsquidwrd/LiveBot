@@ -40,12 +40,24 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// <returns></returns>
         [SlashCommand(name: "create", description: "Create a stream monitor")]
         public async Task StartStreamMonitor(
-            [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
-            [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel WhereToPost,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")] string LiveMessage = Defaults.NotificationMessage,
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null
+            [Summary(name: "profile-url", description: "The profile page of the streamer")]
+            Uri ProfileURL,
+
+            [Summary(name: "where-to-post", description: "The channel to post live alerts to")]
+            [ChannelTypes(ChannelType.Text, ChannelType.News)]
+            IGuildChannel GuildChannel,
+
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
+            string LiveMessage = Defaults.NotificationMessage,
+
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
+            IRole? RoleToMention = null
         )
         {
+            if (GuildChannel is not ITextChannel)
+                throw new ArgumentException("Channel must be a text channel");
+            var WhereToPost = (ITextChannel)GuildChannel;
+
             var monitor = GetMonitor(ProfileURL);
 
             LiveMessage = LiveMessage.Trim();
@@ -81,13 +93,29 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// <returns></returns>
         [SlashCommand(name: "edit", description: "Edit a stream monitor")]
         public async Task EditStreamMonitor(
-            [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL,
-            [Summary(name: "where-to-post", description: "The channel to post live alerts to")] ITextChannel? WhereToPost = null,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")] string? LiveMessage = null,
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
-            [Summary(name: "remove-role-ping", description: "True means the role to ping will be removed, False will leave the role to be pinged")] bool RemoveRolePing = false
+            [Summary(name: "profile-url", description: "The profile page of the streamer")]
+            Uri ProfileURL,
+
+            [Summary(name: "where-to-post", description: "The channel to post live alerts to")]
+            [ChannelTypes(ChannelType.Text, ChannelType.News)]
+            IGuildChannel? GuildChannel = null,
+
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
+            string? LiveMessage = null,
+
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
+            IRole? RoleToMention = null,
+
+            [Summary(name: "remove-role-ping", description: "True means the role to ping will be removed, False will leave the role to be pinged")]
+            bool RemoveRolePing = false
         )
         {
+            ITextChannel? WhereToPost = null;
+            if (GuildChannel is not ITextChannel && GuildChannel != null)
+                throw new ArgumentException("Channel must be a text channel");
+            if (GuildChannel != null)
+                WhereToPost = (ITextChannel)GuildChannel;
+
             var monitor = GetMonitor(ProfileURL);
 
             var ResponseMessage = "";
@@ -225,13 +253,29 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         /// <returns></returns>
         [SlashCommand(name: "role", description: "Used to start monitoring a role instead of a specific user")]
         public async Task MonitorRoleAsync(
-            [Summary(name: "where-to-post", description: "The channel to post live alerts to when this role goes live")] ITextChannel? WhereToPost = null,
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")] string LiveMessage = Defaults.NotificationMessage,
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")] IRole? RoleToMention = null,
-            [Summary(name: "role-to-monitor", description: "The role to monitor for when they go live")] IRole? RoleToMonitor = null,
-            [Summary(name: "stop-monitoring", description: "Stop monitoring a role")] bool StopMonitoring = false
+            [Summary(name: "where-to-post", description: "The channel to post live alerts to when this role goes live")]
+            [ChannelTypes(ChannelType.Text, ChannelType.News)]
+            IGuildChannel? GuildChannel = null,
+
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")]
+            string LiveMessage = Defaults.NotificationMessage,
+
+            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
+            IRole? RoleToMention = null,
+
+            [Summary(name: "role-to-monitor", description: "The role to monitor for when they go live")]
+            IRole? RoleToMonitor = null,
+
+            [Summary(name: "stop-monitoring", description: "Stop monitoring a role")]
+            bool StopMonitoring = false
         )
         {
+            ITextChannel? WhereToPost = null;
+            if (GuildChannel is not ITextChannel && GuildChannel != null)
+                throw new ArgumentException("Channel must be a text channel");
+            if (GuildChannel != null)
+                WhereToPost = (ITextChannel)GuildChannel;
+
             if (WhereToPost == null && LiveMessage == null && RoleToMention == null && RoleToMonitor == null && !StopMonitoring)
             {
                 await FollowupAsync(text: $"Nothing was updated", ephemeral: true);
