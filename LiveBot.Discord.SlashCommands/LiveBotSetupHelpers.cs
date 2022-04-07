@@ -43,19 +43,20 @@ namespace LiveBot.Discord.SlashCommands
 
             var IsDebug = builder.Configuration.GetValue<bool>("IsDebug", false);
 
-            var discord = new DiscordShardedClient();
             var discordConfig = new DiscordSocketConfig()
             {
                 LogLevel = LogSeverity.Info,
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildPresences | GatewayIntents.GuildMembers,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildPresences | GatewayIntents.GuildMembers,
                 SuppressUnknownDispatchWarnings = true,
                 AlwaysDownloadUsers = true,
+                FormatUsersInBidirectionalUnicode = true,
             };
+            var discord = new DiscordShardedClient(discordConfig);
 
             builder.Services.AddRouting();
 
             // Add Discord
-            builder.Services.AddSingleton(discordConfig);
+            //builder.Services.AddSingleton(discordConfig);
             builder.Services.AddSingleton(discord);
 
             // Add interaction service

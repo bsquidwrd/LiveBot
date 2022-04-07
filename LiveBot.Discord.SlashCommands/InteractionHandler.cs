@@ -1,9 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using LiveBot.Discord.SlashCommands.Helpers;
 using LiveBot.Discord.SlashCommands.Modules;
-using System.Reflection;
 
 using DNetInteractions = Discord.Interactions;
 
@@ -29,21 +27,6 @@ namespace LiveBot.Discord.SlashCommands
             IsDebug = _configuration.GetValue<bool>("IsDebug", false);
         }
 
-        public async Task InitializeAsync()
-        {
-            // Process when the client is ready, so we can register our commands.
-            _client.ShardReady += ReadyAsync;
-            _handler.Log += LogAsync;
-
-            _handler.AddTypeConverter<Uri>(new UriConverter());
-            // Add the public modules that inherit InteractionModuleBase<T> to the InteractionService
-            await _handler.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-
-            // Process the InteractionCreated payloads to execute Interactions commands
-            _client.InteractionCreated += HandleInteraction;
-            _handler.InteractionExecuted += InteractionExecuted;
-        }
-
         internal async Task LogAsync(LogMessage log)
         {
             var logLevel = GetLogLevel(log.Severity);
@@ -51,7 +34,7 @@ namespace LiveBot.Discord.SlashCommands
             await Task.CompletedTask;
         }
 
-        private async Task ReadyAsync(DiscordSocketClient client)
+        internal async Task ReadyAsync(DiscordSocketClient client)
         {
             if (!RegisteredCommands)
             {
@@ -60,13 +43,14 @@ namespace LiveBot.Discord.SlashCommands
                     var adminGuildId = _configuration.GetValue<ulong>("testguild");
                     var adminGuild = _client.GetGuild(adminGuildId);
                     await _handler.AddModulesToGuildAsync(guild: adminGuild, deleteMissing: false, modules: _handler.GetModuleInfo<AdminModule>());
+                    _logger.LogInformation(message: "Finished registering AdminModule with shard {ShardId}", client.ShardId);
                     RegisteredCommands = true;
                 }
                 catch { }
             }
         }
 
-        private async Task HandleInteraction(SocketInteraction interaction)
+        internal async Task HandleInteraction(SocketInteraction interaction)
         {
             try
             {
@@ -90,7 +74,7 @@ namespace LiveBot.Discord.SlashCommands
             }
         }
 
-        private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, DNetInteractions.IResult result)
+        internal async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, DNetInteractions.IResult result)
         {
             if (!result.IsSuccess && result.Error != null)
             {
@@ -129,7 +113,7 @@ namespace LiveBot.Discord.SlashCommands
             await Task.CompletedTask;
         }
 
-        private static LogLevel GetLogLevel(LogSeverity logSeverity) =>
+        internal static LogLevel GetLogLevel(LogSeverity logSeverity) =>
             logSeverity switch
             {
                 LogSeverity.Critical => LogLevel.Critical,
