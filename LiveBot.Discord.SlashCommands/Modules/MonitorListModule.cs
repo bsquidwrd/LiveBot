@@ -265,7 +265,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             .WithThumbnailUrl(subscription.User.AvatarURL)
             .WithAuthor(name: subscription.User.DisplayName, iconUrl: subscription.User.AvatarURL, url: subscription.User.ProfileURL)
 
-            //.AddField(name: "Role", value: subscription.DiscordRole == null ? "none" : MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), inline: true)
             .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
             .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
             .AddField(name: "Role", value: "See the dropdown below", inline: false)
