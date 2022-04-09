@@ -46,7 +46,7 @@ namespace LiveBot.Discord.SlashCommands
             var discordConfig = new DiscordSocketConfig()
             {
                 LogLevel = LogSeverity.Info,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildPresences | GatewayIntents.GuildMembers,
+                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildPresences | GatewayIntents.GuildMembers,
                 SuppressUnknownDispatchWarnings = true,
                 AlwaysDownloadUsers = true,
                 FormatUsersInBidirectionalUnicode = true,
