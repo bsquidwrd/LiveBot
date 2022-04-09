@@ -59,7 +59,10 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
         {
-            if (beforeGuild.Name == afterGuild.Name && beforeGuild.IconUrl == afterGuild.IconUrl)
+            if (
+                beforeGuild.Name.Equals(afterGuild.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                beforeGuild.IconUrl.Equals(afterGuild.IconUrl, StringComparison.InvariantCultureIgnoreCase)
+            )
                 return;
             var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name, IconUrl = afterGuild.IconUrl };
             await _bus.Publish(context);
@@ -116,7 +119,7 @@ namespace LiveBot.Discord.SlashCommands
             SocketTextChannel beforeGuildChannel = (SocketTextChannel)beforeChannel;
             SocketTextChannel afterGuildChannel = (SocketTextChannel)afterChannel;
 
-            if (beforeGuildChannel.Name == afterGuildChannel.Name)
+            if (beforeGuildChannel.Name.Equals(afterGuildChannel.Name, StringComparison.InvariantCultureIgnoreCase))
                 return;
 
             var context = new DiscordChannelUpdate { GuildId = afterGuildChannel.Guild.Id, ChannelId = afterGuildChannel.Id, ChannelName = afterGuildChannel.Name };
@@ -154,7 +157,7 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
         {
-            if (beforeRole.Name == afterRole.Name)
+            if (beforeRole.Name.Equals(afterRole.Name, StringComparison.InvariantCultureIgnoreCase))
                 return;
             var context = new DiscordRoleUpdate { GuildId = beforeRole.Guild.Id, RoleId = afterRole.Id, RoleName = afterRole.Name };
             await _bus.Publish(context);
