@@ -5,25 +5,16 @@
     /// </summary>
     public enum ServiceEnum
     {
-        Twitch = 1
+        Twitch = 1,
     }
 
     public static class ServiceUtils
     {
-        public static uint GetAlertColor(this ServiceEnum serviceEnum)
-        {
-            // Default Twitch Purple because it's pretty
-            uint HexColor = 0x9146FF;
-            switch (serviceEnum)
+        public static uint GetAlertColor(this ServiceEnum serviceEnum) =>
+            serviceEnum switch
             {
-                case ServiceEnum.Twitch:
-                    HexColor = 0x9146FF;
-                    break;
-
-                default:
-                    break;
-            }
-            return HexColor;
-        }
+                ServiceEnum.Twitch => 0x9146FF,
+                _ => 0xFFFFFF,
+            };
     }
 }
