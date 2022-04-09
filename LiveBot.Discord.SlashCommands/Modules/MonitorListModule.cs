@@ -31,7 +31,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = subscriptions.First();
 
             var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
+            var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, guild: Context.Guild, previousSpot: -1, nextSpot: 1);
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
@@ -104,7 +104,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 }
 
                 var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
-                var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: previousSpot, nextSpot: nextSpot);
+                var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, guild: Context.Guild, previousSpot: previousSpot, nextSpot: nextSpot);
 
                 await component.UpdateAsync(x =>
                 {
@@ -123,83 +123,137 @@ namespace LiveBot.Discord.SlashCommands.Modules
         [ComponentInteraction(customId: "monitor.delete:*")]
         public async Task MonitorDeleteAsync(long subscriptionId)
         {
-            try
-            {
-                await DeferAsync(ephemeral: true);
-                var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
-                var displayName = subscription.User.DisplayName;
-                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
-                await FollowupAsync(text: $"Monitor for {Format.Bold(displayName)} has been deleted", ephemeral: true);
-            }
-            catch
-            {
-                await FollowupAsync(text: $"Unable to remove subscription", ephemeral: true);
-            }
+            await DeferAsync(ephemeral: true);
+            var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
+
+            if (subscription == null)
+                throw new ArgumentException("This subscription does not exist, maybe it was already deleted?");
+
+            var displayName = Format.Bold(subscription.User.DisplayName);
+
+            var componentBuilder = new ComponentBuilder()
+                .WithButton(label: "Confirm", customId: $"monitor.delete.confirm:{subscriptionId},{true}", style: ButtonStyle.Success)
+                .WithButton(label: "Cancel", customId: $"monitor.delete.confirm:{subscriptionId},{false}", style: ButtonStyle.Danger);
+
+            await FollowupAsync(text: $"Are you sure you wish to delete the subscription for {displayName}?", ephemeral: true, components: componentBuilder.Build());
         }
 
         #endregion monitor.delete
+
+        #region monitor.delete.confirm
+
+        [RequireBotManager]
+        [ComponentInteraction(customId: "monitor.delete.confirm:*,*")]
+        public async Task MonitorDeleteConfirmAsync(long subscriptionId, bool delete)
+        {
+            if (Context.Interaction is SocketMessageComponent component)
+            {
+                var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
+                var displayName = Format.Bold(subscription.User.DisplayName);
+                var resultMessage = "Unkown error occurred";
+
+                if (delete)
+                {
+                    try
+                    {
+                        await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+
+                        _logger.LogInformation(
+                            message: "Stream Subscription deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                            subscription.User.ServiceType,
+                            subscription.User.Username,
+                            subscription.User.SourceID,
+                            Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                            Context.User.Id,
+                            Context.Guild.Name,
+                            Context.Guild.Id
+                        );
+
+                        resultMessage = $"Monitor for {displayName} has been deleted";
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            exception: ex,
+                            message: "Stream Subscription could not be deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                            subscription.User.ServiceType,
+                            subscription.User.Username,
+                            subscription.User.SourceID,
+                            Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                            Context.User.Id,
+                            Context.Guild.Name,
+                            Context.Guild.Id
+                        );
+
+                        resultMessage = $"Unable to remove subscription for {displayName}";
+                    }
+                }
+                else
+                {
+                    resultMessage = $"Cancelled deleting monitor for {displayName}";
+                }
+
+                await component.UpdateAsync(x =>
+                {
+                    x.Content = resultMessage;
+                    x.Components = null;
+                });
+            }
+        }
+
+        #endregion monitor.delete.confirm
+
+        #region monitor.edit.roles
+
+        [ComponentInteraction(customId: "monitor.edit.roles:*")]
+        public async Task UpdateRolesAsync(long subscriptionId, string[] roleIds)
+        {
+            await DeferAsync(ephemeral: true);
+            var roles = Context.Guild.Roles.Where(i => roleIds.Contains(i.Id.ToString()));
+            await FollowupAsync(text: $"You have {roleIds.Length} selected for subscription {subscriptionId}!", ephemeral: true);
+        }
+
+        #endregion monitor.edit.roles
     }
 
     internal static class MonitorListUtils
     {
-        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, int previousSpot = 0, int nextSpot = 1)
+        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, SocketGuild guild, int previousSpot = 0, int nextSpot = 1)
         {
+            var selectMenu = new SelectMenuBuilder()
+            {
+                CustomId = $"monitor.edit.roles:{subscription.Id}",
+                MinValues = 1,
+                MaxValues = 1,
+            };
+
+            var selectedIds = new[] { subscription.DiscordRole?.DiscordId };
+            foreach (var role in guild.Roles)
+            {
+                var isDefault = selectedIds.Contains(role.Id);
+                selectMenu.AddOption(label: role.Name, value: role.Id.ToString(), isDefault: isDefault);
+            }
+
             return new ComponentBuilder()
                 .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
                 .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
                 .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
+                .WithSelectMenu(menu: selectMenu)
                 .Build();
         }
 
-        internal static Embed GetSubscriptionEmbed(StreamSubscription subscription, int subscriptionCount, int currentSpot = 0)
-        {
-            // Build the Footer of the Embed
-            var footerBuilder = new EmbedFooterBuilder()
-                .WithText($"Page {currentSpot + 1}/{subscriptionCount}");
-
-            // Build the Author of the Embed
-            var authorBuilder = new EmbedAuthorBuilder()
-                .WithName(subscription.User.DisplayName)
-                .WithIconUrl(subscription.User.AvatarURL)
-                .WithUrl(subscription.User.ProfileURL);
-
-            // Add Basic information to EmbedBuilder
-            var builder = new EmbedBuilder()
+        internal static Embed GetSubscriptionEmbed(StreamSubscription subscription, int subscriptionCount, int currentSpot = 0) =>
+            new EmbedBuilder()
                 .WithColor(subscription.User.ServiceType.GetAlertColor())
-                .WithAuthor(authorBuilder)
                 .WithThumbnailUrl(subscription.User.AvatarURL)
-                .WithFooter(footerBuilder);
+                .WithAuthor(name: subscription.User.DisplayName, iconUrl: subscription.User.AvatarURL, url: subscription.User.ProfileURL)
 
-            // Add Role field
-            var discordRole = subscription.DiscordRole == null ? "none" : MentionUtils.MentionRole(subscription.DiscordRole.DiscordId);
-            var roleBuilder = new EmbedFieldBuilder()
-                .WithIsInline(true)
-                .WithName("Role")
-                .WithValue(discordRole);
-            builder.AddField(roleBuilder);
+                //.AddField(name: "Role", value: subscription.DiscordRole == null ? "none" : MentionUtils.MentionRole(subscription.DiscordRole.DiscordId), inline: true)
+                .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
+                .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
+                .AddField(name: "Message", value: subscription.Message, inline: false)
 
-            // Add Channel field
-            var channelField = new EmbedFieldBuilder()
-                .WithIsInline(true)
-                .WithName("Channel")
-                .WithValue(MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId));
-            builder.AddField(channelField);
-
-            // Add Message field
-            var messageField = new EmbedFieldBuilder()
-                .WithIsInline(false)
-                .WithName("Message")
-                .WithValue(subscription.Message);
-            builder.AddField(messageField);
-
-            // Add Profile field
-            var profileField = new EmbedFieldBuilder()
-                .WithIsInline(false)
-                .WithName("Profile")
-                .WithValue(subscription.User.ProfileURL);
-            builder.AddField(profileField);
-
-            return builder.Build();
-        }
+                .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
+                .Build();
     }
 }
