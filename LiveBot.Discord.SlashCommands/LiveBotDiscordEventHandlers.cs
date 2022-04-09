@@ -40,6 +40,17 @@ namespace LiveBot.Discord.SlashCommands
         }
 
         /// <summary>
+        /// Discord Event Handler for when a <paramref name="guild"/> is Joined
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
+        public async Task GuildJoined(SocketGuild guild)
+        {
+            _logger.LogInformation(message: "Joined Guild {GuildName} ({GuildId})", guild.Name, guild.Id);
+            await GuildAvailable(guild);
+        }
+
+        /// <summary>
         /// Discord Event Handler for when a Guild is updated from <paramref name="beforeGuild"/> to
         /// <paramref name="afterGuild"/>
         /// </summary>
@@ -48,7 +59,7 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
         {
-            if (beforeGuild.Name == afterGuild.Name)
+            if (beforeGuild.Name == afterGuild.Name && beforeGuild.IconUrl == afterGuild.IconUrl)
                 return;
             var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name, IconUrl = afterGuild.IconUrl };
             await _bus.Publish(context);
@@ -61,6 +72,7 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task GuildLeave(SocketGuild guild)
         {
+            _logger.LogInformation(message: "Left Guild {GuildName} ({GuildId})", guild.Name, guild.Id);
             var context = new DiscordGuildDelete { GuildId = guild.Id };
             await _bus.Publish(context);
         }
@@ -72,9 +84,8 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task ChannelCreated(SocketChannel channel)
         {
-            if (channel is not SocketGuildChannel)
+            if (channel is not SocketGuildChannel socketGuildChannel)
                 return;
-            SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
             var context = new DiscordChannelUpdate { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id, ChannelName = socketGuildChannel.Name };
             await _bus.Publish(context);
         }
@@ -86,9 +97,8 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task ChannelDestroyed(SocketChannel channel)
         {
-            if (channel is not SocketGuildChannel)
+            if (channel is not SocketGuildChannel socketGuildChannel)
                 return;
-            SocketGuildChannel socketGuildChannel = (SocketGuildChannel)channel;
             var context = new DiscordChannelDelete { GuildId = socketGuildChannel.Guild.Id, ChannelId = socketGuildChannel.Id };
             await _bus.Publish(context);
         }

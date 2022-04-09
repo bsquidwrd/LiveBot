@@ -68,7 +68,7 @@ namespace LiveBot.Discord.SlashCommands
             // Guild Events
             _client.GuildAvailable += _eventHandlers.GuildAvailable;
             _client.GuildUpdated += _eventHandlers.GuildUpdated;
-            _client.JoinedGuild += _eventHandlers.GuildAvailable;
+            _client.JoinedGuild += _eventHandlers.GuildJoined;
             _client.LeftGuild += _eventHandlers.GuildLeave;
 
             // Channel Events
