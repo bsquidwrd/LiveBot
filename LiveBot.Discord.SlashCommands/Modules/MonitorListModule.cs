@@ -223,7 +223,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var selectMenu = new SelectMenuBuilder()
             {
                 CustomId = $"monitor.edit.roles:{subscription.Id}",
-                MinValues = 1,
+                MinValues = 0,
                 MaxValues = 1,
             };
 
