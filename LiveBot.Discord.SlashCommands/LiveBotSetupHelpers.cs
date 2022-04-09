@@ -60,7 +60,13 @@ namespace LiveBot.Discord.SlashCommands
             builder.Services.AddSingleton(discord);
 
             // Add interaction service
-            builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordShardedClient>()));
+            var interactionConfig = new InteractionServiceConfig()
+            {
+                LogLevel = LogSeverity.Info,
+                UseCompiledLambda = true,
+                DefaultRunMode = RunMode.Async,
+            };
+            builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordShardedClient>(), interactionConfig));
             builder.Services.AddSingleton<InteractionHandler>();
 
             // Add my own things
