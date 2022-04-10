@@ -31,7 +31,6 @@ namespace LiveBot.Discord.SlashCommands.Helpers
 
         internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, ShardedInteractionContext context, int previousSpot = 0, int nextSpot = 1) =>
             new ComponentBuilder()
-            //.WithSelectMenu(menu: GetRoleMentionSelectMenu(subscription: subscription, guild: context.Guild))
             .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
             .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
             .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
