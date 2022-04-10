@@ -1,11 +1,14 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using MassTransit;
 using System.Globalization;
+using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
@@ -58,13 +61,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             var channel = guild.GetTextChannel(guildConfig.DiscordChannel.DiscordId);
             if (channel == null) return;
 
-            // Default to none
-            var alertColor = ServiceEnum.None.GetAlertColor();
-
             // Attempt to get the color specific to the streaming service
             var monitor = _monitors.Where(i => i.IsValid(context.Message.Url)).FirstOrDefault();
-            if (monitor != null)
-                monitor.ServiceType.GetAlertColor();
+            var serviceType = monitor?.ServiceType ?? ServiceEnum.None;
+            var alertColor = serviceType.GetAlertColor();
 
             var embed = new EmbedBuilder()
                 .WithColor(color: alertColor)
@@ -81,19 +81,105 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 .Build();
 
             var roleToMention = "";
+            var guildRole = guildConfig.MentionRoleDiscordId != null ? guild.GetRole((ulong)guildConfig.MentionRoleDiscordId) : null;
             if (guildConfig.MentionRoleDiscordId != null)
                 roleToMention = MentionUtils.MentionRole((ulong)guildConfig.MentionRoleDiscordId);
 
             var message = guildConfig.Message
-                .Replace("{Name}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Username}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Game}", Format.Sanitize(memberLive.GameName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Title}", Format.Sanitize(memberLive.GameDetails), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{URL}", Format.EscapeUrl(memberLive.Url) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", roleToMention, ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Name}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
+                .Replace("{Username}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
+                .Replace("{Game}", Format.Sanitize(memberLive.GameName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
+                .Replace("{Title}", Format.Sanitize(memberLive.GameDetails), ignoreCase: true, culture: CultureInfo.InvariantCulture)
+                .Replace("{URL}", Format.EscapeUrl(memberLive.Url) ?? "", ignoreCase: true, culture: CultureInfo.InvariantCulture)
+                .Replace("{Role}", roleToMention, ignoreCase: true, culture: CultureInfo.InvariantCulture)
                 .Trim();
 
-            var discordMessage = await channel.SendMessageAsync(text: message, embed: embed);
+            Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
+                    i.User_SourceID == user.Id.ToString()
+                    && i.DiscordGuild_DiscordId == guild.Id
+                    && i.DiscordChannel_DiscordId == channel.Id
+                );
+            var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
+            previousNotifications = previousNotifications.Where(i =>
+                    memberLive.LiveTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
+                    && i.Success == true // Only pull Successful notifications
+                );
+
+            var newStreamNotification = new StreamNotification
+            {
+                ServiceType = serviceType,
+                Success = false,
+                Message = message,
+
+                User_SourceID = user.Id.ToString(),
+                User_Username = user.Username,
+                User_DisplayName = user.DisplayName,
+                User_AvatarURL = user.GetGuildAvatarUrl() ?? user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(),
+
+                Stream_Title = memberLive.GameDetails,
+                Stream_StartTime = memberLive.LiveTime,
+                Stream_StreamURL = memberLive.Url,
+
+                Game_Name = memberLive.GameName,
+
+                DiscordGuild_DiscordId = guild.Id,
+                DiscordGuild_Name = guild.Name,
+
+                DiscordChannel_DiscordId = channel.Id,
+                DiscordChannel_Name = channel.Name,
+
+                DiscordRole_DiscordId = guildRole?.Id ?? 0,
+                DiscordRole_Name = guildRole?.Name ?? "none"
+            };
+
+            Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
+                    i.User_SourceID == newStreamNotification.User_SourceID &&
+                    i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
+                    i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
+                    i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
+                    i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
+                    i.Game_SourceID == newStreamNotification.Game_SourceID
+                );
+
+            // If there is already 1 or more notifications that were successful in the past hour
+            // mark this current one as a success
+            if (previousNotifications.Any())
+                newStreamNotification.Success = true;
+
+            await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
+            StreamNotification streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
+
+            // If the current notification was marked as a success, end processing
+            if (newStreamNotification.Success == true)
+                return;
+
+            try
+            {
+                var discordMessage = await channel.SendMessageAsync(text: message, embed: embed);
+                streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
+                streamNotification.Success = true;
+                streamNotification.LogMessage = "From Discord Role Monitor";
+                await _work.NotificationRepository.UpdateAsync(streamNotification);
+            }
+            catch (Exception e)
+            {
+                if (e is HttpException discordError)
+                {
+                    // You lack permissions to perform that action
+                    if (
+                        discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                        || discordError.DiscordCode == DiscordErrorCode.MissingPermissions
+                    )
+                    {
+                        // I'm tired of seeing errors for Missing Permissions
+                        return;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message}\n{e}", streamNotification.Id, streamNotification.ServiceType, streamNotification.User_Username, streamNotification.DiscordGuild_DiscordId, streamNotification.DiscordChannel_DiscordId, streamNotification.DiscordRole_DiscordId, streamNotification.Message, e);
+                }
+            }
         }
     }
 }
