@@ -35,10 +35,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             if (discordGuild == null) return;
 
-            // If the Guild ID is not whitelisted, don't do anything This is for Beta testing
-            bool isInBeta = discordGuild?.IsInBeta ?? false;
-            if (!isInBeta) return;
-
             var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == context.Message.DiscordGuildId);
 
             // If they don't have any of the proper settings set, ignore
