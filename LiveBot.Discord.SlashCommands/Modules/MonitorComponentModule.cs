@@ -73,7 +73,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 }
 
                 var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
-                var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: previousSpot, nextSpot: nextSpot);
+                var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: previousSpot, nextSpot: nextSpot);
 
                 await component.UpdateAsync(x =>
                 {
@@ -125,6 +125,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 {
                     try
                     {
+                        foreach (var roleToMention in subscription.RolesToMention)
+                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
 
                         _logger.LogInformation(
@@ -154,7 +156,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                             Context.Guild.Id
                         );
 
-                        resultMessage = $"Unable to remove subscription for {displayName}";
+                        resultMessage = $"Unable to delete monitor for {displayName}";
                     }
                 }
                 else

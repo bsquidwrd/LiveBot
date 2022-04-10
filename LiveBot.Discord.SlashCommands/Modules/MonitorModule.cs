@@ -161,8 +161,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.User == streamUser);
             if (subscription != null)
             {
+                var displayName = Format.Bold(subscription.User.DisplayName);
+                var resultMessage = "Unkown error occurred";
                 try
                 {
+                    foreach (var roleToMention in subscription.RolesToMention)
+                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                     await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
 
                     _logger.LogInformation(
@@ -175,6 +179,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                         Context.Guild.Name,
                         Context.Guild.Id
                     );
+
+                    resultMessage = $"Monitor for {displayName} has been deleted";
                 }
                 catch (Exception ex)
                 {
@@ -189,9 +195,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                         Context.Guild.Name,
                         Context.Guild.Id
                     );
+
+                    resultMessage = $"Unable to delete monitor for {displayName}";
                 }
 
-                await FollowupAsync($"Successfully deleted the monitor for {Format.Bold(streamUser.DisplayName)}", ephemeral: true);
+                await FollowupAsync(text: resultMessage, ephemeral: true);
             }
             else
             {
@@ -385,7 +393,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             var subscription = subscriptions.First();
 
             var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: -1, nextSpot: 1);
+            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
