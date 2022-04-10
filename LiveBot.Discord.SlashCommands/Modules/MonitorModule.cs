@@ -480,8 +480,9 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             if (message != null)
                 subscription.Message = message;
 
-            if (subscription.RolesToMention?.Count > 0 && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
-                subscription.Message = "{role} " + subscription.Message;
+            if (subscription.RolesToMention != null)
+                if (subscription.RolesToMention.Any() && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
+                    subscription.Message = "{role} " + subscription.Message;
 
             await _work.SubscriptionRepository.UpdateAsync(subscription);
 
