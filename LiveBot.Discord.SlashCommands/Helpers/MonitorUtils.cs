@@ -18,7 +18,9 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 MaxValues = 5,
             };
 
-            var selectedIds = subscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct();
+            IEnumerable<ulong> selectedIds = new List<ulong>(){ };
+            if (subscription.RolesToMention != null)
+                selectedIds = subscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct();
             foreach (var role in guild.Roles)
             {
                 if (selectMenu.Options.Count >= 25)
@@ -29,7 +31,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             return selectMenu;
         }
 
-        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, ShardedInteractionContext context, int previousSpot = 0, int nextSpot = 1) =>
+        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, int previousSpot = 0, int nextSpot = 1) =>
             new ComponentBuilder()
             .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
             .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
@@ -45,7 +47,10 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
             .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
             .AddField(name: "Message", value: subscription.Message, inline: false)
-            .AddField(name: "Roles", value: String.Join(", ", subscription.RolesToMention.Select(i => MentionUtils.MentionRole(i.DiscordRoleId))), inline: false)
+            .AddField(
+                name: "Roles",
+                value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", subscription.RolesToMention.Select(i => MentionUtils.MentionRole(i.DiscordRoleId))),
+                inline: false)
 
             .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
             .Build();
