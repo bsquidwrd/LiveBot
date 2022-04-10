@@ -10,6 +10,46 @@ namespace LiveBot.Repository.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(sql: @"
+CREATE TABLE ""DiscordGuildConfig_Translation"" AS
+SELECT
+    ""DiscordGuildConfig"".""Id""
+    ,""Mention"".""DiscordId"" AS ""MentionRoleDiscordId""
+    ,""Admin"".""DiscordId"" AS ""AdminRoleDiscordId""
+    ,""Monitor"".""DiscordId"" AS ""MonitorRoleDiscordId""
+
+FROM
+    public.""DiscordGuildConfig""
+    LEFT JOIN public.""DiscordRole"" AS ""Mention"" ON ""DiscordGuildConfig"".""DiscordRoleId"" = ""Mention"".""Id""
+    LEFT JOIN public.""DiscordRole"" AS ""Admin"" ON ""DiscordGuildConfig"".""AdminRoleId"" = ""Admin"".""Id""
+    LEFT JOIN public.""DiscordRole"" AS ""Monitor"" ON ""DiscordGuildConfig"".""MonitorRoleId"" = ""Monitor"".""Id""
+
+WHERE
+    ""DiscordGuildConfig"".""DiscordRoleId"" IS NOT NULL
+    OR ""DiscordGuildConfig"".""MonitorRoleId"" IS NOT NULL
+    OR ""DiscordGuildConfig"".""AdminRoleId"" IS NOT NULL;
+
+CREATE TABLE ""StreamSubscription_Translation"" AS
+SELECT
+    ""StreamSubscription"".""Id""
+    ,""DiscordRole"".""DiscordId"" AS ""DiscordRoleId""
+
+FROM
+    public.""StreamSubscription""
+    INNER JOIN public.""DiscordRole"" ON ""StreamSubscription"".""DiscordRoleId"" = ""DiscordRole"".""Id""
+
+WHERE
+    1=1;
+
+CREATE TABLE ""StreamSubscription_Backup_IsFromRole"" AS
+SELECT*
+FROM public.""StreamSubscription""
+WHERE ""IsFromRole"" = TRUE;
+
+DELETE FROM public.""StreamSubscription""
+WHERE ""IsFromRole"" = TRUE;
+");
+
             migrationBuilder.DropForeignKey(
                 name: "FK_DiscordGuildConfig_DiscordRole_AdminRoleId",
                 table: "DiscordGuildConfig");
@@ -113,6 +153,33 @@ namespace LiveBot.Repository.Migrations
                 name: "Unique_StreamSubscription_DiscordRoleId",
                 table: "RoleToMention",
                 columns: new[] { "StreamSubscriptionId", "DiscordRoleId" });
+
+            migrationBuilder.Sql(sql: @"
+UPDATE public.""DiscordGuildConfig""
+SET
+    ""AdminRoleDiscordId"" = ""Backup"".""AdminRoleDiscordId""
+    ,""MentionRoleDiscordId"" = ""Backup"".""MentionRoleDiscordId""
+    ,""MonitorRoleDiscordId"" = ""Backup"".""MonitorRoleDiscordId""
+
+FROM
+    public.""DiscordGuildConfig_Translation"" AS ""Backup""
+
+WHERE
+    ""Backup"".""Id"" = ""DiscordGuildConfig"".""Id"";
+
+INSERT INTO public.""RoleToMention"" (""TimeStamp"", ""Deleted"", ""StreamSubscriptionId"", ""DiscordRoleId"")
+SELECT
+    CURRENT_TIMESTAMP
+    ,FALSE
+    ,""Backup"".""Id""
+    ,""Backup"".""DiscordRoleId""
+
+FROM
+    public.""StreamSubscription_Translation"" AS ""Backup""
+
+WHERE
+    1=1;
+");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
