@@ -48,10 +48,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IGuildChannel GuildChannel,
 
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
-            string LiveMessage = Defaults.NotificationMessage,
-
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
-            IRole? RoleToMention = null
+            string LiveMessage = Defaults.NotificationMessage
         )
         {
             if (GuildChannel is not ITextChannel)
@@ -70,13 +67,16 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention);
-            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning {RoleToMention?.Mention ?? "nobody"}\n";
+            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
+            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning the selected roles (if any)\n";
 
             var monitorUser = await monitor.GetUser(userId: subscription.User.SourceID);
             monitor.AddChannel(monitorUser);
 
-            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
+            var roleSelectMenu = MonitorUtils.GetRoleMentionSelectMenu(subscription: subscription, guild: Context.Guild);
+            var components = new ComponentBuilder().WithSelectMenu(roleSelectMenu).Build();
+
+            await FollowupAsync(text: $"{ResponseMessage}\nUse the selection menu to choose a role to mention", ephemeral: true, allowedMentions: allowedMentions, components: components);
         }
 
         #endregion Create command
@@ -101,13 +101,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IGuildChannel? GuildChannel = null,
 
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
-            string? LiveMessage = null,
-
-            [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
-            IRole? RoleToMention = null,
-
-            [Summary(name: "remove-role-ping", description: "True means the role to ping will be removed, False will leave the role to be pinged")]
-            bool RemoveRolePing = false
+            string? LiveMessage = null
         )
         {
             ITextChannel? WhereToPost = null;
@@ -121,8 +115,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var ResponseMessage = "";
             if (WhereToPost != null)
                 ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
-            if (RoleToMention != null)
-                ResponseMessage += $"Updated role to {RoleToMention.Mention}. ";
             if (!String.IsNullOrWhiteSpace(LiveMessage))
             {
                 if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
@@ -130,18 +122,22 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 ResponseMessage += $"Updated message to {Format.Code(LiveMessage)}. ";
             }
 
-            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost, role: RoleToMention, RemoveRole: RemoveRolePing);
+            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
 
             var allowedMentions = new AllowedMentions()
             {
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            if (WhereToPost != null || LiveMessage != null || RoleToMention != null || RemoveRolePing)
+            if (WhereToPost != null || LiveMessage != null)
                 ResponseMessage = $"Successfuly updated monitor for {Format.Bold(subscription.User.DisplayName)}! {ResponseMessage}";
             if (string.IsNullOrWhiteSpace(ResponseMessage))
                 ResponseMessage = $"Nothing was updated for {Format.Bold(subscription.User.DisplayName)}";
-            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
+
+            var roleSelectMenu = MonitorUtils.GetRoleMentionSelectMenu(subscription: subscription, guild: Context.Guild);
+            var components = new ComponentBuilder().WithSelectMenu(roleSelectMenu).Build();
+
+            await FollowupAsync(text: $"{ResponseMessage}\nUse the selection menu to choose a role to mention", ephemeral: true, allowedMentions: allowedMentions, components: components);
         }
 
         #endregion Edit command
@@ -165,7 +161,36 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var subscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.User == streamUser);
             if (subscription != null)
             {
-                await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                try
+                {
+                    await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+
+                    _logger.LogInformation(
+                        message: "Stream Subscription deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                        subscription.User.ServiceType,
+                        subscription.User.Username,
+                        subscription.User.SourceID,
+                        Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                        Context.User.Id,
+                        Context.Guild.Name,
+                        Context.Guild.Id
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        exception: ex,
+                        message: "Stream Subscription could not be deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                        subscription.User.ServiceType,
+                        subscription.User.Username,
+                        subscription.User.SourceID,
+                        Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                        Context.User.Id,
+                        Context.Guild.Name,
+                        Context.Guild.Id
+                    );
+                }
+
                 await FollowupAsync($"Successfully deleted the monitor for {Format.Bold(streamUser.DisplayName)}", ephemeral: true);
             }
             else
@@ -396,15 +421,13 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         /// <param name="message"></param>
         /// <param name="RemoveRole"></param>
         /// <returns><see cref="StreamSubscription"/></returns>
-        private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, IRole? role = null, string? message = null, bool RemoveRole = false)
+        private async Task<StreamSubscription> EditStreamSubscriptionAsync(ILiveBotMonitor monitor, Uri uri, IGuild guild, ITextChannel? channel, string? message = null)
         {
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
             DiscordChannel? discordChannel = null;
             DiscordRole? discordRole = null;
             if (channel != null)
                 discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(x => x.DiscordId == channel.Id);
-            if (role != null)
-                discordRole = await _work.RoleRepository.SingleOrDefaultAsync(x => x.DiscordId == role.Id);
 
             var streamUser = await GetStreamUserAsync(monitor, uri);
 
@@ -431,8 +454,6 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 subscription.DiscordRole = discordRole;
             if (message != null)
                 subscription.Message = message;
-            if (RemoveRole)
-                subscription.DiscordRole = null;
 
             if (subscription.DiscordRole != null && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
                 subscription.Message = "{role} " + subscription.Message;

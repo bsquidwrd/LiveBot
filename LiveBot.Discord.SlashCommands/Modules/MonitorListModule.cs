@@ -30,8 +30,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             var subscription = subscriptions.First();
 
-            var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: -1, nextSpot: 1);
+            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
+            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: -1, nextSpot: 1);
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
         }
@@ -103,8 +103,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                     }
                 }
 
-                var subscriptionEmbed = MonitorListUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
-                var messageComponents = MonitorListUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: previousSpot, nextSpot: nextSpot);
+                var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
+                var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: previousSpot, nextSpot: nextSpot);
 
                 await component.UpdateAsync(x =>
                 {
@@ -230,9 +230,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
         #endregion monitor.edit.roles
     }
 
-    internal static class MonitorListUtils
+    internal static class MonitorUtils
     {
-        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, ShardedInteractionContext context, int previousSpot = 0, int nextSpot = 1)
+        internal static SelectMenuBuilder GetRoleMentionSelectMenu(StreamSubscription subscription, SocketGuild guild)
         {
             var selectMenu = new SelectMenuBuilder()
             {
@@ -243,21 +243,23 @@ namespace LiveBot.Discord.SlashCommands.Modules
             };
 
             var selectedIds = new[] { subscription.DiscordRole?.DiscordId };
-            foreach (var role in context.Guild.Roles)
+            foreach (var role in guild.Roles)
             {
                 if (selectMenu.Options.Count >= 25)
                     break;
                 var isDefault = selectedIds.Contains(role.Id);
                 selectMenu.AddOption(label: role.Name, value: role.Id.ToString(), isDefault: isDefault);
             }
-
-            return new ComponentBuilder()
-                .WithSelectMenu(menu: selectMenu)
-                .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
-                .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
-                .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
-                .Build();
+            return selectMenu;
         }
+
+        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, ShardedInteractionContext context, int previousSpot = 0, int nextSpot = 1) =>
+            new ComponentBuilder()
+            .WithSelectMenu(menu: GetRoleMentionSelectMenu(subscription: subscription, guild: context.Guild))
+            .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
+            .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
+            .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
+            .Build();
 
         internal static Embed GetSubscriptionEmbed(StreamSubscription subscription, int subscriptionCount, int currentSpot = 0) =>
             new EmbedBuilder()
