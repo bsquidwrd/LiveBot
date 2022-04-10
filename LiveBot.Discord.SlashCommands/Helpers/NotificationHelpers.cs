@@ -21,18 +21,9 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         /// <returns></returns>
         public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
-            string RoleMention = "";
-            if (subscription.DiscordRole != null)
-            {
-                if (subscription.DiscordRole.Name == "@everyone")
-                {
-                    RoleMention = "@everyone";
-                }
-                else
-                {
-                    RoleMention = MentionUtils.MentionRole(subscription.DiscordRole.DiscordId);
-                }
-            }
+            string RoleMentions = "";
+            if (subscription.RolesToMention.Any())
+                RoleMentions = String.Join(" ", subscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
@@ -43,7 +34,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(tempGame.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", RoleMention, ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Role}", RoleMentions, ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Trim();
         }
 

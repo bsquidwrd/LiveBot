@@ -3,48 +3,17 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
-using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
+using LiveBot.Discord.SlashCommands.Helpers;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    public partial class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
+    public class MonitorComponentModule : InteractionModuleBase<ShardedInteractionContext>
     {
-        #region list command
-
-        /// <summary>
-        /// List all stream monitors in the Guild
-        /// </summary>
-        /// <returns></returns>
-        [SlashCommand(name: "list", description: "List all stream monitors")]
-        public async Task ListStreamMonitorAsync()
-        {
-            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
-            subscriptions = subscriptions.OrderBy(i => i.User.DisplayName);
-
-            if (!subscriptions.Any())
-            {
-                await FollowupAsync("There are no subscriptions for this server!", ephemeral: true);
-                return;
-            }
-
-            var subscription = subscriptions.First();
-
-            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: -1, nextSpot: 1);
-
-            await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
-        }
-
-        #endregion list command
-    }
-
-    public class MonitorListModule : InteractionModuleBase<ShardedInteractionContext>
-    {
-        private readonly ILogger<MonitorListModule> _logger;
+        private readonly ILogger<MonitorComponentModule> _logger;
         private readonly IUnitOfWork _work;
 
-        public MonitorListModule(ILogger<MonitorListModule> logger, IUnitOfWorkFactory factory)
+        public MonitorComponentModule(ILogger<MonitorComponentModule> logger, IUnitOfWorkFactory factory)
         {
             _logger = logger;
             _work = factory.Create();
@@ -205,74 +174,39 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #region monitor.edit.roles
 
+        [RequireBotManager]
         [ComponentInteraction(customId: "monitor.edit.roles:*")]
         public async Task UpdateRolesAsync(long subscriptionId, string[] roleIds)
         {
-            await DeferAsync(ephemeral: true);
-            var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
-
-            if (roleIds.Length == 0)
-                subscription.DiscordRole = null;
-            else
+            if (Context.Interaction is SocketMessageComponent component)
             {
-                foreach (var roleId in roleIds)
+                var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
+                var roleMentions = subscription.RolesToMention;
+
+                foreach (var roleMention in roleMentions.Where(i => !roleIds.Contains(i.DiscordRoleId.ToString())))
+                    await _work.RoleToMentionRepository.RemoveAsync(roleMention.Id);
+
+                foreach (var roleId in roleIds.Where(i => !roleMentions.Select(r => r.DiscordRoleId.ToString()).Contains(i)))
+                    await _work.RoleToMentionRepository.AddAsync(new RoleToMention()
+                    {
+                        StreamSubscription = subscription,
+                        DiscordRoleId = ulong.Parse(roleId),
+                    });
+
+                if (subscription.RolesToMention.Any() && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
+                    subscription.Message = String.Concat("{role} ", subscription.Message).Trim();
+                await _work.SubscriptionRepository.UpdateAsync(subscription);
+
+                await component.UpdateAsync(x =>
                 {
-                    var discordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordId.ToString() == roleId);
-                    subscription.DiscordRole = discordRole;
-                }
+                    x.Content = $"Roles to mention for {Format.Bold(subscription.User.DisplayName)} has been updated!";
+                    x.Components = null;
+                    x.Embed = null;
+                    x.Embeds = null;
+                });
             }
-
-            await _work.SubscriptionRepository.UpdateAsync(subscription);
-
-            await FollowupAsync(text: $"Monitor for {Format.Bold(subscription.User.DisplayName)} has been updated!", ephemeral: true);
         }
 
         #endregion monitor.edit.roles
-    }
-
-    internal static class MonitorUtils
-    {
-        internal static SelectMenuBuilder GetRoleMentionSelectMenu(StreamSubscription subscription, SocketGuild guild)
-        {
-            var selectMenu = new SelectMenuBuilder()
-            {
-                CustomId = $"monitor.edit.roles:{subscription.Id}",
-                Placeholder = "Role to mention",
-                MinValues = 0,
-                MaxValues = 1,
-            };
-
-            var selectedIds = new[] { subscription.DiscordRole?.DiscordId };
-            foreach (var role in guild.Roles)
-            {
-                if (selectMenu.Options.Count >= 25)
-                    break;
-                var isDefault = selectedIds.Contains(role.Id);
-                selectMenu.AddOption(label: role.Name, value: role.Id.ToString(), isDefault: isDefault);
-            }
-            return selectMenu;
-        }
-
-        internal static MessageComponent GetSubscriptionComponents(StreamSubscription subscription, ShardedInteractionContext context, int previousSpot = 0, int nextSpot = 1) =>
-            new ComponentBuilder()
-            .WithSelectMenu(menu: GetRoleMentionSelectMenu(subscription: subscription, guild: context.Guild))
-            .WithButton(label: "Back", customId: $"monitor.list:{previousSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25C0"))
-            .WithButton(label: "Next", customId: $"monitor.list:{nextSpot}", style: ButtonStyle.Primary, emote: new Emoji("\u25B6"))
-            .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
-            .Build();
-
-        internal static Embed GetSubscriptionEmbed(StreamSubscription subscription, int subscriptionCount, int currentSpot = 0) =>
-            new EmbedBuilder()
-            .WithColor(subscription.User.ServiceType.GetAlertColor())
-            .WithThumbnailUrl(subscription.User.AvatarURL)
-            .WithAuthor(name: subscription.User.DisplayName, iconUrl: subscription.User.AvatarURL, url: subscription.User.ProfileURL)
-
-            .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
-            .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
-            .AddField(name: "Role", value: "See the dropdown below", inline: false)
-            .AddField(name: "Message", value: subscription.Message, inline: false)
-
-            .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
-            .Build();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using LiveBot.Core.Contracts.Discord;
 
+#nullable disable
+
 namespace LiveBot.Discord.SlashCommands.Contracts.Discord
 {
     public class DiscordGuildAvailable : IDiscordGuildAvailable

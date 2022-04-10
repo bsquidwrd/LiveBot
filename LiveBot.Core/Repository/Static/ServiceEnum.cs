@@ -5,6 +5,7 @@
     /// </summary>
     public enum ServiceEnum
     {
+        None = 0,
         Twitch = 1,
     }
 

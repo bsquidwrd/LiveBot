@@ -24,7 +24,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 return;
 
             var discordChannels = await _work.ChannelRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
-            var discordRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
 
             // Remove Discord Guild Config
@@ -33,11 +32,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             // Remove Stream Subscriptions for this Guild
             foreach (var streamSubscription in streamSubscriptions)
+            {
+                foreach (var roleToMention in streamSubscription.RolesToMention)
+                    await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                 await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-
-            // Remove Discord Roles for this Guild
-            foreach (var discordRole in discordRoles)
-                await _work.RoleRepository.RemoveAsync(discordRole.Id);
+            }
 
             // Remove Discord Channels for this Guild
             foreach (var discordChannel in discordChannels)

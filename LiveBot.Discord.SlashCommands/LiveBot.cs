@@ -77,9 +77,7 @@ namespace LiveBot.Discord.SlashCommands
             _client.ChannelUpdated += _eventHandlers.ChannelUpdated;
 
             // Role Events
-            _client.RoleCreated += _eventHandlers.RoleCreated;
             _client.RoleDeleted += _eventHandlers.RoleDeleted;
-            _client.RoleUpdated += _eventHandlers.RoleUpdated;
 
             // User Events
             _client.PresenceUpdated += _eventHandlers.PresenceUpdated;

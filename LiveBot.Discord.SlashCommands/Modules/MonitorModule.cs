@@ -13,7 +13,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 {
     [RequireBotManager]
     [Group(name: "monitor", description: "Commands for manipulating stream monitors")]
-    public partial class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
+    public class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<MonitorModule> _logger;
         private readonly IUnitOfWork _work;
@@ -344,15 +344,15 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             }
 
             if (RoleToMonitor != null)
-                guildConfig.MonitorRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == RoleToMonitor.Id);
+                guildConfig.MonitorRoleDiscordId = RoleToMonitor.Id;
 
             if (RoleToMention != null)
-                guildConfig.DiscordRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == RoleToMention.Id);
+                guildConfig.MentionRoleDiscordId = RoleToMention.Id;
 
             if (StopMonitoring)
             {
-                guildConfig.MonitorRole = null;
-                guildConfig.DiscordRole = null;
+                guildConfig.MonitorRoleDiscordId = null;
+                guildConfig.MentionRoleDiscordId = null;
                 guildConfig.DiscordChannel = null;
                 guildConfig.Message = null;
             }
@@ -363,6 +363,34 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         }
 
         #endregion Role command
+
+        #region List command
+
+        /// <summary>
+        /// List all stream monitors in the Guild
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand(name: "list", description: "List all stream monitors")]
+        public async Task ListStreamMonitorAsync()
+        {
+            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
+            subscriptions = subscriptions.OrderBy(i => i.User.DisplayName);
+
+            if (!subscriptions.Any())
+            {
+                await FollowupAsync("There are no subscriptions for this server!", ephemeral: true);
+                return;
+            }
+
+            var subscription = subscriptions.First();
+
+            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
+            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, context: Context, previousSpot: -1, nextSpot: 1);
+
+            await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
+        }
+
+        #endregion List command
 
         #endregion Slash Commands
 
@@ -425,7 +453,6 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         {
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(x => x.DiscordId == guild.Id);
             DiscordChannel? discordChannel = null;
-            DiscordRole? discordRole = null;
             if (channel != null)
                 discordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(x => x.DiscordId == channel.Id);
 
@@ -450,12 +477,10 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
 
             if (discordChannel != null)
                 subscription.DiscordChannel = discordChannel;
-            if (discordRole != null)
-                subscription.DiscordRole = discordRole;
             if (message != null)
                 subscription.Message = message;
 
-            if (subscription.DiscordRole != null && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
+            if (subscription.RolesToMention.Any() && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
                 subscription.Message = "{role} " + subscription.Message;
 
             await _work.SubscriptionRepository.UpdateAsync(subscription);

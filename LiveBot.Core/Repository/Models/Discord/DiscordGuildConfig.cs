@@ -6,8 +6,8 @@
         public long DiscordGuildId { get; set; }
         public virtual DiscordGuild DiscordGuild { get; set; }
         public virtual DiscordChannel DiscordChannel { get; set; }
-        public virtual DiscordRole DiscordRole { get; set; }
-        public virtual DiscordRole MonitorRole { get; set; }
-        public virtual DiscordRole AdminRole { get; set; }
+        public virtual ulong? MentionRoleDiscordId { get; set; }
+        public virtual ulong? MonitorRoleDiscordId { get; set; }
+        public virtual ulong? AdminRoleDiscordId { get; set; }
     }
 }

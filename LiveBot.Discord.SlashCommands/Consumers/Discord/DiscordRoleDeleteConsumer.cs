@@ -18,38 +18,34 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         public async Task Consume(ConsumeContext<IDiscordRoleDelete> context)
         {
             var message = context.Message;
-            var role = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
 
-            if (role == null)
-                return;
-
-            var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordRole.DiscordId == message.RoleId && i.DiscordGuild.DiscordId == message.GuildId);
-            foreach (var subscription in subscriptions)
-            {
-                subscription.DiscordRole = null;
-                await _work.SubscriptionRepository.UpdateAsync(subscription);
-            }
+            var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.DiscordRoleId == message.RoleId);
+            foreach (var roleToMention in rolesToMention)
+                await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
 
             var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
             if (guildConfig != null)
             {
                 bool update = false;
-                if (guildConfig.DiscordRole == role)
+                if (guildConfig.MonitorRoleDiscordId == message.RoleId)
                 {
-                    guildConfig.DiscordRole = null;
+                    guildConfig.MonitorRoleDiscordId = null;
                     update = true;
                 }
-                if (guildConfig.MonitorRole == role)
+                if (guildConfig.MentionRoleDiscordId == message.RoleId)
                 {
-                    guildConfig.MonitorRole = null;
+                    guildConfig.MentionRoleDiscordId = null;
+                    update = true;
+                }
+                if (guildConfig.AdminRoleDiscordId == message.RoleId)
+                {
+                    guildConfig.AdminRoleDiscordId = null;
                     update = true;
                 }
 
                 if (update)
                     await _work.GuildConfigRepository.UpdateAsync(guildConfig);
             }
-
-            await _work.RoleRepository.RemoveAsync(role.Id);
         }
     }
 }

@@ -1,10 +1,11 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using MassTransit;
-using System.Linq.Expressions;
+using System.Globalization;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
@@ -25,10 +26,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
         public async Task Consume(ConsumeContext<IDiscordMemberLive> context)
         {
-            var monitor = _monitors.Where(i => i.IsValid(context.Message.Url)).FirstOrDefault();
-            if (monitor == null) return;
+            var memberLive = context.Message;
 
-            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == context.Message.DiscordGuildId && i.IsInBeta == true);
+            var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == memberLive.DiscordGuildId && i.IsInBeta == true);
 
             if (discordGuild == null) return;
 
@@ -40,64 +40,60 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             // If they don't have any of the proper settings set, ignore
             if (guildConfig == null) return;
-            if (guildConfig.MonitorRole == null || guildConfig.DiscordChannel == null || guildConfig.Message == null)
+            if (guildConfig.MonitorRoleDiscordId == null || guildConfig.DiscordChannel == null || guildConfig.Message == null)
                 return;
 
-            var user = await monitor.GetUser(profileURL: context.Message.Url);
-            var streamUser = new StreamUser()
-            {
-                ServiceType = user.ServiceType,
-                SourceID = user.Id,
-                Username = user.Username,
-                DisplayName = user.DisplayName,
-                AvatarURL = user.AvatarURL,
-                ProfileURL = user.ProfileURL
-            };
-            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == user.ServiceType && i.SourceID == user.Id));
-            streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == user.ServiceType && i.SourceID == user.Id);
-
-            Expression<Func<StreamSubscription, bool>> streamSubscriptionPredicate = (i =>
-                i.User == streamUser &&
-                i.DiscordGuild == discordGuild
-            );
-
-            var existingSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
-
-            var guild = _client.GetGuild(context.Message.DiscordGuildId);
+            // Get the guild
+            var guild = _client.GetGuild(memberLive.DiscordGuildId);
             if (guild == null) return;
-            var guildMember = guild.GetUser(context.Message.DiscordUserId);
 
-            var userHasMonitorRole = guildMember.Roles.Select(i => i.Id).Distinct().Contains(guildConfig.MonitorRole.DiscordId);
+            // Get the guild user
+            var user = guild.GetUser(memberLive.DiscordUserId);
+            if (user == null) return;
 
-            // If there's an existing subscription, check that they still have the role
-            if (existingSubscription != null)
-            {
-                // If it's not from a role, just return and stop processing
-                if (!existingSubscription.IsFromRole)
-                    return;
-                // If the user does not have the role, remove their subscription
-                if (!userHasMonitorRole)
-                    await _work.SubscriptionRepository.RemoveAsync(existingSubscription.Id);
-            }
+            // If the user doesn't have the monitor role, return
+            if (!user.Roles.Any(i => i.Id == guildConfig.MonitorRoleDiscordId)) return;
 
-            if (!userHasMonitorRole)
-                return;
+            // Get the channel
+            var channel = guild.GetTextChannel(guildConfig.DiscordChannel.DiscordId);
+            if (channel == null) return;
 
-            var newSubscription = new StreamSubscription()
-            {
-                User = streamUser,
-                DiscordGuild = discordGuild,
-                DiscordChannel = guildConfig.DiscordChannel,
-                DiscordRole = guildConfig.DiscordRole,
-                Message = guildConfig.Message,
-                IsFromRole = true
-            };
+            // Default to none
+            var alertColor = ServiceEnum.None.GetAlertColor();
 
-            await _work.SubscriptionRepository.AddOrUpdateAsync(newSubscription, streamSubscriptionPredicate);
+            // Attempt to get the color specific to the streaming service
+            var monitor = _monitors.Where(i => i.IsValid(context.Message.Url)).FirstOrDefault();
+            if (monitor != null)
+                monitor.ServiceType.GetAlertColor();
 
-            // Check that it was created
-            var streamSubscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
-            monitor.AddChannel(user);
+            var embed = new EmbedBuilder()
+                .WithColor(color: alertColor)
+                .WithDescription(description: Format.Sanitize(memberLive.GameDetails))
+                .WithAuthor(user: user)
+                .WithFooter(text: "Stream start time")
+                .WithCurrentTimestamp()
+                .WithUrl(url: memberLive.Url)
+                .WithThumbnailUrl(thumbnailUrl: user.GetGuildAvatarUrl() ?? user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
+
+                .AddField(name: "Game", value: memberLive.GameName, inline: true)
+                .AddField(name: "Stream", value: memberLive.Url, inline: true)
+
+                .Build();
+
+            var roleToMention = "";
+            if (guildConfig.MentionRoleDiscordId != null)
+                roleToMention = MentionUtils.MentionRole((ulong)guildConfig.MentionRoleDiscordId);
+
+            var message = guildConfig.Message
+                .Replace("{Name}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Username}", Format.Sanitize(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Game}", Format.Sanitize(memberLive.GameName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Title}", Format.Sanitize(memberLive.GameDetails), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{URL}", Format.EscapeUrl(memberLive.Url) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Role}", roleToMention, ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Trim();
+
+            var discordMessage = await channel.SendMessageAsync(text: message, embed: embed);
         }
     }
 }

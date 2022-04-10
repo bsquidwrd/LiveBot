@@ -54,7 +54,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             {
                 if (AdminRole.Id != Context.Guild.EveryoneRole.Id)
                 {
-                    guildConfig.AdminRole = await _work.RoleRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == AdminRole.Id);
+                    guildConfig.AdminRoleDiscordId = AdminRole.Id;
                     ResponseMessage += $"Set {Format.Bold(AdminRole?.Name)} as the bot manager role. ";
                 }
                 else

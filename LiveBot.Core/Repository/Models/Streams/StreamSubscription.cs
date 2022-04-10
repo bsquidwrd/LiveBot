@@ -1,4 +1,6 @@
 ﻿using LiveBot.Core.Repository.Models.Discord;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace LiveBot.Core.Repository.Models.Streams
 {
@@ -7,8 +9,9 @@ namespace LiveBot.Core.Repository.Models.Streams
         public virtual StreamUser User { get; set; }
         public virtual DiscordGuild DiscordGuild { get; set; }
         public virtual DiscordChannel DiscordChannel { get; set; }
-        public virtual DiscordRole DiscordRole { get; set; }
         public string Message { get; set; }
-        public bool IsFromRole { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<RoleToMention> RolesToMention { get; set; }
     }
 }
