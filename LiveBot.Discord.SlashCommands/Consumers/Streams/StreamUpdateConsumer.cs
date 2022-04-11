@@ -85,7 +85,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
 
                 var discordChannel = streamSubscription.DiscordChannel;
-                var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>

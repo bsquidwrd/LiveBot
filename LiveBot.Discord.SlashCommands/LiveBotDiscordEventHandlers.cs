@@ -127,17 +127,6 @@ namespace LiveBot.Discord.SlashCommands
         }
 
         /// <summary>
-        /// Discord Event Handler for when a <paramref name="role"/> is created
-        /// </summary>
-        /// <param name="role"></param>
-        /// <returns></returns>
-        public async Task RoleCreated(SocketRole role)
-        {
-            var context = new DiscordRoleUpdate { GuildId = role.Guild.Id, RoleId = role.Id, RoleName = role.Name };
-            await _bus.Publish(context);
-        }
-
-        /// <summary>
         /// Discord Event Handler for when a <paramref name="role"/> is deleted
         /// </summary>
         /// <param name="role"></param>
@@ -145,21 +134,6 @@ namespace LiveBot.Discord.SlashCommands
         public async Task RoleDeleted(SocketRole role)
         {
             var context = new DiscordRoleDelete { GuildId = role.Guild.Id, RoleId = role.Id };
-            await _bus.Publish(context);
-        }
-
-        /// <summary>
-        /// Discord Event Handler for when a Role is updated from <paramref name="beforeRole"/> to
-        /// <paramref name="afterRole"/>
-        /// </summary>
-        /// <param name="beforeRole"></param>
-        /// <param name="afterRole"></param>
-        /// <returns></returns>
-        public async Task RoleUpdated(SocketRole beforeRole, SocketRole afterRole)
-        {
-            if (beforeRole.Name.Equals(afterRole.Name, StringComparison.InvariantCultureIgnoreCase))
-                return;
-            var context = new DiscordRoleUpdate { GuildId = beforeRole.Guild.Id, RoleId = afterRole.Id, RoleName = afterRole.Name };
             await _bus.Publish(context);
         }
 
@@ -201,9 +175,11 @@ namespace LiveBot.Discord.SlashCommands
                 // Publish a Member Live Event for processing
                 await _bus.Publish(new DiscordMemberLive
                 {
-                    Url = userGame.Url,
                     DiscordGuildId = guild.Id,
-                    DiscordUserId = user.Id
+                    DiscordUserId = user.Id,
+                    Url = userGame.Url,
+                    GameName = userGame.Name,
+                    GameDetails = userGame.Details,
                 });
             }
         }

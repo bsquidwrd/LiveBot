@@ -81,7 +81,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
 
                 var discordChannel = streamSubscription.DiscordChannel;
-                var discordRole = streamSubscription.DiscordRole;
                 var discordGuild = streamSubscription.DiscordGuild;
 
                 SocketGuild? guild = null;
@@ -169,8 +168,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     DiscordChannel_DiscordId = discordChannel.DiscordId,
                     DiscordChannel_Name = discordChannel.Name,
 
-                    DiscordRole_DiscordId = discordRole == null ? 0 : discordRole.DiscordId,
-                    DiscordRole_Name = discordRole?.Name
+                    DiscordRole_DiscordId = 0,
+                    DiscordRole_Name = String.Join(",", streamSubscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct())
                 };
 
                 Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>

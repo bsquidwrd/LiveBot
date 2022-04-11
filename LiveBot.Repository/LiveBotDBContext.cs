@@ -24,12 +24,12 @@ namespace LiveBot.Repository
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }
         public DbSet<DiscordChannel> DiscordChannel { get; set; }
-        public DbSet<DiscordRole> DiscordRole { get; set; }
         public DbSet<StreamSubscription> StreamSubscription { get; set; }
         public DbSet<StreamUser> StreamUser { get; set; }
         public DbSet<StreamNotification> StreamNotification { get; set; }
         public DbSet<StreamGame> StreamGame { get; set; }
         public DbSet<MonitorAuth> MonitorAuth { get; set; }
         public DbSet<DiscordGuildConfig> DiscordGuildConfig { get; set; }
+        public DbSet<RoleToMention> RoleToMention { get; set; }
     }
 }

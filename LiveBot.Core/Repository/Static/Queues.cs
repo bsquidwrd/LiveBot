@@ -22,7 +22,6 @@ namespace LiveBot.Core.Repository.Static
         public static readonly string DiscordGuildDelete = "discord_guilddelete";
         public static readonly string DiscordChannelUpdate = "discord_channelupdate";
         public static readonly string DiscordChannelDelete = "discord_channeldelete";
-        public static readonly string DiscordRoleUpdate = "discord_roleupdate";
         public static readonly string DiscordRoleDelete = "discord_roledelete";
 
         public static readonly string DiscordMemberLive = "discord_memberlive";

@@ -78,33 +78,16 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
             #region Handle Roles
 
-            var dbRoles = await _work.RoleRepository.FindAsync(i => i.DiscordGuild == discordGuild);
-
-            foreach (var role in guild.Roles)
-            {
-                var existingRoles = dbRoles.Where(i => i.DiscordId == role.Id && i.Name == role.Name);
-                if (existingRoles.Any())
-                    continue;
-                await _bus.Publish(new DiscordRoleUpdate
-                {
-                    GuildId = guild.Id,
-                    RoleId = role.Id,
-                    RoleName = role.Name,
-                });
-            }
-
+            var dbRoles = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription.DiscordGuild == discordGuild);
             var roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
             if (dbRoles.Any())
             {
-                foreach (var roleId in dbRoles.Select(i => i.DiscordId).Distinct().Except(roleIDs))
-                {
-                    ;
+                foreach (var roleId in dbRoles.Select(i => i.DiscordRoleId).Distinct().Except(roleIDs))
                     await _bus.Publish(new DiscordRoleDelete
                     {
                         GuildId = guild.Id,
                         RoleId = roleId,
                     });
-                }
             }
 
             #endregion Handle Roles

@@ -10,12 +10,12 @@ namespace LiveBot.Core.Repository.Interfaces
     {
         IGuildRepository GuildRepository { get; }
         IChannelRepository ChannelRepository { get; }
-        IRoleRepository RoleRepository { get; }
         ISubscriptionRepository SubscriptionRepository { get; }
         IUserRepository UserRepository { get; }
         INotificationRepository NotificationRepository { get; }
         IGameRepository GameRepository { get; }
         IAuthRepository AuthRepository { get; }
         IGuildConfigRepository GuildConfigRepository { get; }
+        IRoleToMentionRepository RoleToMentionRepository { get; }
     }
 }
