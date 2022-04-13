@@ -1,4 +1,4 @@
-using LiveBot.Core.Repository.Base.Monitor;
+﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
@@ -87,7 +87,7 @@ namespace LiveBot.Watcher.Twitch
             StartTime = DateTime.UtcNow;
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.Twitch;
-            URLPattern = "^((http|https):\\/\\/|)([\\w\\d]+\\.)?twitch\\.tv/(?<username>[a-zA-Z0-9_]{1,})";
+            URLPattern = ServiceUtils.TwitchUrlPattern;
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
