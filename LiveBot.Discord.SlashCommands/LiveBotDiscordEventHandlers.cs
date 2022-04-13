@@ -170,18 +170,14 @@ namespace LiveBot.Discord.SlashCommands
             if (userGame == null)
                 return;
 
-            foreach (var guild in user.MutualGuilds)
+            // Publish a Member Live Event for processing
+            await _bus.Publish(new DiscordMemberLive
             {
-                // Publish a Member Live Event for processing
-                await _bus.Publish(new DiscordMemberLive
-                {
-                    DiscordGuildId = guild.Id,
-                    DiscordUserId = user.Id,
-                    Url = userGame.Url,
-                    GameName = userGame.Name,
-                    GameDetails = userGame.Details,
-                });
-            }
+                DiscordUserId = user.Id,
+                Url = userGame.Url,
+                GameName = userGame.Name,
+                GameDetails = userGame.Details,
+            });
         }
     }
 }
