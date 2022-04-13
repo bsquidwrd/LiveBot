@@ -412,9 +412,9 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         /// <exception cref="ArgumentException"></exception>
         private ILiveBotMonitor GetMonitor(Uri uri)
         {
-            var monitor = _monitors.Where(x => x.IsValid(uri.AbsoluteUri)).FirstOrDefault();
+            var monitor = _monitors.Where(x => x.IsValid(uri.AbsoluteUri) && x.IsEnabled == true).FirstOrDefault();
             if (monitor == null)
-                throw new ArgumentException($"Invalid/unsupported Profile URL {Format.EscapeUrl(uri.AbsoluteUri)}");
+                throw new ArgumentException($"Invalid/unsupported Profile URL for manual monitoring\n{Format.EscapeUrl(uri.AbsoluteUri)}");
             return monitor;
         }
 

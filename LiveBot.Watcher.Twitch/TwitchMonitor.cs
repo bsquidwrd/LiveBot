@@ -1,4 +1,4 @@
-﻿using LiveBot.Core.Repository.Base.Monitor;
+using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
@@ -83,6 +83,7 @@ namespace LiveBot.Watcher.Twitch
             _bus = bus;
             _configuration = configuration;
 
+            IsEnabled = true;
             StartTime = DateTime.UtcNow;
             BaseURL = "https://twitch.tv";
             ServiceType = ServiceEnum.Twitch;
