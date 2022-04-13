@@ -224,10 +224,22 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
                     streamNotification.Success = true;
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
+
+                    _logger.LogInformation(
+                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                        streamNotification.Id,
+                        streamNotification.ServiceType,
+                        streamNotification.User_Username,
+                        streamNotification.DiscordGuild_DiscordId,
+                        streamNotification.DiscordChannel_DiscordId,
+                        streamNotification.DiscordRole_DiscordId,
+                        streamNotification.Message,
+                        false
+                    );
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    if (e is HttpException discordError)
+                    if (ex is HttpException discordError)
                     {
                         // You lack permissions to perform that action
                         if (
@@ -241,7 +253,18 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                     else
                     {
-                        _logger.LogError("Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message}\n{e}", streamNotification.Id, streamNotification.ServiceType, streamNotification.User_Username, streamNotification.DiscordGuild_DiscordId, streamNotification.DiscordChannel_DiscordId, streamNotification.DiscordRole_DiscordId, streamNotification.Message, e);
+                        _logger.LogError(
+                            exception: ex,
+                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                            streamNotification.Id,
+                            streamNotification.ServiceType,
+                            streamNotification.User_Username,
+                            streamNotification.DiscordGuild_DiscordId,
+                            streamNotification.DiscordChannel_DiscordId,
+                            streamNotification.DiscordRole_DiscordId,
+                            streamNotification.Message,
+                            false
+                        );
                     }
                 }
             }
