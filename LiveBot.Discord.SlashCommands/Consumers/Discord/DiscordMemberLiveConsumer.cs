@@ -177,13 +177,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
 
                     _logger.LogInformation(
-                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
                         streamNotification.Id,
                         streamNotification.ServiceType,
                         streamNotification.User_Username,
                         streamNotification.DiscordGuild_DiscordId,
                         streamNotification.DiscordChannel_DiscordId,
-                        streamNotification.DiscordRole_DiscordId,
+                        streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                         streamNotification.Message,
                         true
                     );
@@ -206,13 +206,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     {
                         _logger.LogError(
                             exception: ex,
-                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
                             streamNotification.Id,
                             streamNotification.ServiceType,
                             streamNotification.User_Username,
                             streamNotification.DiscordGuild_DiscordId,
                             streamNotification.DiscordChannel_DiscordId,
-                            streamNotification.DiscordRole_DiscordId,
+                            streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                             streamNotification.Message,
                             true
                         );

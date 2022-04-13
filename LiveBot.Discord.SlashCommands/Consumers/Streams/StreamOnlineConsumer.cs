@@ -58,7 +58,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
             else
             {
-                StreamGame newStreamGame = new StreamGame
+                var newStreamGame = new StreamGame
                 {
                     ServiceType = stream.ServiceType,
                     SourceId = game.Id,
@@ -140,7 +140,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
-                StreamNotification newStreamNotification = new StreamNotification
+                var newStreamNotification = new StreamNotification
                 {
                     ServiceType = stream.ServiceType,
                     Success = false,
@@ -226,13 +226,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
 
                     _logger.LogInformation(
-                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
                         streamNotification.Id,
                         streamNotification.ServiceType,
                         streamNotification.User_Username,
                         streamNotification.DiscordGuild_DiscordId,
                         streamNotification.DiscordChannel_DiscordId,
-                        streamNotification.DiscordRole_DiscordId,
+                        streamNotification.DiscordRole_Name.Split(","),
                         streamNotification.Message,
                         false
                     );
@@ -255,13 +255,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     {
                         _logger.LogError(
                             exception: ex,
-                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {RoleId}, {Message} {IsFromRole}",
+                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
                             streamNotification.Id,
                             streamNotification.ServiceType,
                             streamNotification.User_Username,
                             streamNotification.DiscordGuild_DiscordId,
                             streamNotification.DiscordChannel_DiscordId,
-                            streamNotification.DiscordRole_DiscordId,
+                            streamSubscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct().ToList(),
                             streamNotification.Message,
                             false
                         );
