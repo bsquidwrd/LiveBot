@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
 using System.Globalization;
@@ -16,13 +17,15 @@ namespace LiveBot.Discord.SlashCommands.Modules
         private readonly IConfiguration configuration;
         private readonly InteractionService commands;
         private readonly IUnitOfWork work;
+        private readonly IEnumerable<ILiveBotMonitor> monitors;
 
-        public AdminModule(ILogger<AdminModule> logger, IConfiguration configuration, InteractionService commands, IUnitOfWorkFactory factory)
+        public AdminModule(ILogger<AdminModule> logger, IConfiguration configuration, InteractionService commands, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors)
         {
             this.logger = logger;
             this.configuration = configuration;
             this.commands = commands;
             this.work = factory.Create();
+            this.monitors = monitors;
         }
 
         #region Ping command
@@ -179,5 +182,24 @@ namespace LiveBot.Discord.SlashCommands.Modules
         }
 
         #endregion Stats command
+
+        #region Url Parse test
+
+        [SlashCommand(name: "parse", description: "Used to test a URL and try to locate a monitor")]
+        public async Task MonitorTestAsync(
+            [Summary(name: "url", description: "The URL to parse")] Uri uri)
+        {
+            var monitor = monitors.Where(x => x.IsValid(uri.AbsoluteUri)).FirstOrDefault();
+            var serviceType = uri.ToServiceEnum();
+            var monitorBase = monitor?.BaseURL == null ? Format.Bold("unknown") : Format.EscapeUrl(monitor.BaseURL);
+
+            var embed = new EmbedBuilder()
+                .WithColor(serviceType.GetAlertColor())
+                .WithDescription($"Service Type {Format.Bold(serviceType.ToString())} is {Format.Bold(((monitor?.IsEnabled ?? false) ? "enabled" : "disabled"))} with Base URL {monitorBase}")
+                .Build();
+            await FollowupAsync(embed: embed, ephemeral: true);
+        }
+
+        #endregion Url Parse test
     }
 }
