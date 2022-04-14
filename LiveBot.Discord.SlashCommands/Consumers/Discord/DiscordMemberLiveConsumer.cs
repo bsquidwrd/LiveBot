@@ -33,6 +33,29 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             var user = _client.GetUser(message.DiscordUserId);
             if (user == null) return;
 
+            // I don't care about bots
+            if (user.IsBot)
+                return;
+
+            // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
+            StreamingGame? userGame = null;
+            foreach (var userActivity in user.Activities)
+            {
+                if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame game)
+                {
+                    // If there's no URL, then skip
+                    if (String.IsNullOrWhiteSpace(game.Url))
+                        continue;
+
+                    userGame = game;
+                    break;
+                }
+            }
+
+            // Incase one couldn't be found, skip
+            if (userGame == null)
+                return;
+
             foreach (var guild in user.MutualGuilds)
             {
                 if (guild == null) continue;
