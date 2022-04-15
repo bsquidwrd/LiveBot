@@ -193,7 +193,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
                 try
                 {
-                    var discordMessage = await channel.SendMessageAsync(text: guildConfig.Message, embed: embed);
+                    var discordMessage = await channel.SendMessageAsync(text: liveMessage, embed: embed);
                     streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
                     streamNotification.Success = true;
                     streamNotification.LogMessage = "From Discord Role Monitor";
