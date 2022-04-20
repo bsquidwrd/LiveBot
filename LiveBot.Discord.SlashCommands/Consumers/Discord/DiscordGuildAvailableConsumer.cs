@@ -79,10 +79,16 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             #region Handle Roles
 
             var dbRoles = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription.DiscordGuild == discordGuild);
+            var dbRoleIds = dbRoles.Select(i => i.DiscordRoleId).Distinct().ToList();
             var roleIDs = guild.Roles.Select(i => i.Id).Distinct().ToList();
-            if (dbRoles.Any())
+
+            if (discordGuild.Config?.AdminRoleDiscordId != null) dbRoleIds.Add((ulong)discordGuild.Config.AdminRoleDiscordId);
+            if (discordGuild.Config?.MonitorRoleDiscordId != null) dbRoleIds.Add((ulong)discordGuild.Config.MonitorRoleDiscordId);
+            if (discordGuild.Config?.MentionRoleDiscordId != null) dbRoleIds.Add((ulong)discordGuild.Config.MentionRoleDiscordId);
+
+            if (dbRoleIds.Any())
             {
-                foreach (var roleId in dbRoles.Select(i => i.DiscordRoleId).Distinct().Except(roleIDs))
+                foreach (var roleId in dbRoleIds.Distinct().Except(roleIDs))
                     await _bus.Publish(new DiscordRoleDelete
                     {
                         GuildId = guild.Id,
