@@ -108,7 +108,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #endregion Beta command
 
-        #region Info command
+        #region Guild Info command
 
         /// <summary>
         /// Given an Id, get some basic information about the Guild that may help
@@ -117,9 +117,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        [SlashCommand(name: "info", description: "Get misc information of a guild (used for troubleshooting)")]
-        public async Task AdminInfoCommandAsync(
-            [Summary(name: "guild-id", description: "The Guild Id to get information for")] string? id = null
+        [SlashCommand(name: "guildinfo", description: "Get misc information of a guild (used for troubleshooting)")]
+        public async Task AdminGuildInfoCommandAsync(
+            [Summary(name: "id", description: "The Guild Id to get information for")] string? id = null
         )
         {
             if (id == null)
@@ -132,7 +132,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 throw new Exception($"Unable to find the Guild with Id {guildId}");
 
             var discordGuild = await work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
-            var notifications = await work.NotificationRepository.FindAsync(i => i.DiscordGuild_DiscordId == guild.Id && i.Success == true);
+            var notifications = await work.NotificationRepository.FindAsync(i => i.DiscordGuild_DiscordId == guild.Id && i.Success == true && i.DiscordMessage_DiscordId != null);
             var latestNotification = notifications.OrderByDescending(i => i.TimeStamp).FirstOrDefault();
 
             var embedBuilder = new EmbedBuilder()
@@ -142,10 +142,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithThumbnailUrl(guild.IconUrl)
                 .WithDescription($"");
 
-            embedBuilder.AddField(name: "Creation Date", value: $"{guild.CreatedAt.UtcDateTime.ToString("u", CultureInfo.GetCultureInfo("en-US"))}", inline: true);
-            embedBuilder.AddField(name: "Subscription Count", value: $"{discordGuild.StreamSubscriptions.Count}", inline: true);
-            embedBuilder.AddField(name: "Notification Count", value: $"{notifications.Count()}", inline: true);
-            embedBuilder.AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"}", inline: true);
+            embedBuilder
+                .AddField(name: "Creation Date", value: $"{guild.CreatedAt.UtcDateTime.ToString("u", CultureInfo.GetCultureInfo("en-US"))}", inline: true)
+                .AddField(name: "Subscription Count", value: $"{discordGuild.StreamSubscriptions.Count}", inline: true)
+                .AddField(name: "Notification Count", value: $"{notifications.Count()}", inline: true)
+                .AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"}", inline: true);
 
             foreach (var serviceType in notifications.Select(i => i.ServiceType).Distinct())
                 embedBuilder.AddField(name: $"{serviceType} Subscriptions", value: notifications.Count(i => i.ServiceType == serviceType), inline: true);
@@ -153,7 +154,98 @@ namespace LiveBot.Discord.SlashCommands.Modules
             await FollowupAsync(text: $"Guild information for {Format.Bold(guild.Name)}", embed: embedBuilder.Build(), ephemeral: true);
         }
 
-        #endregion Info command
+        #endregion Guild Info command
+
+        #region User Info Command
+
+        /// <summary>
+        /// Get information about a user, and their mutual guilds with the bot
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="gid"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [SlashCommand(name: "userinfo", description: "Get misc information about a user (used for troubleshooting)")]
+        public async Task AdminUserInfoCommandAsync(
+            [Summary(name: "id", description: "The User Id to get information for")] string id,
+            [Summary(name: "guildid", description: "The Guild Id to check too")] string? gid = null
+        )
+        {
+            if (!ulong.TryParse(id, out var userId))
+                throw new Exception("Could not parse User Id");
+
+            var user = Context.Client.GetUser(userId);
+
+            var userEmbedBuilder = new EmbedBuilder()
+                .WithColor(Color.Green)
+                .WithAuthor(user)
+                .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
+                .WithFooter(user.Id.ToString());
+
+            userEmbedBuilder
+                .AddField(name: "Created Date", value: $"{TimestampTag.FromDateTime(user.CreatedAt.UtcDateTime, TimestampTagStyles.Relative)}", inline: true)
+                .AddField(name: "Mutual Servers", value: $"{user.MutualGuilds.Count}", inline: true);
+
+            await FollowupAsync(text: $"User information for {Format.Bold(Format.UsernameAndDiscriminator(user: user, doBidirectional: true))}", embed: userEmbedBuilder.Build(), ephemeral: true);
+
+            foreach (var guildChunk in user.MutualGuilds.Chunk(10))
+            {
+                var guildEmbeds = new List<Embed>();
+
+                foreach (var guild in guildChunk)
+                {
+                    if (gid != null)
+                        if (gid != guild.Id.ToString())
+                            continue;
+
+                    var discordGuild = await work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
+                    var notifications = await work.NotificationRepository.FindAsync(i => i.DiscordGuild_DiscordId == guild.Id && i.Success == true && i.DiscordMessage_DiscordId != null);
+                    var latestNotification = notifications.OrderByDescending(i => i.TimeStamp).FirstOrDefault();
+
+                    var guildUser = guild.GetUser(user.Id);
+
+                    var guildEmbedBuilder = new EmbedBuilder()
+                        .WithColor(Color.Green)
+                        .WithAuthor(user)
+                        .WithThumbnailUrl(guild.IconUrl)
+                        .WithFooter(guild.Id.ToString());
+
+                    string userPermissions = "";
+                    if (guild.OwnerId == user.Id)
+                        userPermissions = "Owner";
+                    else if (guildUser.GuildPermissions.Administrator)
+                        userPermissions = "Administrator";
+                    else if (guildUser.GuildPermissions.ManageGuild)
+                        userPermissions = "Manage Guild";
+                    else
+                    {
+                        var adminRoleId = discordGuild.Config.AdminRoleDiscordId;
+                        if (adminRoleId != null)
+                            if (guildUser.Roles.Where(i => i.Id == adminRoleId).Any())
+                                userPermissions = "Admin Role";
+                    }
+                    if (string.IsNullOrWhiteSpace(userPermissions))
+                        continue;
+
+                    TimestampTag notificationTimestampTag = null;
+                    if (latestNotification != null)
+                        notificationTimestampTag = TimestampTag.FromDateTime(latestNotification.TimeStamp, TimestampTagStyles.Relative);
+
+                    guildEmbedBuilder
+                        .AddField(name: "Creation Date", value: $"{TimestampTag.FromDateTime(guild.CreatedAt.UtcDateTime, TimestampTagStyles.Relative)}", inline: true)
+                        .AddField(name: "Subscription Count", value: $"{discordGuild.StreamSubscriptions.Count}", inline: true)
+                        .AddField(name: "Notification Count", value: $"{notifications.Count()}", inline: true)
+                        .AddField(name: "Latest Notification", value: $"{latestNotification?.ServiceType} {latestNotification?.User_Username ?? "none"} {(notificationTimestampTag?.ToString() ?? "unknown")}", inline: true)
+                        .AddField(name: "Has Permission", value: $"{userPermissions}", inline: true);
+
+                    guildEmbeds.Add(guildEmbedBuilder.Build());
+                }
+                if (guildEmbeds.Any())
+                    await FollowupAsync(embeds: guildEmbeds.ToArray(), ephemeral: true);
+            }
+        }
+
+        #endregion User Info Command
 
         #region Stats command
 
@@ -173,9 +265,13 @@ namespace LiveBot.Discord.SlashCommands.Modules
             embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptions.Count()}", inline: true);
             embedBuilder.AddField(name: "Unique Subscription Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}", inline: true);
 
-            Enum.GetValues<ServiceEnum>().ToList().ForEach(service =>
+            Enum.GetValues<ServiceEnum>()
+                .Where(i => i != ServiceEnum.None)
+                .ToList()
+                .ForEach(service =>
             {
-                embedBuilder.AddField(name: $"{service} Subscriptions", value: $"{subscriptions.Count(i => i.User.ServiceType == service)}", inline: true);
+                if (subscriptions.Any(i => i.User.ServiceType == service))
+                    embedBuilder.AddField(name: $"{service} Subscriptions", value: $"{subscriptions.Count(i => i.User.ServiceType == service)}", inline: true);
             });
 
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
