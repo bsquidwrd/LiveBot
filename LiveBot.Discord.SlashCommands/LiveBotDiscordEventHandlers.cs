@@ -47,7 +47,7 @@ namespace LiveBot.Discord.SlashCommands
         public async Task GuildJoined(SocketGuild guild)
         {
             _logger.LogInformation(message: "Joined Guild {GuildName} ({GuildId})", guild.Name, guild.Id);
-            await GuildAvailable(guild);
+            await Task.CompletedTask;
         }
 
         /// <summary>
