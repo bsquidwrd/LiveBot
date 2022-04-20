@@ -23,7 +23,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             string RoleMentions = "";
             if (subscription.RolesToMention.Any())
-                RoleMentions = String.Join(" ", subscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
+                RoleMentions = String.Join(" ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
