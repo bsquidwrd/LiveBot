@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
@@ -18,7 +17,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 MaxValues = 5,
             };
 
-            IEnumerable<ulong> selectedIds = new List<ulong>(){ };
+            IEnumerable<ulong> selectedIds = new List<ulong>() { };
             if (subscription.RolesToMention != null)
                 selectedIds = subscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct();
             foreach (var role in guild.Roles)
@@ -49,7 +48,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             .AddField(name: "Message", value: subscription.Message, inline: false)
             .AddField(
                 name: "Roles",
-                value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", subscription.RolesToMention.Select(i => MentionUtils.MentionRole(i.DiscordRoleId))),
+                value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => MentionUtils.MentionRole(i.DiscordRoleId))),
                 inline: false)
 
             .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
