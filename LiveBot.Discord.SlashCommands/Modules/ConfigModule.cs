@@ -87,7 +87,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             var configEmbed = new EmbedBuilder()
                 .WithColor(Color.Green)
-                .WithDescription("Server Settings")
+                .WithThumbnailUrl(Context.Guild.IconUrl)
+                .WithFooter(text: Context.Guild.Id.ToString())
                 .AddField(name: "Bot Manager Role", value: (guildConfig?.AdminRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.AdminRoleDiscordId)), inline: false)
                 .AddField(name: "Default Live Message", value: Format.Code((guildConfig?.Message ?? Defaults.NotificationMessage)), inline: false)
                 .AddField(name: "Role Config - Monitor", value: (guildConfig?.MonitorRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.MonitorRoleDiscordId)), inline: true)
