@@ -48,7 +48,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IGuildChannel GuildChannel,
 
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
-            string LiveMessage = Defaults.NotificationMessage
+            string LiveMessage = "default"
         )
         {
             if (GuildChannel is not ITextChannel)
@@ -56,11 +56,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var WhereToPost = (ITextChannel)GuildChannel;
 
             var monitor = GetMonitor(ProfileURL);
+            var guild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
 
             LiveMessage = LiveMessage.Trim();
-            if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = Defaults.NotificationMessage;
+            if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = "default";
             if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
-                LiveMessage = Defaults.NotificationMessage;
+                LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
 
             var allowedMentions = new AllowedMentions()
             {
@@ -111,6 +112,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 WhereToPost = (ITextChannel)GuildChannel;
 
             var monitor = GetMonitor(ProfileURL);
+            var guild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
 
             var ResponseMessage = "";
             if (WhereToPost != null)
@@ -118,7 +120,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             if (!String.IsNullOrWhiteSpace(LiveMessage))
             {
                 if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
-                    LiveMessage = Defaults.NotificationMessage;
+                    LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
                 ResponseMessage += $"Updated message to {Format.Code(LiveMessage)}. ";
             }
 
