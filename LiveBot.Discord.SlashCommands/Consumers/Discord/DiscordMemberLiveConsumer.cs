@@ -204,8 +204,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                         streamNotification.Id,
                         streamNotification.ServiceType,
                         streamNotification.User_Username,
-                        streamNotification.DiscordGuild_DiscordId,
-                        streamNotification.DiscordChannel_DiscordId,
+                        streamNotification.DiscordGuild_DiscordId.ToString(),
+                        streamNotification.DiscordChannel_DiscordId.ToString(),
                         streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                         streamNotification.Message,
                         true
@@ -233,8 +233,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                             streamNotification.Id,
                             streamNotification.ServiceType,
                             streamNotification.User_Username,
-                            streamNotification.DiscordGuild_DiscordId,
-                            streamNotification.DiscordChannel_DiscordId,
+                            streamNotification.DiscordGuild_DiscordId.ToString(),
+                            streamNotification.DiscordChannel_DiscordId.ToString(),
                             streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                             streamNotification.Message,
                             true

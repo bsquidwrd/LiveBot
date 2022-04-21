@@ -103,9 +103,9 @@ namespace LiveBot.Discord.SlashCommands
                     commandInfo?.Module?.Name ?? "Unknown",
                     commandInfo?.Name ?? "Unknown",
                     Format.UsernameAndDiscriminator(user: context.User, doBidirectional: true),
-                    context.User.Id,
+                    context.User.Id.ToString(),
                     context.Guild.Name,
-                    context.Guild.Id,
+                    context.Guild.Id.ToString(),
                     result.Error,
                     result.ErrorReason
                 );

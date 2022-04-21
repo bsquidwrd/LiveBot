@@ -46,7 +46,7 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task GuildJoined(SocketGuild guild)
         {
-            _logger.LogInformation(message: "Joined Guild {GuildName} ({GuildId})", guild.Name, guild.Id);
+            _logger.LogInformation(message: "Joined Guild {GuildName} ({GuildId})", guild.Name, guild.Id.ToString());
             await Task.CompletedTask;
         }
 
@@ -75,7 +75,7 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public async Task GuildLeave(SocketGuild guild)
         {
-            _logger.LogInformation(message: "Left Guild {GuildName} ({GuildId})", guild.Name, guild.Id);
+            _logger.LogInformation(message: "Left Guild {GuildName} ({GuildId})", guild.Name, guild.Id.ToString());
             var context = new DiscordGuildDelete { GuildId = guild.Id };
             await _bus.Publish(context);
         }

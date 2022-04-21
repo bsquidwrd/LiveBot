@@ -135,9 +135,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
                             subscription.User.Username,
                             subscription.User.SourceID,
                             Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
-                            Context.User.Id,
+                            Context.User.Id.ToString(),
                             Context.Guild.Name,
-                            Context.Guild.Id
+                            Context.Guild.Id.ToString()
                         );
 
                         resultMessage = $"Monitor for {displayName} has been deleted";
@@ -151,9 +151,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
                             subscription.User.Username,
                             subscription.User.SourceID,
                             Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
-                            Context.User.Id,
+                            Context.User.Id.ToString(),
                             Context.Guild.Name,
-                            Context.Guild.Id
+                            Context.Guild.Id.ToString()
                         );
 
                         resultMessage = $"Unable to delete monitor for {displayName}";

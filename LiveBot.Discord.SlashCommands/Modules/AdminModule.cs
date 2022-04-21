@@ -101,7 +101,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             await work.GuildRepository.UpdateAsync(discordGuild);
             discordGuild = await work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
 
-            logger.LogInformation(message: "Set Beta status of {GuildName} ({GuildId}) to {BetaStatus}", discordGuild.Name, discordGuild.DiscordId, discordGuild.IsInBeta);
+            logger.LogInformation(message: "Set Beta status of {GuildName} ({GuildId}) to {BetaStatus}", discordGuild.Name, discordGuild.DiscordId.ToString(), discordGuild.IsInBeta);
 
             await FollowupAsync(text: $"I have updated the beta status for {Format.Code(discordGuild.Name)} to {Format.Code(discordGuild.IsInBeta.ToString())}", ephemeral: true);
         }
