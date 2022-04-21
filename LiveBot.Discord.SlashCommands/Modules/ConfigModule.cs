@@ -23,7 +23,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         [SlashCommand(name: "config", description: "Configure some general settings for the server overall")]
         public async Task ConfigSetupAsync(
-            [Summary(name: "admin-role", description: "The role allowed to manage the bot, so you don't need to assign Manage Server")] IRole? AdminRole = null
+            [Summary(name: "admin-role", description: "The role allowed to manage the bot, so you don't need to assign Manage Server")]
+        IRole? AdminRole = null,
+
+            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")]
+            string LiveMessage = null
         )
         {
             var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
@@ -62,6 +66,16 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 {
                     ResponseMessage += "You can't set the bot manager role to everyone. ";
                 }
+            }
+
+            if (LiveMessage != null)
+            {
+                if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    LiveMessage = Defaults.NotificationMessage;
+                }
+                guildConfig.Message = LiveMessage;
+                ResponseMessage += $"Updated guild default live message to be {Format.Code(LiveMessage)}. ";
             }
 
             await _work.GuildConfigRepository.UpdateAsync(guildConfig);

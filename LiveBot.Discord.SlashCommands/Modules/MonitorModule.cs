@@ -292,9 +292,6 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             [ChannelTypes(ChannelType.Text, ChannelType.News)]
             IGuildChannel? GuildChannel = null,
 
-            [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")]
-            string LiveMessage = Defaults.NotificationMessage,
-
             [Summary(name: "role-to-mention", description: "The role to replace {role} with in the live message (default is none)")]
             IRole? RoleToMention = null,
 
@@ -311,7 +308,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             if (GuildChannel != null)
                 WhereToPost = (ITextChannel)GuildChannel;
 
-            if (WhereToPost == null && LiveMessage == null && RoleToMention == null && RoleToMonitor == null && !StopMonitoring)
+            if (WhereToPost == null && RoleToMention == null && RoleToMonitor == null && !StopMonitoring)
             {
                 await FollowupAsync(text: $"Nothing was updated", ephemeral: true);
                 return;
@@ -344,15 +341,6 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             if (WhereToPost != null)
                 guildConfig.DiscordChannel = await _work.ChannelRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id && i.DiscordId == WhereToPost.Id);
 
-            if (LiveMessage != null)
-            {
-                if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    LiveMessage = Defaults.NotificationMessage;
-                }
-                guildConfig.Message = LiveMessage;
-            }
-
             if (RoleToMonitor != null)
                 guildConfig.MonitorRoleDiscordId = RoleToMonitor.Id;
 
@@ -364,7 +352,6 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 guildConfig.MonitorRoleDiscordId = null;
                 guildConfig.MentionRoleDiscordId = null;
                 guildConfig.DiscordChannel = null;
-                guildConfig.Message = null;
             }
 
             await _work.GuildConfigRepository.UpdateAsync(guildConfig);
