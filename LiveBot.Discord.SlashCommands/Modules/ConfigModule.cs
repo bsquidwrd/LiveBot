@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -70,7 +71,16 @@ namespace LiveBot.Discord.SlashCommands.Modules
             else
                 ResponseMessage = "Nothing was updated";
 
-            await FollowupAsync(text: ResponseMessage, ephemeral: true);
+            var configEmbed = new EmbedBuilder()
+                .WithColor(Color.Green)
+                .WithDescription("Server Settings")
+                .AddField(name: "Bot Manager Role", value: (guildConfig?.AdminRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.AdminRoleDiscordId)), inline: false)
+                .AddField(name: "Default Live Message", value: (guildConfig?.Message ?? Defaults.NotificationMessage), inline: false)
+                .AddField(name: "Role Monitor - Role to Monitor", value: (guildConfig?.MonitorRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.MonitorRoleDiscordId)), inline: true)
+                .AddField(name: "Role Monitor - Role to Mention", value: (guildConfig?.MentionRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.MentionRoleDiscordId)), inline: true)
+                .Build();
+
+            await FollowupAsync(text: ResponseMessage, embed: configEmbed, ephemeral: true);
         }
 
         #endregion Config command
