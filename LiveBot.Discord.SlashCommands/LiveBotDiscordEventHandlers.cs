@@ -151,17 +151,6 @@ namespace LiveBot.Discord.SlashCommands
             if (user.IsBot)
                 return;
 
-            // If none of the activies are Streaming, then skip
-            if (!afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming))
-                return;
-
-            // If they were previously streaming, and are currently streaming
-            if (
-                beforePresence.Activities.Any(i => i.Type == ActivityType.Streaming)
-                && afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming)
-            )
-                return;
-
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
             StreamingGame? userGame = null;
             foreach (var userActivity in afterPresence.Activities)
