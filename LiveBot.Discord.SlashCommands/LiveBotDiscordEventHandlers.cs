@@ -150,26 +150,32 @@ namespace LiveBot.Discord.SlashCommands
             // I don't care about bots
             if (user.IsBot)
                 return;
+
             // If none of the activies are Streaming, then skip
             if (!afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming))
                 return;
 
-            //If they were previously streaming, and are currently streaming
+            // If they were previously streaming, and are currently streaming
             if (
                 beforePresence.Activities.Any(i => i.Type == ActivityType.Streaming)
                 && afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming)
             )
                 return;
 
-            // Convert to a list of streaming games
-            IEnumerable<StreamingGame> streamingGames = afterPresence
-                .Activities
-                .Where(i => i.Type == ActivityType.Streaming)
-                .Select(i => (StreamingGame)i)
-                .Where(i => !String.IsNullOrWhiteSpace(i.Url));
-
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
-            StreamingGame? userGame = streamingGames.FirstOrDefault();
+            StreamingGame? userGame = null;
+            foreach (var userActivity in afterPresence.Activities)
+            {
+                if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame game)
+                {
+                    // If there's no URL, then skip
+                    if (String.IsNullOrWhiteSpace(game.Url))
+                        continue;
+
+                    userGame = game;
+                    break;
+                }
+            }
 
             // Incase one couldn't be found, skip
             if (userGame == null)
