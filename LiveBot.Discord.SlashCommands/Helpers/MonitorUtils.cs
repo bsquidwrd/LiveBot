@@ -9,12 +9,15 @@ namespace LiveBot.Discord.SlashCommands.Helpers
     {
         internal static SelectMenuBuilder GetRoleMentionSelectMenu(StreamSubscription subscription, SocketGuild guild)
         {
+            var maxRoleSelections = 5;
+            if (guild.Roles.Count < 5)
+                maxRoleSelections = guild.Roles.Count;
             var selectMenu = new SelectMenuBuilder()
             {
                 CustomId = $"monitor.edit.roles:{subscription.Id}",
                 Placeholder = "Role to mention",
                 MinValues = 0,
-                MaxValues = 5,
+                MaxValues = maxRoleSelections,
             };
 
             IEnumerable<ulong> selectedIds = new List<ulong>() { };
