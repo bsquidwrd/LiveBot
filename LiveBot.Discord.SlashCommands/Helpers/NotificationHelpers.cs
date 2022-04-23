@@ -17,16 +17,23 @@ namespace LiveBot.Discord.SlashCommands.Helpers
 
         public static string FormatNotificationMessage(string message, IEnumerable<IRole> roles, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
         {
-            roles = roles.OrderBy(i => i.Name);
             var roleStrings = new List<string>();
-            foreach (var role in roles)
+            if (roles.Any())
             {
-                if (role.Name.Equals("@everyone", StringComparison.CurrentCulture))
-                    roleStrings.Add("@everyone");
-                else if (role.Name.Equals("@here", StringComparison.CurrentCulture))
-                    roleStrings.Add("@here");
-                else
-                    roleStrings.Add(role.Mention);
+                roles = roles.OrderBy(i => i.Name);
+                foreach (var role in roles)
+                {
+                    if (role.Name.Equals("@everyone", StringComparison.CurrentCulture))
+                        roleStrings.Add("@everyone");
+                    else if (role.Name.Equals("@here", StringComparison.CurrentCulture))
+                        roleStrings.Add("@here");
+                    else
+                        roleStrings.Add(role.Mention);
+                }
+            }
+            else
+            {
+                roleStrings.Add("");
             }
             return message
                 .Replace("{Name}", EscapeSpecialDiscordCharacters(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
