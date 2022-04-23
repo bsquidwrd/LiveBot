@@ -61,7 +61,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             {
                 if (guild == null) continue;
 
-                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id && i.IsInBeta == true);
+                var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
                 if (discordGuild == null) continue;
 
                 // If they don't have any of the proper settings set, ignore
