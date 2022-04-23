@@ -26,6 +26,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordChannel.DiscordId == message.ChannelId && i.DiscordGuild.DiscordId == message.GuildId);
             foreach (var subscription in subscriptions)
             {
+                foreach (var roleToMention in subscription.RolesToMention)
+                    await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                 await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
             }
 
