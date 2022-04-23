@@ -21,7 +21,12 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", roleMentions, ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace(
+                    "{Role}",
+                    roleMentions.Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase),
+                    ignoreCase: true,
+                    culture: CultureInfo.CurrentCulture
+                )
                 .Trim();
 
         /// <summary>
@@ -37,7 +42,6 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             string RoleMentions = "";
             if (subscription.RolesToMention.Any())
                 RoleMentions = String.Join(" ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
-            RoleMentions = RoleMentions.Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase);
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
@@ -57,7 +61,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             var RoleMention = "";
             if (config.MentionRoleDiscordId.HasValue)
-                RoleMention = MentionUtils.MentionRole(config.MentionRoleDiscordId.Value).Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase);
+                RoleMention = MentionUtils.MentionRole(config.MentionRoleDiscordId.Value);
 
             return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roleMentions: RoleMention, stream: stream, user: user, game: game);
         }
