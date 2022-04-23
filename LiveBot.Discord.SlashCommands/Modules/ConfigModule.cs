@@ -93,6 +93,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .AddField(name: "Default Live Message", value: Format.Code((guildConfig?.Message ?? Defaults.NotificationMessage)), inline: false)
                 .AddField(name: "Role Config - Monitor", value: (guildConfig?.MonitorRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.MonitorRoleDiscordId)), inline: true)
                 .AddField(name: "Role Config - Mention", value: (guildConfig?.MentionRoleDiscordId == null ? "none" : MentionUtils.MentionRole((ulong)guildConfig.MentionRoleDiscordId)), inline: true)
+                .AddField(name: "Role Config - Channel", value: (guildConfig?.DiscordChannel?.DiscordId == null ? "none" : MentionUtils.MentionChannel((ulong)guildConfig.DiscordChannel.DiscordId)), inline: true)
                 .Build();
 
             await FollowupAsync(text: ResponseMessage, embed: configEmbed, ephemeral: true);
