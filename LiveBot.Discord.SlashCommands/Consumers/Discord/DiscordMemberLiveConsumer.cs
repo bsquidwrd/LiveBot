@@ -6,8 +6,9 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
+using LiveBot.Discord.SlashCommands.Helpers;
+using LiveBot.Discord.SlashCommands.Models;
 using MassTransit;
-using System.Globalization;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
@@ -104,33 +105,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     catch (NotImplementedException) { }
                 }
 
-                var embed = new EmbedBuilder()
-                    .WithColor(color: alertColor)
-                    .WithDescription(description: Format.Sanitize(message.GameDetails))
-                    .WithAuthor(user: guildUser)
-                    .WithFooter(text: "Stream start time")
-                    .WithCurrentTimestamp()
-                    .WithUrl(url: message.Url)
-                    .WithThumbnailUrl(thumbnailUrl: guildUser.GetGuildAvatarUrl() ?? guildUser.GetAvatarUrl() ?? guildUser.GetDefaultAvatarUrl())
+                var discordGame = new DiscordGame(serviceType, userGame);
+                var discordUser = new DiscordUser(serviceType, guildUser);
+                var discordStream = new DiscordStream(serviceType, message, discordUser, discordGame);
 
-                    .AddField(name: "Game", value: message.GameName, inline: true)
-                    .AddField(name: "Stream", value: message.Url, inline: true)
-
-                    .Build();
-
-                var roleToMention = "";
-                var guildRole = guildConfig.MentionRoleDiscordId != null ? guild.GetRole((ulong)guildConfig.MentionRoleDiscordId) : null;
-                if (guildConfig.MentionRoleDiscordId != null)
-                    roleToMention = MentionUtils.MentionRole((ulong)guildConfig.MentionRoleDiscordId);
-
-                var liveMessage = guildConfig.Message
-                    .Replace("{Name}", Format.Sanitize(guildUser.DisplayName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Replace("{Username}", Format.Sanitize(guildUser.DisplayName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Replace("{Game}", Format.Sanitize(message.GameName), ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Replace("{Title}", Format.Sanitize(message.GameDetails), ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Replace("{URL}", Format.EscapeUrl(message.Url) ?? "", ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Replace("{Role}", roleToMention, ignoreCase: true, culture: CultureInfo.InvariantCulture)
-                    .Trim();
+                var embed = NotificationHelpers.GetStreamEmbed(discordStream, discordUser, discordGame);
+                var liveMessage = NotificationHelpers.GetNotificationMessage(stream: discordStream, config: guildConfig, user: discordUser, game: discordGame);
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
                         i.User_SourceID == guildUser.Id.ToString()
@@ -143,6 +123,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                         && i.Success == true // Only pull Successful notifications
                     );
 
+                var guildRole = guildConfig.MentionRoleDiscordId != null ? guild.GetRole((ulong)guildConfig.MentionRoleDiscordId) : null;
                 var newStreamNotification = new StreamNotification
                 {
                     ServiceType = serviceType,
@@ -167,7 +148,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     DiscordChannel_Name = channel.Name,
 
                     DiscordRole_DiscordId = guildRole?.Id ?? 0,
-                    DiscordRole_Name = guildRole?.Name ?? "none"
+                    DiscordRole_Name = guildRole?.Name ?? "none",
                 };
 
                 Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>

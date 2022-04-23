@@ -1,5 +1,6 @@
 ﻿using Discord;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using System.Globalization;
@@ -13,29 +14,52 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             return Format.Sanitize(input);
         }
 
+        public static string FormatNotificationMessage(string message, string roleMentions, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game) =>
+            message
+                .Replace("{Name}", EscapeSpecialDiscordCharacters(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Username}", EscapeSpecialDiscordCharacters(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Game}", EscapeSpecialDiscordCharacters(game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Replace("{Role}", roleMentions, ignoreCase: true, culture: CultureInfo.CurrentCulture)
+                .Trim();
+
         /// <summary>
         /// Formats a notification string with the necessary parameters
         /// </summary>
         /// <param name="stream"></param>
-        /// <param name="message"></param>
+        /// <param name="subscription"></param>
+        /// <param name="user"></param>
+        /// <param name="game"></param>
         /// <returns></returns>
         public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
             string RoleMentions = "";
             if (subscription.RolesToMention.Any())
                 RoleMentions = String.Join(" ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
+            RoleMentions = RoleMentions.Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase);
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
 
-            return subscription.Message
-                .Replace("{Name}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Username}", EscapeSpecialDiscordCharacters(tempUser.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Game}", EscapeSpecialDiscordCharacters(tempGame.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace("{Role}", RoleMentions, ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Trim();
+            return FormatNotificationMessage(message: subscription.Message, roleMentions: RoleMentions, stream: stream, user: tempUser, game: tempGame);
+        }
+
+        /// <summary>
+        /// Formats a notification string with the necessary parameters
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="config"></param>
+        /// <param name="user"></param>
+        /// <param name="game"></param>
+        /// <returns></returns>
+        public static string GetNotificationMessage(ILiveBotStream stream, DiscordGuildConfig config, ILiveBotUser user, ILiveBotGame game)
+        {
+            var RoleMention = "";
+            if (config.MentionRoleDiscordId.HasValue)
+                RoleMention = MentionUtils.MentionRole(config.MentionRoleDiscordId.Value).Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase);
+
+            return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roleMentions: RoleMention, stream: stream, user: user, game: game);
         }
 
         /// <summary>
