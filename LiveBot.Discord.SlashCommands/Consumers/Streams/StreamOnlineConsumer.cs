@@ -137,7 +137,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                 }
 
-                string notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: streamSubscription, user: user, game: game);
+                string notificationMessage = NotificationHelpers.GetNotificationMessage(guild: guild, stream: stream, subscription: streamSubscription, user: user, game: game);
                 Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
 
                 var newStreamNotification = new StreamNotification

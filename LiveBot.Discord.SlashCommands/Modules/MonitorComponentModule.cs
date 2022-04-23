@@ -72,7 +72,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                     }
                 }
 
-                var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
+                var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(guild: Context.Guild, currentSpot: currentSpot, subscription: subscription, subscriptionCount: subscriptions.Count());
                 var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: previousSpot, nextSpot: nextSpot);
 
                 await component.UpdateAsync(x =>

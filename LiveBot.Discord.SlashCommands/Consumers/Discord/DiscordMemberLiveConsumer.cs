@@ -110,7 +110,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 var discordStream = new DiscordStream(serviceType, message, discordUser, discordGame);
 
                 var embed = NotificationHelpers.GetStreamEmbed(discordStream, discordUser, discordGame);
-                var liveMessage = NotificationHelpers.GetNotificationMessage(stream: discordStream, config: guildConfig, user: discordUser, game: discordGame);
+                var liveMessage = NotificationHelpers.GetNotificationMessage(guild: guild, stream: discordStream, config: guildConfig, user: discordUser, game: discordGame);
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
                         i.User_SourceID == guildUser.Id.ToString()

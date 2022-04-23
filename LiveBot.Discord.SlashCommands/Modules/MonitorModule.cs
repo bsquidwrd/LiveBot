@@ -268,7 +268,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             {
                 var streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: stream.User, game: stream.Game);
                 var bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
-                var notificationMessage = NotificationHelpers.GetNotificationMessage(stream: stream, subscription: bogusSubscription);
+                var notificationMessage = NotificationHelpers.GetNotificationMessage(guild: Context.Guild, stream: stream, subscription: bogusSubscription);
                 await FollowupAsync(text: notificationMessage, embed: streamEmbed, ephemeral: true);
             }
         }
@@ -381,7 +381,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
 
             var subscription = subscriptions.First();
 
-            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
+            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(guild: Context.Guild, currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
             var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
 
             await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);

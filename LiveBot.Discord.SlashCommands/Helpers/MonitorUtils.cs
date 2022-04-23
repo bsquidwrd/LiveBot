@@ -37,21 +37,35 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             .WithButton(label: "Delete", customId: $"monitor.delete:{subscription.Id}", style: ButtonStyle.Danger, emote: new Emoji("\uD83D\uDDD1"))
             .Build();
 
-        internal static Embed GetSubscriptionEmbed(StreamSubscription subscription, int subscriptionCount, int currentSpot = 0) =>
-            new EmbedBuilder()
-            .WithColor(subscription.User.ServiceType.GetAlertColor())
-            .WithThumbnailUrl(subscription.User.AvatarURL)
-            .WithAuthor(name: subscription.User.DisplayName, iconUrl: subscription.User.AvatarURL, url: subscription.User.ProfileURL)
+        internal static Embed GetSubscriptionEmbed(SocketGuild guild, StreamSubscription subscription, int subscriptionCount, int currentSpot = 0)
+        {
+            var roles = new List<SocketRole>();
+            if (subscription.RolesToMention.Any())
+                roles = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).ToList();
 
-            .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
-            .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
-            .AddField(name: "Message", value: subscription.Message, inline: false)
-            .AddField(
-                name: "Roles",
-                value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => MentionUtils.MentionRole(i.DiscordRoleId))),
-                inline: false)
+            var roleStrings = new List<string>();
+            foreach (var role in roles.OrderBy(i => i.Name))
+            {
+                if (role.Name.Equals("@everyone", StringComparison.CurrentCulture))
+                    roleStrings.Add("@everyone");
+                else if (role.Name.Equals("@here", StringComparison.CurrentCulture))
+                    roleStrings.Add("@here");
+                else
+                    roleStrings.Add(role.Mention);
+            }
 
-            .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
-            .Build();
+            return new EmbedBuilder()
+                .WithColor(subscription.User.ServiceType.GetAlertColor())
+                .WithThumbnailUrl(subscription.User.AvatarURL)
+                .WithAuthor(name: subscription.User.DisplayName, iconUrl: subscription.User.AvatarURL, url: subscription.User.ProfileURL)
+
+                .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
+                .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
+                .AddField(name: "Message", value: subscription.Message, inline: false)
+                .AddField(name: "Roles", value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", roleStrings), inline: false)
+
+                .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
+                .Build();
+        }
     }
 }

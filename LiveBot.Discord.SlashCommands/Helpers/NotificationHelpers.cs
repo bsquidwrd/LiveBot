@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
@@ -14,20 +15,28 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             return Format.Sanitize(input);
         }
 
-        public static string FormatNotificationMessage(string message, string roleMentions, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game) =>
-            message
+        public static string FormatNotificationMessage(string message, IEnumerable<IRole> roles, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
+        {
+            roles = roles.OrderBy(i => i.Name);
+            var roleStrings = new List<string>();
+            foreach (var role in roles)
+            {
+                if (role.Name.Equals("@everyone", StringComparison.CurrentCulture))
+                    roleStrings.Add("@everyone");
+                else if (role.Name.Equals("@here", StringComparison.CurrentCulture))
+                    roleStrings.Add("@here");
+                else
+                    roleStrings.Add(role.Mention);
+            }
+            return message
                 .Replace("{Name}", EscapeSpecialDiscordCharacters(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Username}", EscapeSpecialDiscordCharacters(user.DisplayName), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Game}", EscapeSpecialDiscordCharacters(game.Name), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{Title}", EscapeSpecialDiscordCharacters(stream.Title), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Replace("{URL}", Format.EscapeUrl(stream.StreamURL) ?? "", ignoreCase: true, culture: CultureInfo.CurrentCulture)
-                .Replace(
-                    "{Role}",
-                    roleMentions.Replace("@@everyone", "@everyone", StringComparison.InvariantCultureIgnoreCase),
-                    ignoreCase: true,
-                    culture: CultureInfo.CurrentCulture
-                )
+                .Replace("{Role}", String.Join(" ", roleStrings), ignoreCase: true, culture: CultureInfo.CurrentCulture)
                 .Trim();
+        }
 
         /// <summary>
         /// Formats a notification string with the necessary parameters
@@ -37,16 +46,16 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         /// <param name="user"></param>
         /// <param name="game"></param>
         /// <returns></returns>
-        public static string GetNotificationMessage(ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
+        public static string GetNotificationMessage(SocketGuild guild, ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
-            string RoleMentions = "";
+            var RoleMentions = new List<SocketRole>();
             if (subscription.RolesToMention.Any())
-                RoleMentions = String.Join(" ", subscription.RolesToMention.OrderBy(i => i.DiscordRoleId).Select(i => i.DiscordRoleId).Distinct().Select(i => MentionUtils.MentionRole(i)));
+                RoleMentions = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).ToList();
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
 
-            return FormatNotificationMessage(message: subscription.Message, roleMentions: RoleMentions, stream: stream, user: tempUser, game: tempGame);
+            return FormatNotificationMessage(message: subscription.Message, roles: RoleMentions, stream: stream, user: tempUser, game: tempGame);
         }
 
         /// <summary>
@@ -57,13 +66,13 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         /// <param name="user"></param>
         /// <param name="game"></param>
         /// <returns></returns>
-        public static string GetNotificationMessage(ILiveBotStream stream, DiscordGuildConfig config, ILiveBotUser user, ILiveBotGame game)
+        public static string GetNotificationMessage(SocketGuild guild, ILiveBotStream stream, DiscordGuildConfig config, ILiveBotUser user, ILiveBotGame game)
         {
-            var RoleMention = "";
+            var RoleMentions = new List<SocketRole>();
             if (config.MentionRoleDiscordId.HasValue)
-                RoleMention = MentionUtils.MentionRole(config.MentionRoleDiscordId.Value);
+                RoleMentions.Add(guild.GetRole(config.MentionRoleDiscordId.Value));
 
-            return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roleMentions: RoleMention, stream: stream, user: user, game: game);
+            return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roles: RoleMentions, stream: stream, user: user, game: game);
         }
 
         /// <summary>
