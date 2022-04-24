@@ -57,7 +57,14 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             var RoleMentions = new List<SocketRole>();
             if (subscription.RolesToMention.Any())
-                RoleMentions = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).Where(i => !String.IsNullOrWhiteSpace(i.Name)).ToList();
+            {
+                foreach (var roleToMention in subscription.RolesToMention)
+                {
+                    var role = guild.GetRole(roleToMention.DiscordRoleId);
+                    if (!String.IsNullOrWhiteSpace(role.Name))
+                        RoleMentions.Add(role);
+                }
+            }
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
