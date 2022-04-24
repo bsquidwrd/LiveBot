@@ -18,9 +18,9 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         public static string FormatNotificationMessage(string message, IEnumerable<IRole> roles, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
         {
             var roleStrings = new List<string>();
-            if (roles.Any())
+            if (roles.Any(i => !String.IsNullOrWhiteSpace(i.Name)))
             {
-                roles = roles.OrderBy(i => i.Name);
+                roles = roles.Where(i => !String.IsNullOrWhiteSpace(i.Name)).OrderBy(i => i.Name);
                 foreach (var role in roles)
                 {
                     if (role.Name.Equals("@everyone", StringComparison.CurrentCulture))
@@ -57,7 +57,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             var RoleMentions = new List<SocketRole>();
             if (subscription.RolesToMention.Any())
-                RoleMentions = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).ToList();
+                RoleMentions = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).Where(i => !String.IsNullOrWhiteSpace(i.Name)).ToList();
 
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
@@ -77,7 +77,11 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             var RoleMentions = new List<SocketRole>();
             if (config.MentionRoleDiscordId.HasValue)
-                RoleMentions.Add(guild.GetRole(config.MentionRoleDiscordId.Value));
+            {
+                var role = guild.GetRole(config.MentionRoleDiscordId.Value);
+                if (!String.IsNullOrWhiteSpace(role?.Name))
+                    RoleMentions.Add(role);
+            }
 
             return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roles: RoleMentions, stream: stream, user: user, game: game);
         }
