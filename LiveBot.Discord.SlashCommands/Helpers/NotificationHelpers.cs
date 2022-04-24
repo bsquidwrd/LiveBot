@@ -56,7 +56,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         public static string GetNotificationMessage(SocketGuild guild, ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
             var RoleMentions = new List<SocketRole>();
-            if (subscription.RolesToMention.Any())
+            if (subscription.RolesToMention.Any() && guild != null)
             {
                 foreach (var roleToMention in subscription.RolesToMention)
                 {
@@ -83,7 +83,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         public static string GetNotificationMessage(SocketGuild guild, ILiveBotStream stream, DiscordGuildConfig config, ILiveBotUser user, ILiveBotGame game)
         {
             var RoleMentions = new List<SocketRole>();
-            if (config.MentionRoleDiscordId.HasValue)
+            if (config.MentionRoleDiscordId.HasValue && guild != null)
             {
                 var role = guild.GetRole(config.MentionRoleDiscordId.Value);
                 if (!String.IsNullOrWhiteSpace(role?.Name))
