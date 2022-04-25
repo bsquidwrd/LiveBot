@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
@@ -188,7 +189,17 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             await FollowupAsync(text: $"User information for {Format.Bold(Format.UsernameAndDiscriminator(user: user, doBidirectional: true))}", embed: userEmbedBuilder.Build(), ephemeral: true);
 
-            foreach (var guildChunk in user.MutualGuilds.Chunk(10))
+            var mutualGuilds = new List<SocketGuild>();
+            foreach (DiscordSocketClient shard in Context.Client.Shards)
+            {
+                foreach (SocketGuild guild in shard.Guilds)
+                {
+                    if (guild.GetUser(user.Id) != null)
+                        mutualGuilds.Add(guild);
+                }
+            }
+
+            foreach (var guildChunk in mutualGuilds.Chunk(10))
             {
                 var guildEmbeds = new List<Embed>();
 
@@ -219,7 +230,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                         userPermissions = "Manage Guild";
                     else
                     {
-                        var adminRoleId = discordGuild.Config.AdminRoleDiscordId;
+                        var adminRoleId = discordGuild.Config?.AdminRoleDiscordId;
                         if (adminRoleId != null)
                             if (guildUser.Roles.Where(i => i.Id == adminRoleId).Any())
                                 userPermissions = "Admin Role";
