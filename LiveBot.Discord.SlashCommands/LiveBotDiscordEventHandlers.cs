@@ -151,8 +151,15 @@ namespace LiveBot.Discord.SlashCommands
             if (user.IsBot)
                 return;
 
-            if (beforePresence.Activities.Any(i => i.Type == ActivityType.Streaming) && afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming))
+            try
+            {
+                if (beforePresence.Activities.Any(i => i.Type == ActivityType.Streaming) && afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming))
+                    return;
+            }
+            catch
+            {
                 return;
+            }
 
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
             StreamingGame? userGame = null;
