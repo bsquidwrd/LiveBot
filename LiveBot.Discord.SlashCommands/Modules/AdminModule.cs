@@ -183,12 +183,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())
                 .WithFooter(user.Id.ToString());
 
-            userEmbedBuilder
-                .AddField(name: "Created Date", value: $"{TimestampTag.FromDateTime(user.CreatedAt.UtcDateTime, TimestampTagStyles.Relative)}", inline: true)
-                .AddField(name: "Mutual Servers", value: $"{user.MutualGuilds.Count}", inline: true);
-
-            await FollowupAsync(text: $"User information for {Format.Bold(Format.UsernameAndDiscriminator(user: user, doBidirectional: true))}", embed: userEmbedBuilder.Build(), ephemeral: true);
-
             var mutualGuilds = new List<SocketGuild>();
             foreach (DiscordSocketClient shard in Context.Client.Shards)
             {
@@ -199,6 +193,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
                             mutualGuilds.Add(guild);
                 }
             }
+
+            userEmbedBuilder
+                .AddField(name: "Created Date", value: $"{TimestampTag.FromDateTime(user.CreatedAt.UtcDateTime, TimestampTagStyles.Relative)}", inline: true)
+                .AddField(name: "Mutual Servers", value: $"{mutualGuilds.Count}", inline: true);
+
+            await FollowupAsync(text: $"User information for {Format.Bold(Format.UsernameAndDiscriminator(user: user, doBidirectional: true))}", embed: userEmbedBuilder.Build(), ephemeral: true);
 
             foreach (var guildChunk in mutualGuilds.Chunk(10))
             {
