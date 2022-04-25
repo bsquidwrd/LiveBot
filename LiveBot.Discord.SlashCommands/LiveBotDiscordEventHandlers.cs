@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using LiveBot.Discord.SlashCommands.Contracts.Discord;
 using MassTransit;
+using System.Collections.Concurrent;
 
 namespace LiveBot.Discord.SlashCommands
 {
@@ -9,11 +10,23 @@ namespace LiveBot.Discord.SlashCommands
     {
         private readonly IBusControl _bus;
         private readonly ILogger<LiveBotDiscordEventHandlers> _logger;
+        private readonly System.Timers.Timer emptyPresenceQueuedCacheTimer;
+        private ConcurrentBag<ulong> presenceQueuedCache = new();
 
         public LiveBotDiscordEventHandlers(IBusControl bus, ILogger<LiveBotDiscordEventHandlers> logger)
         {
             _bus = bus;
             _logger = logger;
+
+            // Setup the timer to clear the presenceQueuedCache
+            emptyPresenceQueuedCacheTimer = new System.Timers.Timer()
+            {
+                AutoReset = true,
+                Interval = TimeSpan.FromMinutes(5).TotalMilliseconds,
+                Enabled = true,
+            };
+            emptyPresenceQueuedCacheTimer.Elapsed += EmptyPresenceQueuedCache;
+            emptyPresenceQueuedCacheTimer.Start();
         }
 
         /// <summary>
@@ -151,16 +164,6 @@ namespace LiveBot.Discord.SlashCommands
             if (user.IsBot)
                 return;
 
-            try
-            {
-                if (beforePresence.Activities.Any(i => i.Type == ActivityType.Streaming) && afterPresence.Activities.Any(i => i.Type == ActivityType.Streaming))
-                    return;
-            }
-            catch
-            {
-                return;
-            }
-
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
             StreamingGame? userGame = null;
             foreach (var userActivity in afterPresence.Activities)
@@ -180,6 +183,13 @@ namespace LiveBot.Discord.SlashCommands
             if (userGame == null)
                 return;
 
+            // If the user was previously queued, skip
+            // otherwise add them to queued cache
+            if (presenceQueuedCache.Contains(user.Id))
+                return;
+            else
+                presenceQueuedCache.Add(user.Id);
+
             // Publish a Member Live Event for processing
             await _bus.Publish(new DiscordMemberLive
             {
@@ -189,5 +199,13 @@ namespace LiveBot.Discord.SlashCommands
                 GameDetails = userGame.Details,
             });
         }
+
+        /// <summary>
+        /// Fired to empty the cache of users that were already queued for
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        public void EmptyPresenceQueuedCache(object? sender = null, System.Timers.ElapsedEventArgs? args = null) =>
+            presenceQueuedCache = new();
     }
 }
