@@ -195,7 +195,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 foreach (SocketGuild guild in shard.Guilds)
                 {
                     if (guild.GetUser(user.Id) != null)
-                        mutualGuilds.Add(guild);
+                        if (!mutualGuilds.Any(i => i.Id == guild.Id))
+                            mutualGuilds.Add(guild);
                 }
             }
 
