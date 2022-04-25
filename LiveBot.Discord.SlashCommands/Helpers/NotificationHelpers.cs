@@ -61,7 +61,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 foreach (var roleToMention in subscription.RolesToMention)
                 {
                     var role = guild.GetRole(roleToMention.DiscordRoleId);
-                    if (!String.IsNullOrWhiteSpace(role.Name))
+                    if (!String.IsNullOrWhiteSpace(role?.Name))
                         RoleMentions.Add(role);
                 }
             }

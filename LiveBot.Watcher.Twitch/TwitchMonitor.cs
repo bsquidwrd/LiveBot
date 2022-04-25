@@ -112,7 +112,7 @@ namespace LiveBot.Watcher.Twitch
 
         public void Monitor_OnServiceStarted(object? sender, OnServiceStartedArgs e)
         {
-            _logger.LogDebug("Monitor service successfully connected to Twitch!");
+            _logger.LogDebug("Monitor service successfully connected to Twitch! {ServiceType}", ServiceType);
         }
 
         public async void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs e)
@@ -132,7 +132,7 @@ namespace LiveBot.Watcher.Twitch
             if (user == null) return;
             ILiveBotGame game = await GetGame(e.Stream.GameId);
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            await _PublishStreamUpdate(stream);
+            await PublishStreamUpdate(stream);
         }
 
         public async void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs e)
@@ -142,7 +142,7 @@ namespace LiveBot.Watcher.Twitch
             if (user == null) return;
             ILiveBotGame game = await GetGame(e.Stream.GameId);
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            await _PublishStreamOffline(stream);
+            await PublishStreamOffline(stream);
         }
 
         #endregion Events
@@ -153,13 +153,13 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                List<string> gameIDs = new List<string> { gameId };
+                var gameIDs = new List<string> { gameId };
                 GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
                 return games.Games.FirstOrDefault(i => i.Id == gameId);
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -169,7 +169,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
@@ -180,13 +180,13 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                List<string> usernameList = new List<string> { username.ToLower() };
+                var usernameList = new List<string> { username.ToLower() };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Login == username);
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -196,7 +196,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
@@ -207,13 +207,13 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                List<string> userIdList = new List<string> { userId };
+                var userIdList = new List<string> { userId };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Id == userId);
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -223,7 +223,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
@@ -239,7 +239,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -249,7 +249,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUsersById(userIdList);
@@ -265,7 +265,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -275,7 +275,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
@@ -286,7 +286,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
-                List<string> userIds = new List<string>
+                var userIds = new List<string>
                 {
                     user.Id
                 };
@@ -295,7 +295,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
                 if (retryCount <= ApiRetryCount)
                 {
                     await Task.Delay(RetryDelay);
@@ -305,7 +305,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
-                _logger.LogError($"{e}");
+                _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
                 await UpdateAuth();
                 await Task.Delay(RetryDelay);
                 return await API_GetStream(user);
@@ -332,25 +332,25 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task UpdateAuth()
         {
-            _logger.LogInformation($"Updating Auth for {ServiceType} with Client Id {ClientId}");
+            _logger.LogInformation(message: "Updating Auth for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
             if (!IsWatcher)
             {
                 try
                 {
                     await SetActiveAuth();
-                    _logger.LogInformation($"Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth");
+                    _logger.LogInformation(message: "Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth", ServiceType, ClientId);
 
                     // Trigger it 5 minutes before expiration time to be safe
                     SetupAuthTimer(TimeSpan.FromHours(1));
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Unable to update AccessToken for {ServiceType} with Client Id {ClientId} {ex}");
+                    _logger.LogError(exception: ex, message: "Unable to update AccessToken for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
                 }
             }
             else
             {
-                _logger.LogDebug($"Refreshing Auth for {ServiceType}");
+                _logger.LogDebug(message: "Refreshing Auth for {ServiceType}", ServiceType);
                 await SetActiveAuth();
                 var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
                 RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
@@ -363,7 +363,7 @@ namespace LiveBot.Watcher.Twitch
                 AccessToken = newAuth.AccessToken;
 
                 var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
-                _logger.LogDebug($"Expiration time: {ExpirationSeconds}");
+                _logger.LogDebug(message: "{ServiceType} Expiration time: {ExpirationSeconds}", ExpirationSeconds);
 
                 TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
                 // Trigger it 5 minutes before expiration time to be safe
@@ -394,7 +394,7 @@ namespace LiveBot.Watcher.Twitch
                     if (users == null) continue;
                     foreach (User user in users.Users)
                     {
-                        TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, user);
+                        var twitchUser = new TwitchUser(BaseURL, ServiceType, user);
                         if (_userCache.ContainsKey(user.Id))
                         {
                             _userCache[user.Id] = twitchUser;
@@ -415,7 +415,7 @@ namespace LiveBot.Watcher.Twitch
                         }
                         catch (Exception e)
                         {
-                            _logger.LogError($"Error updating user {twitchUser.Username}: {e}");
+                            _logger.LogError(exception: e, message: "Error updating user {ServiceType} {Username}", ServiceType, twitchUser.Username);
                         }
                     }
                 }
@@ -423,7 +423,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e)
             {
                 SetupUserTimer(1);
-                _logger.LogError($"Error updating users\n{e}");
+                _logger.LogError(exception:e , message: "Error updating {ServiceType} users", ServiceType);
             }
         }
 
@@ -460,7 +460,7 @@ namespace LiveBot.Watcher.Twitch
         private async Task RefreshMonitoredUsers()
         {
             var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
-            List<string> channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
+            var channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
 
             if (channelList.Count == 0)
                 // Add myself so startup doesn't fail if there's no users in the database
@@ -492,11 +492,11 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error trying to publish StreamOnline:\n{e}");
+                _logger.LogError(exception: e, message: "Error trying to publish {ServiceType} StreamOnline", ServiceType);
             }
         }
 
-        public async Task _PublishStreamUpdate(ILiveBotStream stream)
+        public async Task PublishStreamUpdate(ILiveBotStream stream)
         {
             try
             {
@@ -504,11 +504,11 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error trying to publish StreamUpdate:\n{e}");
+                _logger.LogError(exception: e, message: "Error trying to publish {ServiceType} StreamUpdate", ServiceType);
             }
         }
 
-        public async Task _PublishStreamOffline(ILiveBotStream stream)
+        public async Task PublishStreamOffline(ILiveBotStream stream)
         {
             try
             {
@@ -516,7 +516,7 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error trying to publish StreamOffline:\n{e}");
+                _logger.LogError(exception: e, message: "Error trying to publish {ServiceType} StreamOffline", ServiceType);
             }
         }
 
@@ -633,7 +633,7 @@ namespace LiveBot.Watcher.Twitch
                 return null;
             }
             if (apiUser == null) return null;
-            TwitchUser twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
+            var twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
             _userCache.TryAdd(twitchUser.Id, twitchUser);
             return twitchUser;
         }
