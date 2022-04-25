@@ -219,6 +219,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                     var guildEmbedBuilder = new EmbedBuilder()
                         .WithColor(Color.Green)
                         .WithAuthor(user)
+                        .WithDescription(guild.Name)
                         .WithThumbnailUrl(guild.IconUrl)
                         .WithFooter(guild.Id.ToString());
 
