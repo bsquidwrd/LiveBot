@@ -124,11 +124,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                     else if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
                     {
-                        await _bus.Publish(new DiscordChannelDelete()
-                        {
-                            GuildId = streamSubscription.DiscordGuild.DiscordId,
-                            ChannelId = streamSubscription.DiscordChannel.DiscordId,
-                        });
+                        // It's possible the guild is unavailable
+                        // continue on and let GuildAvailable events
+                        // handle the cleanups
                         continue;
                     }
                     else
