@@ -93,7 +93,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     if (
                         ex.DiscordCode == DiscordErrorCode.InsufficientPermissions
                         || ex.DiscordCode == DiscordErrorCode.MissingPermissions
-                        || ex.DiscordCode == DiscordErrorCode.UnknownGuild
                     )
                     {
                         await _bus.Publish(new DiscordGuildDelete()
