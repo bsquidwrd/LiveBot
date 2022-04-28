@@ -56,7 +56,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         public static string GetNotificationMessage(SocketGuild guild, ILiveBotStream stream, StreamSubscription subscription, ILiveBotUser? user = null, ILiveBotGame? game = null)
         {
             var RoleMentions = new List<SocketRole>();
-            if (subscription.RolesToMention.Any() && guild != null)
+            if (subscription.RolesToMention?.Count > 0 && guild != null)
             {
                 foreach (var roleToMention in subscription.RolesToMention)
                 {
