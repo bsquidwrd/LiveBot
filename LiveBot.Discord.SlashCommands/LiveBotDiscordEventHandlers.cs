@@ -165,7 +165,7 @@ namespace LiveBot.Discord.SlashCommands
                 return;
 
             // Check if the user was previously Streaming, and if so skip it
-            if (beforePresence != null)
+            try
             {
                 foreach (var userActivity in beforePresence.Activities)
                 {
@@ -178,6 +178,10 @@ namespace LiveBot.Discord.SlashCommands
                         return;
                     }
                 }
+            }
+            catch
+            {
+                // Do nothing, cause I really don't care tbh
             }
 
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
