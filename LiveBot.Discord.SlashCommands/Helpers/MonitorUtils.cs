@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 
@@ -69,6 +70,40 @@ namespace LiveBot.Discord.SlashCommands.Helpers
 
                 .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")
                 .Build();
+        }
+
+        internal static async Task<bool> ConsolidateRoleMentions(IUnitOfWork work, StreamSubscription subscription, params IRole?[] roles)
+        {
+            var RolesUpdated = false;
+            var roleIds = new List<ulong>();
+            foreach (var role in roles)
+                if (role?.Id != null)
+                    roleIds.Add(role.Id);
+
+            if (roleIds.Count > 0)
+            {
+                var currentRolesToMention = await work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
+                if (currentRolesToMention.Any())
+                {
+                    var rolesToDelete = currentRolesToMention.Where(i => !roleIds.Contains(i.DiscordRoleId)).ToList();
+                    rolesToDelete.ForEach(async i => await work.RoleToMentionRepository.RemoveAsync(i.Id));
+                    RolesUpdated = true;
+                }
+                foreach (var roleId in roleIds)
+                {
+                    var currentRoleToMention = await work.RoleToMentionRepository.SingleOrDefaultAsync(i => i.StreamSubscription == subscription && i.DiscordRoleId == roleId);
+                    if (currentRoleToMention == null)
+                    {
+                        await work.RoleToMentionRepository.AddAsync(new RoleToMention
+                        {
+                            StreamSubscription = subscription,
+                            DiscordRoleId = roleId,
+                        });
+                        RolesUpdated = true;
+                    }
+                }
+            }
+            return RolesUpdated;
         }
     }
 }

@@ -48,7 +48,22 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IGuildChannel GuildChannel,
 
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
-            string LiveMessage = "default"
+            string LiveMessage = "default",
+
+            [Summary(name: "role1", description: "A role to ping on live")]
+            IRole? role1 = null,
+
+            [Summary(name: "role2", description: "A role to ping on live")]
+            IRole? role2 = null,
+
+            [Summary(name: "role3", description: "A role to ping on live")]
+            IRole? role3 = null,
+
+            [Summary(name: "role4", description: "A role to ping on live")]
+            IRole? role4 = null,
+
+            [Summary(name: "role5", description: "A role to ping on live")]
+            IRole? role5 = null
         )
         {
             if (GuildChannel is not ITextChannel)
@@ -69,15 +84,14 @@ namespace LiveBot.Discord.SlashCommands.Modules
             };
 
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
+            await MonitorUtils.ConsolidateRoleMentions(work: _work, subscription: subscription, role1, role2, role3, role4, role5);
+
             var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning the selected roles (if any)\n";
 
             var monitorUser = await monitor.GetUser(userId: subscription.User.SourceID);
             monitor.AddChannel(monitorUser);
 
-            var roleSelectMenu = MonitorUtils.GetRoleMentionSelectMenu(subscription: subscription, guild: Context.Guild);
-            var components = new ComponentBuilder().WithSelectMenu(roleSelectMenu).Build();
-
-            await FollowupAsync(text: $"{ResponseMessage}\nUse the selection menu to choose a role to mention", ephemeral: true, allowedMentions: allowedMentions, components: components);
+            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
         #endregion Create command
@@ -102,7 +116,22 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IGuildChannel? GuildChannel = null,
 
             [Summary(name: "live-message", description: "This message will be sent out when the streamer goes live (check /monitor help for more info)")]
-            string? LiveMessage = null
+            string? LiveMessage = null,
+
+            [Summary(name: "role1", description: "A role to ping on live")]
+            IRole? role1 = null,
+
+            [Summary(name: "role2", description: "A role to ping on live")]
+            IRole? role2 = null,
+
+            [Summary(name: "role3", description: "A role to ping on live")]
+            IRole? role3 = null,
+
+            [Summary(name: "role4", description: "A role to ping on live")]
+            IRole? role4 = null,
+
+            [Summary(name: "role5", description: "A role to ping on live")]
+            IRole? role5 = null
         )
         {
             ITextChannel? WhereToPost = null;
@@ -131,15 +160,16 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            if (WhereToPost != null || LiveMessage != null)
+            var RolesUpdated = false;
+            if (role1 != null || role2 != null || role3 != null || role4 != null || role5 != null)
+                RolesUpdated = await MonitorUtils.ConsolidateRoleMentions(work: _work, subscription: subscription, role1, role2, role3, role4, role5);
+
+            if (WhereToPost != null || LiveMessage != null || RolesUpdated)
                 ResponseMessage = $"Successfuly updated monitor for {Format.Bold(subscription.User.DisplayName)}! {ResponseMessage}";
             if (string.IsNullOrWhiteSpace(ResponseMessage))
                 ResponseMessage = $"Nothing was updated for {Format.Bold(subscription.User.DisplayName)}";
 
-            var roleSelectMenu = MonitorUtils.GetRoleMentionSelectMenu(subscription: subscription, guild: Context.Guild);
-            var components = new ComponentBuilder().WithSelectMenu(roleSelectMenu).Build();
-
-            await FollowupAsync(text: $"{ResponseMessage}\nUse the selection menu to choose a role to mention", ephemeral: true, allowedMentions: allowedMentions, components: components);
+            await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
 
         #endregion Edit command
