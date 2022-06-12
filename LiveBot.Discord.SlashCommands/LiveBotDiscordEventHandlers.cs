@@ -165,15 +165,18 @@ namespace LiveBot.Discord.SlashCommands
                 return;
 
             // Check if the user was previously Streaming, and if so skip it
-            foreach (var userActivity in beforePresence.Activities)
+            if (beforePresence != null)
             {
-                if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame game)
+                foreach (var userActivity in beforePresence.Activities)
                 {
-                    // If there's no URL, then skip
-                    if (String.IsNullOrWhiteSpace(game.Url))
-                        continue;
+                    if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame game)
+                    {
+                        // If there's no URL, then skip
+                        if (String.IsNullOrWhiteSpace(game.Url))
+                            continue;
 
-                    return;
+                        return;
+                    }
                 }
             }
 
