@@ -125,7 +125,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 {
                     try
                     {
-                        foreach (var roleToMention in subscription.RolesToMention)
+                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
+                        foreach (var roleToMention in rolesToMention)
                             await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
 

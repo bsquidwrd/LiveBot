@@ -76,6 +76,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             {
                 if (streamSubscription.DiscordGuild == null || streamSubscription.DiscordChannel == null)
                 {
+                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
+                    foreach (var roleToMention in rolesToMention)
+                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                     await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     continue;
                 }
@@ -118,6 +121,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         || ex.DiscordCode == DiscordErrorCode.MissingPermissions
                     )
                     {
+                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
+                        foreach (var roleToMention in rolesToMention)
+                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                         continue;
                     }
@@ -203,6 +209,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     // remove the subscription
                     if (guild != null)
                     {
+                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
+                        foreach (var roleToMention in rolesToMention)
+                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     }
                     return;
