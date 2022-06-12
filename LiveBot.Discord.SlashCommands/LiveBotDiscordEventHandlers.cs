@@ -164,6 +164,19 @@ namespace LiveBot.Discord.SlashCommands
             if (user.IsBot)
                 return;
 
+            // Check if the user was previously Streaming, and if so skip it
+            foreach (var userActivity in beforePresence.Activities)
+            {
+                if (userActivity.Type == ActivityType.Streaming && userActivity is StreamingGame game)
+                {
+                    // If there's no URL, then skip
+                    if (String.IsNullOrWhiteSpace(game.Url))
+                        continue;
+
+                    return;
+                }
+            }
+
             // Check if the updated user has an activity set Also make sure it's a Streaming type of Activity
             StreamingGame? userGame = null;
             foreach (var userActivity in afterPresence.Activities)
