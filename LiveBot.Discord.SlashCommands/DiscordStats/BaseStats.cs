@@ -50,7 +50,7 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             _configuration = configuration;
             _discordClient = discordClient;
 
-            IsDebug = _configuration.GetValue<bool>("IsDebug", false);
+            IsDebug = Convert.ToBoolean(_configuration.GetValue<string>("IsDebug") ?? "false");
         }
 
         /// <inheritdoc/>

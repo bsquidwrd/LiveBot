@@ -56,7 +56,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task RegisterCommandsAsync()
         {
             var startTime = DateTime.UtcNow;
-            var IsDebug = configuration.GetValue<bool>("IsDebug", false);
+            var IsDebug = Convert.ToBoolean(configuration.GetValue<string>("IsDebug") ?? "false");
             var testGuildId = configuration.GetValue<ulong>("testguild");
 
             if (IsDebug)
@@ -240,7 +240,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                     if (string.IsNullOrWhiteSpace(userPermissions))
                         continue;
 
-                    TimestampTag notificationTimestampTag = null;
+                    TimestampTag? notificationTimestampTag = null;
                     if (latestNotification != null)
                         notificationTimestampTag = TimestampTag.FromDateTime(latestNotification.TimeStamp, TimestampTagStyles.Relative);
 

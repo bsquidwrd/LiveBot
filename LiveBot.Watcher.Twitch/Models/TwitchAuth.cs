@@ -13,6 +13,10 @@ namespace LiveBot.Watcher.Twitch.Models
             ClientId = clientId;
             AccessToken = refreshResponse.AccessToken;
             RefreshToken = refreshResponse.RefreshToken;
+            ExpiresAt = DateTime.UtcNow.AddSeconds(refreshResponse.ExpiresIn);
         }
+
+        public TwitchAuth()
+        { }
     }
 }

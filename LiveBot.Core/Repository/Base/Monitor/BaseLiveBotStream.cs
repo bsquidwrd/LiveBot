@@ -13,6 +13,9 @@ namespace LiveBot.Core.Repository.Base.Monitor
         {
         }
 
+        public BaseLiveBotStream()
+        { }
+
         public ILiveBotUser User { get; set; }
 
         public ILiveBotGame Game { get; set; }

@@ -17,9 +17,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private readonly ILogger<StreamOnlineConsumer> _logger;
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
-        private readonly IBusControl _bus;
+        private readonly IBus _bus;
 
-        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus)
+        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus)
         {
             _logger = logger;
             _client = client;

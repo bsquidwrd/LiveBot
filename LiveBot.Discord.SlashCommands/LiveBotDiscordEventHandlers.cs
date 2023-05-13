@@ -8,12 +8,12 @@ namespace LiveBot.Discord.SlashCommands
 {
     public class LiveBotDiscordEventHandlers
     {
-        private readonly IBusControl _bus;
+        private readonly IBus _bus;
         private readonly ILogger<LiveBotDiscordEventHandlers> _logger;
         private readonly System.Timers.Timer emptyPresenceQueuedCacheTimer;
         private ConcurrentBag<ulong> presenceQueuedCache = new();
 
-        public LiveBotDiscordEventHandlers(IBusControl bus, ILogger<LiveBotDiscordEventHandlers> logger)
+        public LiveBotDiscordEventHandlers(IBus bus, ILogger<LiveBotDiscordEventHandlers> logger)
         {
             _bus = bus;
             _logger = logger;

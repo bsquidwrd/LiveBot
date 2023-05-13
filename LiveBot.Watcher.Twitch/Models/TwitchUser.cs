@@ -27,5 +27,8 @@ namespace LiveBot.Watcher.Twitch.Models
             AvatarURL = user.AvatarURL;
             ProfileURL = user.ProfileURL;
         }
+
+        public TwitchUser()
+        { }
     }
 }

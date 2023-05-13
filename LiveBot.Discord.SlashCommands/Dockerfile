@@ -20,6 +20,7 @@ ENV LiveBot_BotsOnDiscord_API=""
 ENV LiveBot_DiscordBotList_API=""
 ENV LiveBot_DiscordBots_API=""
 ENV LiveBot_TopGG_API=""
+ENV Redis_connectionstring=""
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src

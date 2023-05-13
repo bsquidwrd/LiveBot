@@ -39,7 +39,7 @@ namespace LiveBot.Discord.SlashCommands
             _eventHandlers = eventHandlers;
             _services = services;
 
-            IsDebug = _configuration.GetValue<bool>("IsDebug", false);
+            IsDebug = Convert.ToBoolean(_configuration.GetValue<string>("IsDebug") ?? "false");
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)

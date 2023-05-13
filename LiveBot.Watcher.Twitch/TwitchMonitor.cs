@@ -3,9 +3,11 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
+using LiveBot.Watcher.Twitch.Cache;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
+using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Timers;
 using TwitchLib.Api;
@@ -27,11 +29,15 @@ namespace LiveBot.Watcher.Twitch
         private readonly ILogger<TwitchMonitor> _logger;
         public LiveStreamMonitorService Monitor;
         public TwitchAPI API;
-        public IBusControl _bus;
+        public IBus _bus;
         public bool IsWatcher = false;
         private readonly IConfiguration _configuration;
+        private readonly ConnectionMultiplexer _cache;
         private readonly int RetryDelay = 1000 * 5; // 5 seconds
         private readonly int ApiRetryCount = 5; // How many times to retry API requests
+        private readonly string _authCacheName = "twitch:auth";
+        private readonly string _gameCacheName = "twitch:games";
+        private readonly string _userCacheName = "twitch:users";
 
         public string ClientId
         {
@@ -75,13 +81,14 @@ namespace LiveBot.Watcher.Twitch
         /// </summary>
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public TwitchMonitor(ILogger<TwitchMonitor> logger, IUnitOfWorkFactory factory, IBusControl bus, IConfiguration configuration)
+        public TwitchMonitor(ILogger<TwitchMonitor> logger, IUnitOfWorkFactory factory, IBus bus, IConfiguration configuration, ConnectionMultiplexer cache)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _logger = logger;
             _factory = factory;
             _bus = bus;
             _configuration = configuration;
+            _cache = cache;
 
             IsEnabled = true;
             StartTime = DateTime.UtcNow;
@@ -89,12 +96,12 @@ namespace LiveBot.Watcher.Twitch
             ServiceType = ServiceEnum.Twitch;
             URLPattern = ServiceUtils.TwitchUrlPattern;
 
-            var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(5000, TimeSpan.FromMinutes(1));
+            var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(800, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
             Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
-            ClientId = _configuration.GetValue<string>("TwitchClientId");
-            ClientSecret = _configuration.GetValue<string>("TwitchClientSecret");
+            ClientId = _configuration.GetValue<string>("TwitchClientId") ?? "";
+            ClientSecret = _configuration.GetValue<string>("TwitchClientSecret") ?? "";
 
             //Monitor.OnServiceTick += Monitor_OnServiceTick;
             Monitor.OnServiceStarted += Monitor_OnServiceStarted;
@@ -170,7 +177,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetGame(gameId);
             }
@@ -197,7 +204,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByLogin(username);
             }
@@ -224,7 +231,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetUserById(userId);
             }
@@ -250,7 +257,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetUsersById(userIdList);
             }
@@ -276,7 +283,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetUserByURL(url);
             }
@@ -306,7 +313,7 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
-                await UpdateAuth();
+                await UpdateAuth(force: true);
                 await Task.Delay(RetryDelay);
                 return await API_GetStream(user);
             }
@@ -324,24 +331,66 @@ namespace LiveBot.Watcher.Twitch
             }
         }
 
-        public async Task SetActiveAuth()
+        private async Task<TwitchAuth> GetAuthAsync()
         {
-            var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-            AccessToken = activeAuth.AccessToken;
+            var auth = await _cache.GetRecordAsync<TwitchAuth>(recordId: _authCacheName);
+            if (auth is null || auth.Expired || auth.ExpiresAt <= DateTime.UtcNow)
+            {
+                var tempAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+
+                auth = new TwitchAuth
+                {
+                    Id = tempAuth.Id,
+                    Deleted = tempAuth.Deleted,
+                    TimeStamp = tempAuth.TimeStamp,
+                    ServiceType = tempAuth.ServiceType,
+                    Expired = tempAuth.Expired,
+                    ClientId = tempAuth.ClientId,
+                    AccessToken = tempAuth.AccessToken,
+                    RefreshToken = tempAuth.RefreshToken,
+                    ExpiresAt = tempAuth.ExpiresAt,
+                };
+
+                if (auth.ExpiresAt == DateTime.MinValue)
+                {
+                    // if it's already expired, or is not set add 1 minutes (probably refreshing anyways)
+                    auth.ExpiresAt = DateTime.UtcNow.AddMinutes(1);
+                    await _work.AuthRepository.UpdateAsync(auth);
+                }
+
+                if (auth.ExpiresAt > DateTime.UtcNow)
+                {
+                    // Only set cache if the ExpiresAt is in the future
+                    // Otherwise it throws an error about being negative
+                    var timeToExpire = auth.ExpiresAt - DateTime.UtcNow;
+                    await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: auth, expiryTime: timeToExpire);
+                }
+            }
+            return auth;
         }
 
-        public async Task UpdateAuth()
+        public async Task<TwitchAuth> GetAndSetActiveAuth()
+        {
+            //var activeAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+            var activeAuth = await GetAuthAsync();
+            if (AccessToken != activeAuth.AccessToken)
+                AccessToken = activeAuth.AccessToken;
+            return activeAuth;
+        }
+
+        public async Task UpdateAuth(bool force = false)
         {
             _logger.LogInformation(message: "Updating Auth for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
             if (!IsWatcher)
             {
                 try
                 {
-                    await SetActiveAuth();
+                    var activeAuth = await GetAndSetActiveAuth();
                     _logger.LogInformation(message: "Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth", ServiceType, ClientId);
 
                     // Trigger it 5 minutes before expiration time to be safe
-                    SetupAuthTimer(TimeSpan.FromHours(1));
+                    var timeToExpire = activeAuth.ExpiresAt - DateTime.UtcNow;
+                    SetupAuthTimer(timeToExpire);
                 }
                 catch (Exception ex)
                 {
@@ -351,30 +400,68 @@ namespace LiveBot.Watcher.Twitch
             else
             {
                 _logger.LogDebug(message: "Refreshing Auth for {ServiceType}", ServiceType);
-                await SetActiveAuth();
-                var oldAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
-                RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
 
-                var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
-                await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
+                var oldAuth = await GetAndSetActiveAuth();
 
-                oldAuth.Expired = true;
-                await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
-                AccessToken = newAuth.AccessToken;
+                var obtainedLock = false;
+                Guid lockGuid = Guid.NewGuid();
 
-                var ExpirationSeconds = refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn;
-                _logger.LogDebug(message: "{ServiceType} Expiration time: {ExpirationSeconds}", ExpirationSeconds);
+                if (oldAuth.Expired || oldAuth.ExpiresAt <= DateTime.UtcNow || force)
+                {
+                    do
+                    {
+                        // Obtain a lock for a maximum of 30 seconds
+                        obtainedLock = await _cache.ObtainLockAsync(recordId: _authCacheName, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(30));
+                    }
+                    while (!obtainedLock);
 
-                TimeSpan refreshAuthTimeSpan = TimeSpan.FromSeconds(ExpirationSeconds);
+                    try
+                    {
+                        oldAuth = await GetAuthAsync();
+                        if (oldAuth.Expired || oldAuth.ExpiresAt <= DateTime.UtcNow)
+                        {
+                            RefreshResponse refreshResponse = await API.Auth.RefreshAuthTokenAsync(refreshToken: oldAuth.RefreshToken, clientSecret: ClientSecret, clientId: ClientId);
+
+                            var newAuth = new TwitchAuth(ServiceType, ClientId, refreshResponse);
+                            if (refreshResponse.ExpiresIn < 1800)
+                            {
+                                newAuth.ExpiresAt = DateTime.UtcNow.AddSeconds(1800);
+                            }
+
+                            await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
+
+                            var timeToExpire = newAuth.ExpiresAt - DateTime.UtcNow;
+                            await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: newAuth, expiryTime: timeToExpire);
+
+                            oldAuth.Expired = true;
+                            await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
+                            AccessToken = newAuth.AccessToken;
+
+                            _logger.LogDebug(message: "{ServiceType} Expiration time: {ExpirationSeconds}", refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn);
+
+                            // Force all other tokens to be expired
+                            var oldAuths = await _work.AuthRepository.FindAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false && i.AccessToken != newAuth.AccessToken);
+                            foreach (var auth in oldAuths)
+                            {
+                                auth.Expired = true;
+                                await _work.AuthRepository.UpdateAsync(auth);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        await _cache.ReleaseLockAsync(recordId: _authCacheName, identifier: lockGuid);
+                    }
+                }
+                var tempAuth = await GetAndSetActiveAuth();
                 // Trigger it 5 minutes before expiration time to be safe
-                SetupAuthTimer(refreshAuthTimeSpan.Subtract(TimeSpan.FromMinutes(5)));
+                SetupAuthTimer(tempAuth.ExpiresAt - DateTime.UtcNow);
             }
         }
 
         private void SetupAuthTimer(TimeSpan timeSpan)
         {
-            if (RefreshAuthTimer != null)
-                RefreshAuthTimer.Stop();
+            RefreshAuthTimer?.Stop();
 
             RefreshAuthTimer = new System.Timers.Timer(timeSpan.TotalMilliseconds)
             {
@@ -403,6 +490,7 @@ namespace LiveBot.Watcher.Twitch
                         {
                             _userCache.TryAdd(user.Id, twitchUser);
                         }
+                        await _cache.SetListItemAsync<TwitchUser>(recordId: _userCacheName, fieldName: twitchUser.Id, data: twitchUser);
                         try
                         {
                             StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
@@ -423,38 +511,42 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e)
             {
                 SetupUserTimer(1);
-                _logger.LogError(exception:e , message: "Error updating {ServiceType} users", ServiceType);
+                _logger.LogError(exception: e, message: "Error updating {ServiceType} users", ServiceType);
             }
         }
 
-        private System.Timers.Timer SetupUserTimer(double minutes = 5)
+        private void SetupUserTimer(double minutes = 60)
         {
-            var timer = new System.Timers.Timer()
+            RefreshUsersTimer?.Stop();
+
+            RefreshUsersTimer = new System.Timers.Timer()
             {
                 AutoReset = true,
                 Enabled = true,
                 Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
             };
-            timer.Elapsed += async (sender, e) => await UpdateUsers();
-            return timer;
+            RefreshUsersTimer.Elapsed += async (sender, e) => await UpdateUsers();
         }
 
-        public void ClearCache(object? sender, ElapsedEventArgs? e)
+        public async void ClearCache(object? sender, ElapsedEventArgs? e)
         {
             _userCache.Clear();
+            await _cache.DeleteListAsync(recordId: _userCacheName);
+
             _gameCache.Clear();
+            await _cache.DeleteListAsync(recordId: _gameCacheName);
         }
 
-        private System.Timers.Timer SetupCacheTimer()
+        private void SetupCacheTimer()
         {
-            var timer = new System.Timers.Timer()
+            ClearCacheTimer?.Stop();
+            ClearCacheTimer = new System.Timers.Timer()
             {
                 AutoReset = true,
                 Enabled = true,
-                Interval = TimeSpan.FromMinutes(15).TotalMilliseconds
+                Interval = TimeSpan.FromMinutes(60).TotalMilliseconds
             };
-            timer.Elapsed += ClearCache;
-            return timer;
+            ClearCacheTimer.Elapsed += ClearCache;
         }
 
         private async Task RefreshMonitoredUsers()
@@ -468,16 +560,18 @@ namespace LiveBot.Watcher.Twitch
             Monitor.SetChannelsById(channelList);
         }
 
-        private System.Timers.Timer SetupRefreshMonitoredUsers(double minutes = 1)
+        private void SetupRefreshMonitoredUsers(double minutes = 1) => SetupRefreshMonitoredUsers(timeSpan: TimeSpan.FromMinutes(minutes));
+
+        private void SetupRefreshMonitoredUsers(TimeSpan timeSpan)
         {
-            var timer = new System.Timers.Timer()
+            RefreshMonitoredUsersTimer?.Stop();
+            RefreshMonitoredUsersTimer = new System.Timers.Timer()
             {
                 AutoReset = true,
                 Enabled = true,
-                Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
+                Interval = timeSpan.TotalMilliseconds
             };
-            timer.Elapsed += async (sender, e) => await RefreshMonitoredUsers();
-            return timer;
+            RefreshMonitoredUsersTimer.Elapsed += async (sender, e) => await RefreshMonitoredUsers();
         }
 
         #endregion Misc Functions
@@ -532,9 +626,9 @@ namespace LiveBot.Watcher.Twitch
             if (IsWatcher)
             {
                 await RefreshMonitoredUsers();
-                RefreshUsersTimer = SetupUserTimer();
-                ClearCacheTimer = SetupCacheTimer();
-                RefreshMonitoredUsersTimer = SetupRefreshMonitoredUsers();
+                SetupUserTimer();
+                SetupCacheTimer();
+                SetupRefreshMonitoredUsers();
 
                 await Task.Run(Monitor.Start);
             }
@@ -543,15 +637,16 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotGame> GetGame(string gameId)
         {
-            if (_gameCache.ContainsKey(gameId))
-                return _gameCache[gameId];
+            var cachedGame = await _cache.GetListItemAsync<TwitchGame>(recordId: _gameCacheName, fieldName: gameId);
+            if (cachedGame is not null)
+                return cachedGame;
             Game? game = null;
             if (!string.IsNullOrWhiteSpace(gameId))
             {
                 game = await API_GetGame(gameId);
             }
             var twitchGame = new TwitchGame(BaseURL, ServiceType, game);
-            _gameCache.TryAdd(gameId, twitchGame);
+            await _cache.SetListItemAsync<TwitchGame>(recordId: _gameCacheName, fieldName: gameId, data: twitchGame);
             return twitchGame;
         }
 
@@ -595,12 +690,13 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotUser?> GetUserById(string userId)
         {
-            if (_userCache.ContainsKey(userId))
-                return _userCache[userId];
+            var cachedUser = await _cache.GetListItemAsync<TwitchUser>(recordId: _userCacheName, fieldName: userId);
+            if (cachedUser is not null)
+                return cachedUser;
             User? apiUser = await API_GetUserById(userId);
             if (apiUser == null) return null;
             var twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
-            _userCache.TryAdd(userId, twitchUser);
+            await _cache.SetListItemAsync<TwitchUser>(recordId: _userCacheName, fieldName: userId, data: twitchUser);
             return twitchUser;
         }
 
@@ -622,7 +718,7 @@ namespace LiveBot.Watcher.Twitch
             }
             else if (!string.IsNullOrEmpty(userId))
             {
-                apiUser = await API_GetUserById(userId: userId);
+                return await GetUserById(userId: userId);
             }
             else if (!string.IsNullOrEmpty(profileURL))
             {

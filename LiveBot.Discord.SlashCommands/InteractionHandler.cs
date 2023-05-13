@@ -24,7 +24,7 @@ namespace LiveBot.Discord.SlashCommands
             _handler = handler;
             _services = services;
             _configuration = config;
-            IsDebug = _configuration.GetValue<bool>("IsDebug", false);
+            IsDebug = Convert.ToBoolean(_configuration.GetValue<string>("IsDebug") ?? "false");
         }
 
         internal async Task LogAsync(LogMessage log)

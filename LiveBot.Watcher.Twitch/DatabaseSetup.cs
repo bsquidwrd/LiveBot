@@ -15,12 +15,13 @@ namespace LiveBot.Watcher.Twitch
         public static WebApplicationBuilder SetupLiveBot(this WebApplicationBuilder builder)
         {
             builder.Configuration.AddEnvironmentVariables(prefix: "LiveBot_");
+            var IsDebug = Convert.ToBoolean(builder.Configuration.GetValue<string>("IsDebug") ?? "false");
 
-            string apiKey = builder.Configuration.GetValue<string>("datadogapikey");
+            string apiKey = builder.Configuration.GetValue<string>("datadogapikey") ?? "";
             string source = "csharp";
             string service = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown";
             string hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? System.Net.Dns.GetHostName();
-            string[] tags = new[] { builder.Configuration.GetValue<bool>("IsDebug", false) ? "Debug" : "Production" };
+            string[] tags = new[] { IsDebug ? "Debug" : "Production" };
 
             builder.Host.UseSerilog((ctx, lc) =>
                 lc

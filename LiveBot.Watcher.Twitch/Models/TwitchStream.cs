@@ -22,5 +22,8 @@ namespace LiveBot.Watcher.Twitch.Models
             ThumbnailURL = stream.ThumbnailUrl;
             StreamURL = $"{User.ProfileURL}";
         }
+
+        public TwitchStream()
+        { }
     }
 }

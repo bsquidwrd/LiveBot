@@ -12,9 +12,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly ILogger<DiscordGuildAvailableConsumer> _logger;
         private readonly IUnitOfWork _work;
         private readonly DiscordShardedClient _client;
-        private readonly IBusControl _bus;
+        private readonly IBus _bus;
 
-        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWorkFactory factory, DiscordShardedClient client, IBusControl bus)
+        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWorkFactory factory, DiscordShardedClient client, IBus bus)
         {
             _logger = logger;
             _work = factory.Create();

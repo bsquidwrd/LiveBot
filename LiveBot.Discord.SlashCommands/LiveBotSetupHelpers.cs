@@ -6,6 +6,7 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.SlashCommands.DiscordStats;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
+using LiveBot.Watcher.Twitch.Cache;
 using Serilog;
 
 namespace LiveBot.Discord.SlashCommands
@@ -21,12 +22,15 @@ namespace LiveBot.Discord.SlashCommands
         public static async Task<WebApplicationBuilder> SetupLiveBot(this WebApplicationBuilder builder)
         {
             builder.Configuration.AddEnvironmentVariables(prefix: "LiveBot_");
+            var IsDebug = Convert.ToBoolean(builder.Configuration.GetValue<string>("IsDebug") ?? "false");
 
-            string apiKey = builder.Configuration.GetValue<string>("datadogapikey");
+            string apiKey = builder.Configuration.GetValue<string>("datadogapikey") ?? "";
             string source = "csharp";
             string service = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown";
             string hostname = Environment.GetEnvironmentVariable("HOSTNAME") ?? System.Net.Dns.GetHostName();
-            string[] tags = new[] { builder.Configuration.GetValue<bool>("IsDebug", false) ? "Debug" : "Production" };
+            string[] tags = new[] { IsDebug ? "Debug" : "Production" };
+
+            builder.Services.AddCaching(instanceName: IsDebug ? "livebot:debug" : "livebot:live", configuration: builder.Configuration);
 
             builder.Host.UseSerilog((ctx, lc) =>
                 lc
@@ -40,8 +44,6 @@ namespace LiveBot.Discord.SlashCommands
             var unitOfWorkFactory = new UnitOfWorkFactory(builder.Configuration);
             builder.Services.AddSingleton<IUnitOfWorkFactory>(unitOfWorkFactory);
             unitOfWorkFactory.Migrate();
-
-            var IsDebug = builder.Configuration.GetValue<bool>("IsDebug", false);
 
             var discordConfig = new DiscordSocketConfig()
             {

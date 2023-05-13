@@ -14,6 +14,9 @@ namespace LiveBot.Core.Repository.Base.Monitor
             ServiceType = serviceType;
         }
 
+        public BaseLiveBot()
+        { }
+
         public string BaseURL { get; set; }
         public ServiceEnum ServiceType { get; set; }
     }

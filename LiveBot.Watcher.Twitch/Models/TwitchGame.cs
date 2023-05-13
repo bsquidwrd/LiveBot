@@ -47,5 +47,8 @@ namespace LiveBot.Watcher.Twitch.Models
                 ThumbnailURL = game.ThumbnailURL;
             }
         }
+
+        public TwitchGame()
+        { }
     }
 }

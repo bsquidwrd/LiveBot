@@ -1,4 +1,5 @@
 ﻿using LiveBot.Core.Repository.Static;
+using System;
 
 namespace LiveBot.Core.Repository.Models
 {
@@ -9,5 +10,6 @@ namespace LiveBot.Core.Repository.Models
         public string ClientId { get; set; }
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
+        public DateTime ExpiresAt { get; set; }
     }
 }

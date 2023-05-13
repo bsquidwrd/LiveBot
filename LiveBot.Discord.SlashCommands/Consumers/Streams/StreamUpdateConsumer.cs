@@ -12,11 +12,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
     {
         private readonly DiscordShardedClient _client;
         private readonly IUnitOfWork _work;
-        private readonly IBusControl _bus;
+        private readonly IBus _bus;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
         private readonly ILogger<StreamUpdateConsumer> _logger;
 
-        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBusControl bus, IEnumerable<ILiveBotMonitor> monitors, ILogger<StreamUpdateConsumer> logger)
+        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus, IEnumerable<ILiveBotMonitor> monitors, ILogger<StreamUpdateConsumer> logger)
         {
             _client = client;
             _work = factory.Create();

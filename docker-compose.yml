@@ -19,6 +19,7 @@ services:
             - LiveBot_DiscordBotList_API=${DiscordBotList_API}
             - LiveBot_DiscordBots_API=${DiscordBots_API}
             - LiveBot_TopGG_API=${TopGG_API}
+            - Redis_connectionstring=${Redis_connectionstring}
         deploy:
             replicas: 1
             update_config:
@@ -29,8 +30,35 @@ services:
                 delay: 30s
                 max_attempts: 3
                 window: 120s
+        depends_on:
+            redis:
+                condition: service_started
         healthcheck:
-            test: CMD ["dotnet", "LiveBot.Core.HealthCheck.dll"]
-            interval: 60s
+            test: ["CMD", "dotnet", "/app/LiveBot.Core.HealthCheck.dll"]
+            interval: 30s
             retries: 5
-            timeout: 30s
+            timeout: 10s
+        #networks:
+        #    - default
+        #    - backend
+
+    redis:
+        image: redis:7.0.11-alpine
+        deploy:
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            restart_policy:
+                condition: on-failure
+                delay: 30s
+                max_attempts: 3
+                window: 120s
+        networks:
+            - backend
+
+networks:
+    default:
+        driver: overlay
+    backend:
+        driver: overlay

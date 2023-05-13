@@ -12,6 +12,9 @@ namespace LiveBot.Core.Repository.Base.Monitor
         {
         }
 
+        public BaseLiveBotUser()
+        { }
+
         public string Id { get; set; }
         public string Username { get; set; }
         public string DisplayName { get; set; }
