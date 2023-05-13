@@ -55,9 +55,14 @@ services:
                 window: 120s
         networks:
             - backend
+        volumes:
+        - redis:/data
 
 networks:
     default:
         driver: overlay
     backend:
         driver: overlay
+
+volumes:
+    redis:
