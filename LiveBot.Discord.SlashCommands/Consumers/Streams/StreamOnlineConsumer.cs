@@ -241,7 +241,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         streamNotification.DiscordRole_Name.Split(","),
                         streamNotification.Message,
                         false,
-                        streamNotification.Stream_StartTime - DateTime.UtcNow
+                        DateTime.UtcNow - streamNotification.Stream_StartTime
                     );
                 }
                 catch (Exception ex)
@@ -271,7 +271,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                             streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
                             streamNotification.Message,
                             false,
-                            streamNotification.Stream_StartTime - DateTime.UtcNow
+                            DateTime.UtcNow - streamNotification.Stream_StartTime
                         );
                     }
                 }
