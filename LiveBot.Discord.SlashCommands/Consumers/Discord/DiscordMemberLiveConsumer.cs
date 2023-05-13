@@ -198,7 +198,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     await _work.NotificationRepository.UpdateAsync(streamNotification);
 
                     _logger.LogInformation(
-                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
+                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {TimeToPost}",
                         streamNotification.Id,
                         streamNotification.ServiceType,
                         streamNotification.User_Username,
@@ -206,7 +206,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                         streamNotification.DiscordChannel_DiscordId.ToString(),
                         streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                         streamNotification.Message,
-                        true
+                        true,
+                        streamNotification.Stream_StartTime - DateTime.UtcNow
                     );
                 }
                 catch (Exception ex)
@@ -227,7 +228,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                     {
                         _logger.LogError(
                             exception: ex,
-                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}",
+                            message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {TimeToPost}",
                             streamNotification.Id,
                             streamNotification.ServiceType,
                             streamNotification.User_Username,
@@ -235,7 +236,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                             streamNotification.DiscordChannel_DiscordId.ToString(),
                             streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
                             streamNotification.Message,
-                            true
+                            true,
+                            streamNotification.Stream_StartTime - DateTime.UtcNow
                         );
                     }
                 }
