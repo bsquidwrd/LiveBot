@@ -31,16 +31,15 @@ services:
                 max_attempts: 3
                 window: 120s
         depends_on:
-            redis:
-                condition: service_started
+            - redis
         healthcheck:
             test: ["CMD", "dotnet", "/app/LiveBot.Core.HealthCheck.dll"]
             interval: 30s
             retries: 5
             timeout: 10s
-        #networks:
-        #    - default
-        #    - backend
+        networks:
+            - default
+            - backend
 
     redis:
         image: redis:7.0.11-alpine
