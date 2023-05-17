@@ -1,5 +1,5 @@
 ﻿using LiveBot.Core.Cache;
-﻿using LiveBot.Core.Repository.Base.Monitor;
+using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
@@ -362,7 +362,7 @@ namespace LiveBot.Watcher.Twitch
                     // Only set cache if the ExpiresAt is in the future
                     // Otherwise it throws an error about being negative
                     var timeToExpire = auth.ExpiresAt - DateTime.UtcNow;
-                    await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: auth, expiryTime: timeToExpire);
+                    await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: auth, expiryTime: timeToExpire.Duration());
                 }
             }
             return auth;
@@ -430,7 +430,7 @@ namespace LiveBot.Watcher.Twitch
                             await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
 
                             var timeToExpire = newAuth.ExpiresAt - DateTime.UtcNow;
-                            await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: newAuth, expiryTime: timeToExpire);
+                            await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: newAuth, expiryTime: timeToExpire.Duration());
 
                             oldAuth.Expired = true;
                             await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
