@@ -1,12 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LiveBot.Core.Cache;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.SlashCommands.DiscordStats;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
-using LiveBot.Watcher.Twitch.Cache;
 using Serilog;
 
 namespace LiveBot.Discord.SlashCommands
