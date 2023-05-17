@@ -3,11 +3,10 @@ using Discord.Interactions;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
-using LiveBot.Discord.SlashCommands.Attributes;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    [RequireBotManager]
+    [DefaultMemberPermissions(GuildPermission.Administrator)]
     public class ConfigModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<ConfigModule> _logger;
@@ -23,9 +22,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         [SlashCommand(name: "config", description: "Configure some general settings for the server overall")]
         public async Task ConfigSetupAsync(
-            [Summary(name: "admin-role", description: "The role allowed to manage the bot, so you don't need to assign Manage Server")]
-        IRole? AdminRole = null,
-
             [Summary(name: "default-live-message", description: "This message will be sent out when the streamer goes live (check /monitor help)")]
             string? LiveMessage = null
         )
@@ -55,18 +51,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
 
             var ResponseMessage = "";
-            if (AdminRole != null)
-            {
-                if (AdminRole.Id != Context.Guild.EveryoneRole.Id)
-                {
-                    guildConfig.AdminRoleDiscordId = AdminRole.Id;
-                    ResponseMessage += $"Set {Format.Bold(AdminRole?.Name)} as the bot manager role. ";
-                }
-                else
-                {
-                    ResponseMessage += "You can't set the bot manager role to everyone. ";
-                }
-            }
 
             if (LiveMessage != null)
             {

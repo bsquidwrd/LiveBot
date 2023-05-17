@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using LiveBot.Core.Repository.Static;
-using LiveBot.Discord.SlashCommands.Attributes;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
@@ -13,7 +12,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public Task SourceCommandAsync() =>
             FollowupAsync(text: $"You can find my source code here: {Basic.SourceLink}", ephemeral: true);
 
-        [SlashCommand(name: "support", description: "Get an invite link to the support server")]
+        [SlashCommand(name: "help", description: "Get an invite link to the support server")]
         public Task SupportCommandAsync() =>
             FollowupAsync(text: $"You can find support for me here: {Basic.SupportInvite}", ephemeral: true);
 
@@ -31,7 +30,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
         /// </summary>
         /// <param name="channel"></param>
         /// <returns></returns>
-        [RequireBotManager]
+        [DefaultMemberPermissions(GuildPermission.ManageGuild)]
         [SlashCommand(name: "perm-check", description: "Confirm the bot has the necessary permissions to post in a channel")]
         public async Task PermCheckAsync(
             [Summary(name: "channel", description: "The channel to check permissions against")]

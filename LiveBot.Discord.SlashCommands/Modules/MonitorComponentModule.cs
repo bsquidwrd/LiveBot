@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
-using LiveBot.Discord.SlashCommands.Attributes;
 using LiveBot.Discord.SlashCommands.Helpers;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -21,7 +20,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #region monitor.list
 
-        [RequireBotManager]
+        [DefaultMemberPermissions(GuildPermission.ManageGuild)]
         [ComponentInteraction(customId: "monitor.list:*")]
         public async Task MonitorListAsync(int currentSpot)
         {
@@ -88,7 +87,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #region monitor.delete
 
-        [RequireBotManager]
+        [DefaultMemberPermissions(GuildPermission.ManageGuild)]
         [ComponentInteraction(customId: "monitor.delete:*")]
         public async Task MonitorDeleteAsync(long subscriptionId)
         {
@@ -111,7 +110,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #region monitor.delete.confirm
 
-        [RequireBotManager]
+        [DefaultMemberPermissions(GuildPermission.ManageGuild)]
         [ComponentInteraction(customId: "monitor.delete.confirm:*,*")]
         public async Task MonitorDeleteConfirmAsync(long subscriptionId, bool delete)
         {
@@ -177,7 +176,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
         #region monitor.edit.roles
 
-        [RequireBotManager]
+        [DefaultMemberPermissions(GuildPermission.ManageGuild)]
         [ComponentInteraction(customId: "monitor.edit.roles:*")]
         public async Task UpdateRolesAsync(long subscriptionId, string[] roleIds)
         {

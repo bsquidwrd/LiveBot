@@ -5,13 +5,12 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
-using LiveBot.Discord.SlashCommands.Attributes;
 using LiveBot.Discord.SlashCommands.Helpers;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    [RequireBotManager]
+    [DefaultMemberPermissions(GuildPermission.ManageGuild)]
     [Group(name: "monitor", description: "Commands for manipulating stream monitors")]
     public class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
     {
