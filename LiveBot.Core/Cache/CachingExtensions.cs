@@ -1,8 +1,12 @@
-﻿using StackExchange.Redis;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
-namespace LiveBot.Watcher.Twitch.Cache
+namespace LiveBot.Core.Cache
 {
     public static class ServiceCollectionExtensions
     {

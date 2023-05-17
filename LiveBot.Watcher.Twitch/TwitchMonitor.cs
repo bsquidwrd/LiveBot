@@ -1,9 +1,9 @@
+﻿using LiveBot.Core.Cache;
 ﻿using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
-using LiveBot.Watcher.Twitch.Cache;
 using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
@@ -19,7 +19,6 @@ using TwitchLib.Api.Helix.Models.Users.GetUsers;
 using TwitchLib.Api.Services;
 using TwitchLib.Api.Services.Events;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
-
 using TwitchLibStreams = TwitchLib.Api.Helix.Models.Streams.GetStreams;
 
 namespace LiveBot.Watcher.Twitch
