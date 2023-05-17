@@ -214,7 +214,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                             await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
                     }
-                    return;
+                    continue;
                 }
 
                 await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
