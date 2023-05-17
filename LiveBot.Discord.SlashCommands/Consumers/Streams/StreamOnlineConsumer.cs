@@ -224,6 +224,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 if (streamNotification.Success == true)
                     continue;
 
+                var notificationDelay = (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds;
+                // If the subscription was created after the stream was live
+                // don't let it count against us in our stats!
+                if (streamNotification.Stream_StartTime < streamSubscription.TimeStamp)
+                    notificationDelay = (DateTime.UtcNow - streamSubscription.TimeStamp).TotalMilliseconds;
+
                 try
                 {
                     var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
@@ -241,7 +247,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         streamNotification.DiscordRole_Name.Split(","),
                         streamNotification.Message,
                         false,
-                        (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
+                        notificationDelay
                     );
                 }
                 catch (Exception ex)
@@ -271,7 +277,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                             streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
                             streamNotification.Message,
                             false,
-                        (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
+                            notificationDelay
                         );
                     }
                 }
