@@ -266,17 +266,21 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StatsCommandAsync()
         {
             var appInfo = await Context.Client.GetApplicationInfoAsync();
-            var guilds = await work.GuildRepository.GetAllAsync();
             var subscriptions = await work.SubscriptionRepository.GetAllAsync();
+
+            var reportPeriod = DateTime.UtcNow.Subtract(TimeSpan.FromDays(30));
+            var notifications = await work.NotificationRepository.FindAsync(n => n.Success == true && n.TimeStamp >= reportPeriod);
 
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor(appInfo.Owner)
                 .WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            embedBuilder.AddField(name: "Guild Count", value: $"{guilds.Count()}", inline: true);
+            embedBuilder.AddField(name: "Shard Count", value: $"{Context.Client.Shards.Count}", inline: true);
+            embedBuilder.AddField(name: "Guild Count", value: $"{Context.Client.Guilds.Count}", inline: true);
+            embedBuilder.AddField(name: "Last 30 days", value: $"{notifications.LongCount()}", inline: true);
             embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptions.Count()}", inline: true);
-            embedBuilder.AddField(name: "Unique Subscription Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}", inline: true);
+            embedBuilder.AddField(name: "Unique Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}", inline: true);
 
             Enum.GetValues<ServiceEnum>()
                 .Where(i => i != ServiceEnum.None)
