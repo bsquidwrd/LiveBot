@@ -113,18 +113,25 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var endpoint = UpdateUrl.Replace("{BotId}", _discordClient.CurrentUser.Id.ToString());
-            var response = await httpClient.PostAsync(requestUri: endpoint, content: content);
             try
             {
-                response.EnsureSuccessStatusCode();
-                _logger.LogInformation(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
+                var response = await httpClient.PostAsync(requestUri: endpoint, content: content);
+                try
+                {
+                    response.EnsureSuccessStatusCode();
+                    _logger.LogInformation(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
+                }
+                catch (Exception ex)
+                {
+                    var ResponseBody = string.Empty;
+                    if (response != null)
+                        ResponseBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(exception: ex, message: "Unable to update stats for {StatsSiteName} {ResponseBody}", SiteName, ResponseBody);
+                }
             }
             catch (Exception ex)
             {
-                var ResponseBody = string.Empty;
-                if (response != null)
-                    ResponseBody = await response.Content.ReadAsStringAsync();
-                _logger.LogError(exception: ex, message: "Unable to update stats for {StatsSiteName} {ResponseBody}", SiteName, ResponseBody);
+                _logger.LogError(exception: ex, message: "Unable to post to {StatsSiteName}", SiteName);
             }
             finally
             {
