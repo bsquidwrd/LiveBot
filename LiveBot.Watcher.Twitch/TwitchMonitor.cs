@@ -453,7 +453,7 @@ namespace LiveBot.Watcher.Twitch
                     }
                 }
                 var tempAuth = await GetAndSetActiveAuth();
-                // Trigger it 5 minutes before expiration time to be safe
+                // Trigger it at expiration time to be safe
                 SetupAuthTimer(tempAuth.ExpiresAt - DateTime.UtcNow);
             }
         }
