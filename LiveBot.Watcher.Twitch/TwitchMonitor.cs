@@ -462,7 +462,10 @@ namespace LiveBot.Watcher.Twitch
         {
             RefreshAuthTimer?.Stop();
 
-            RefreshAuthTimer = new System.Timers.Timer(timeSpan.TotalMilliseconds)
+            if (timeSpan.TotalSeconds < 1800)
+                timeSpan = TimeSpan.FromSeconds(1800);
+
+            RefreshAuthTimer = new System.Timers.Timer(timeSpan.Duration().TotalMilliseconds)
             {
                 AutoReset = false
             };
