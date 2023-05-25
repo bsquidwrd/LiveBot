@@ -144,181 +144,185 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                 }
 
+                // If the channel can't be found (null) and the shard
+                // is online, check if the Guild is online
+                if (channel == null)
+                {
+                    // If the Guild is online, but the channel isn't found
+                    // remove the subscription
+                    if (guild != null)
+                    {
+                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
+                        foreach (var roleToMention in rolesToMention)
+                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
+                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                    }
+                    continue;
+                }
+
+                string notificationMessage = NotificationHelpers.GetNotificationMessage(guild: guild, stream: stream, subscription: streamSubscription, user: user, game: game);
+                Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
+
+                var newStreamNotification = new StreamNotification
+                {
+                    ServiceType = stream.ServiceType,
+                    Success = false,
+                    Message = notificationMessage,
+
+                    User_SourceID = streamUser.SourceID,
+                    User_Username = streamUser.Username,
+                    User_DisplayName = streamUser.DisplayName,
+                    User_AvatarURL = streamUser.AvatarURL,
+                    User_ProfileURL = streamUser.ProfileURL,
+
+                    Stream_SourceID = stream.Id,
+                    Stream_Title = stream.Title,
+                    Stream_StartTime = stream.StartTime,
+                    Stream_ThumbnailURL = stream.ThumbnailURL,
+                    Stream_StreamURL = stream.StreamURL,
+
+                    Game_SourceID = streamGame?.SourceId,
+                    Game_Name = streamGame?.Name,
+                    Game_ThumbnailURL = streamGame?.ThumbnailURL,
+
+                    DiscordGuild_DiscordId = discordGuild.DiscordId,
+                    DiscordGuild_Name = discordGuild.Name,
+
+                    DiscordChannel_DiscordId = discordChannel.DiscordId,
+                    DiscordChannel_Name = discordChannel.Name,
+
+                    DiscordRole_DiscordId = 0,
+                    DiscordRole_Name = String.Join(",", streamSubscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct())
+                };
+
+                Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
+                    i.User_SourceID == newStreamNotification.User_SourceID &&
+                    i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
+                    i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
+                    i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
+                    i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
+                    i.Game_SourceID == newStreamNotification.Game_SourceID
+                );
+
+                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
+                    i.User_SourceID == streamUser.SourceID &&
+                    i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
+                    i.DiscordChannel_DiscordId == discordChannel.DiscordId
+                );
+
+                var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
+                previousNotifications = previousNotifications.Where(i =>
+                    stream.StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
+                    && i.Success == true // Only pull Successful notifications
+                );
+
+                // If there is already 1 or more notifications that were successful in the past hour
+                // mark this current one as a success
+                if (previousNotifications.Any())
+                    newStreamNotification.Success = true;
+
+                await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
+                StreamNotification streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
+
+                // If the current notification was marked as a success, end processing
+                if (streamNotification.Success == true)
+                    continue;
+
                 // Lock for user and guild
                 bool obtainedLock = false;
                 string recordId = $"subscription:{stream.ServiceType}:{user.Id}:{guild.Id}";
                 Guid lockGuid = Guid.NewGuid();
-                var cachedItem = await _cache.GetRecordAsync<DateTime>(recordId: recordId);
 
-                if (cachedItem == DateTime.MinValue || DateTime.UtcNow.Subtract(cachedItem).TotalMinutes > 60)
+                do
                 {
-                    do
-                    {
-                        obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(30));
-                    }
-                    while (!obtainedLock);
+                    obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(10));
+                }
+                while (!obtainedLock);
 
-                    cachedItem = await _cache.GetRecordAsync<DateTime>(recordId: recordId);
-                    if (cachedItem == DateTime.MinValue || DateTime.UtcNow.Subtract(cachedItem).TotalMinutes > 60)
+                try
+                {
+                    previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
+                    previousNotifications = previousNotifications.Where(i =>
+                        stream.StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
+                        && i.Success == true // Only pull Successful notifications
+                    );
+
+                    // If there is already 1 or more notifications that were successful in the past hour
+                    // mark this current one as a success
+                    if (previousNotifications.Any())
                     {
+                        streamNotification.Success = true;
+                        await _work.NotificationRepository.AddOrUpdateAsync(streamNotification, notificationPredicate);
+                    }
+
+                    if (!streamNotification.Success)
+                    {
+                        var notificationDelay = (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds;
+                        // If the subscription was created after the stream was live
+                        // don't let it count against us in our stats!
+                        if (streamNotification.Stream_StartTime < streamSubscription.TimeStamp)
+                            notificationDelay = (DateTime.UtcNow - streamSubscription.TimeStamp).TotalMilliseconds;
+
                         try
                         {
-                            string notificationMessage = NotificationHelpers.GetNotificationMessage(guild: guild, stream: stream, subscription: streamSubscription, user: user, game: game);
-                            Embed embed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
+                            var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+                            streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
+                            streamNotification.Success = true;
+                            await _work.NotificationRepository.UpdateAsync(streamNotification);
 
-                            var newStreamNotification = new StreamNotification
+                            _logger.LogInformation(
+                                message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                                streamNotification.Id,
+                                streamNotification.ServiceType,
+                                streamNotification.User_Username,
+                                streamNotification.DiscordGuild_DiscordId.ToString(),
+                                streamNotification.DiscordChannel_DiscordId.ToString(),
+                                streamNotification.DiscordRole_Name.Split(","),
+                                streamNotification.Message,
+                                false,
+                                notificationDelay
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            bool logError = true;
+                            if (ex is HttpException discordError)
                             {
-                                ServiceType = stream.ServiceType,
-                                Success = false,
-                                Message = notificationMessage,
-
-                                User_SourceID = streamUser.SourceID,
-                                User_Username = streamUser.Username,
-                                User_DisplayName = streamUser.DisplayName,
-                                User_AvatarURL = streamUser.AvatarURL,
-                                User_ProfileURL = streamUser.ProfileURL,
-
-                                Stream_SourceID = stream.Id,
-                                Stream_Title = stream.Title,
-                                Stream_StartTime = stream.StartTime,
-                                Stream_ThumbnailURL = stream.ThumbnailURL,
-                                Stream_StreamURL = stream.StreamURL,
-
-                                Game_SourceID = streamGame?.SourceId,
-                                Game_Name = streamGame?.Name,
-                                Game_ThumbnailURL = streamGame?.ThumbnailURL,
-
-                                DiscordGuild_DiscordId = discordGuild.DiscordId,
-                                DiscordGuild_Name = discordGuild.Name,
-
-                                DiscordChannel_DiscordId = discordChannel.DiscordId,
-                                DiscordChannel_Name = discordChannel.Name,
-
-                                DiscordRole_DiscordId = 0,
-                                DiscordRole_Name = String.Join(",", streamSubscription.RolesToMention.Select(i => i.DiscordRoleId).Distinct())
-                            };
-
-                            Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
-                                i.User_SourceID == newStreamNotification.User_SourceID &&
-                                i.Stream_SourceID == newStreamNotification.Stream_SourceID &&
-                                i.Stream_StartTime == newStreamNotification.Stream_StartTime &&
-                                i.DiscordGuild_DiscordId == newStreamNotification.DiscordGuild_DiscordId &&
-                                i.DiscordChannel_DiscordId == newStreamNotification.DiscordChannel_DiscordId &&
-                                i.Game_SourceID == newStreamNotification.Game_SourceID
-                            );
-
-                            Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                                i.User_SourceID == streamUser.SourceID &&
-                                i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
-                                i.DiscordChannel_DiscordId == discordChannel.DiscordId
-                            );
-
-                            var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-                            previousNotifications = previousNotifications.Where(i =>
-                                stream.StartTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
-                                && i.Success == true // Only pull Successful notifications
-                            );
-
-                            // If there is already 1 or more notifications that were successful in the past hour
-                            // mark this current one as a success
-                            if (previousNotifications.Any())
-                                newStreamNotification.Success = true;
-
-                            // If the channel can't be found (null) and the shard
-                            // is online, check if the Guild is online
-                            if (channel == null)
-                            {
-                                // If the Guild is online, but the channel isn't found
-                                // remove the subscription
-                                if (guild != null)
+                                // You lack permissions to perform that action
+                                if (
+                                    discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                                    || discordError.DiscordCode == DiscordErrorCode.MissingPermissions
+                                )
                                 {
-                                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
-                                    foreach (var roleToMention in rolesToMention)
-                                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                                    // I'm tired of seeing errors for Missing Permissions
+                                    logError = false;
                                 }
-                                continue;
                             }
 
-                            await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
-                            StreamNotification streamNotification = await _work.NotificationRepository.SingleOrDefaultAsync(notificationPredicate);
-
-                            // If the current notification was marked as a success, end processing
-                            if (streamNotification.Success == true)
-                                continue;
-
-                            var notificationDelay = (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds;
-                            // If the subscription was created after the stream was live
-                            // don't let it count against us in our stats!
-                            if (streamNotification.Stream_StartTime < streamSubscription.TimeStamp)
-                                notificationDelay = (DateTime.UtcNow - streamSubscription.TimeStamp).TotalMilliseconds;
-
-                            try
+                            if (logError)
                             {
-                                var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
-                                streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
-                                streamNotification.Success = true;
-                                await _work.NotificationRepository.UpdateAsync(streamNotification);
-
-                                await _cache.SetRecordAsync<DateTime>(recordId: recordId, data: DateTime.UtcNow, expiryTime: TimeSpan.FromMinutes(60));
-
-                                _logger.LogInformation(
-                                    message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                                _logger.LogError(
+                                    exception: ex,
+                                    message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
                                     streamNotification.Id,
                                     streamNotification.ServiceType,
                                     streamNotification.User_Username,
                                     streamNotification.DiscordGuild_DiscordId.ToString(),
                                     streamNotification.DiscordChannel_DiscordId.ToString(),
-                                    streamNotification.DiscordRole_Name.Split(","),
+                                    streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
                                     streamNotification.Message,
                                     false,
                                     notificationDelay
                                 );
                             }
-                            catch (Exception ex)
-                            {
-                                bool logError = true;
-                                if (ex is HttpException discordError)
-                                {
-                                    // You lack permissions to perform that action
-                                    if (
-                                        discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions
-                                        || discordError.DiscordCode == DiscordErrorCode.MissingPermissions
-                                    )
-                                    {
-                                        // I'm tired of seeing errors for Missing Permissions
-                                        logError = false;
-                                    }
-                                }
-
-                                if (logError)
-                                {
-                                    _logger.LogError(
-                                        exception: ex,
-                                        message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
-                                        streamNotification.Id,
-                                        streamNotification.ServiceType,
-                                        streamNotification.User_Username,
-                                        streamNotification.DiscordGuild_DiscordId.ToString(),
-                                        streamNotification.DiscordChannel_DiscordId.ToString(),
-                                        streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
-                                        streamNotification.Message,
-                                        false,
-                                        notificationDelay
-                                    );
-                                }
-                            }
-                        }
-                        finally
-                        {
-                            if (obtainedLock)
-                                obtainedLock = !await _cache.ReleaseLockAsync(recordId: recordId, identifier: lockGuid);
                         }
                     }
                 }
-
-                if (obtainedLock)
-                    await _cache.ReleaseLockAsync(recordId: recordId, identifier: lockGuid);
+                finally
+                {
+                    if (obtainedLock)
+                        await _cache.ReleaseLockAsync(recordId, identifier: lockGuid);
+                }
             }
         }
     }
