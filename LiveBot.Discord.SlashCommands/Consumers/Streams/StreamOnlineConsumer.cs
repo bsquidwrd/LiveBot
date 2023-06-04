@@ -288,36 +288,19 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         }
                         catch (Exception ex)
                         {
-                            bool logError = true;
-                            if (ex is HttpException discordError)
-                            {
-                                // You lack permissions to perform that action
-                                if (
-                                    discordError.DiscordCode == DiscordErrorCode.InsufficientPermissions
-                                    || discordError.DiscordCode == DiscordErrorCode.MissingPermissions
-                                )
-                                {
-                                    // I'm tired of seeing errors for Missing Permissions
-                                    logError = false;
-                                }
-                            }
-
-                            if (logError)
-                            {
-                                _logger.LogError(
-                                    exception: ex,
-                                    message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
-                                    streamNotification.Id,
-                                    streamNotification.ServiceType,
-                                    streamNotification.User_Username,
-                                    streamNotification.DiscordGuild_DiscordId.ToString(),
-                                    streamNotification.DiscordChannel_DiscordId.ToString(),
-                                    streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
-                                    streamNotification.Message,
-                                    false,
-                                    notificationDelay
-                                );
-                            }
+                            _logger.LogError(
+                                exception: ex,
+                                message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                                streamNotification.Id,
+                                streamNotification.ServiceType,
+                                streamNotification.User_Username,
+                                streamNotification.DiscordGuild_DiscordId.ToString(),
+                                streamNotification.DiscordChannel_DiscordId.ToString(),
+                                streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
+                                streamNotification.Message,
+                                false,
+                                notificationDelay
+                            );
                         }
                     }
                 }
