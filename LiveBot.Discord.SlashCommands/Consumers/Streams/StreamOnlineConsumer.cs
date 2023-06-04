@@ -124,6 +124,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     if (
                         ex.DiscordCode == DiscordErrorCode.InsufficientPermissions
                         || ex.DiscordCode == DiscordErrorCode.MissingPermissions
+                        || ex.DiscordCode == DiscordErrorCode.UnknownChannel
                     )
                     {
                         _logger.LogError(exception: ex, message: "Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
@@ -131,13 +132,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         foreach (var roleToMention in rolesToMention)
                             await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
                         await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                        continue;
-                    }
-                    else if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
-                    {
-                        // It's possible the guild is unavailable
-                        // continue on and let GuildAvailable events
-                        // handle the cleanups
                         continue;
                     }
                     else
