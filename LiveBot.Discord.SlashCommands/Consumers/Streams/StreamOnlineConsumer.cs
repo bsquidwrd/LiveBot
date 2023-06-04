@@ -80,6 +80,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             {
                 if (streamSubscription.DiscordGuild == null || streamSubscription.DiscordChannel == null)
                 {
+                    _logger.LogInformation("Removing orphaned Stream Subscription for {Username} on {ServiceType} - {SubscriptionId}", streamUser.Username, stream.ServiceType, streamSubscription.Id);
                     var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
                     foreach (var roleToMention in rolesToMention)
                         await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
@@ -125,6 +126,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         || ex.DiscordCode == DiscordErrorCode.MissingPermissions
                     )
                     {
+                        _logger.LogError(exception: ex, message: "Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
                         var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
                         foreach (var roleToMention in rolesToMention)
                             await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
@@ -152,6 +154,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     // remove the subscription
                     if (guild != null)
                     {
+                        _logger.LogInformation("Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
                         var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
                         foreach (var roleToMention in rolesToMention)
                             await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);

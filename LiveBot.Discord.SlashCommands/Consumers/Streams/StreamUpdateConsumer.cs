@@ -80,6 +80,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             {
                 if (streamSubscription.DiscordGuild == null || streamSubscription.DiscordChannel == null)
                 {
+                    _logger.LogInformation("Removing orphaned Stream Subscription for {Username} on {ServiceType} - {SubscriptionId}", streamUser.Username, stream.ServiceType, streamSubscription.Id);
                     var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
                     foreach (var roleToMention in rolesToMention)
                         await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
