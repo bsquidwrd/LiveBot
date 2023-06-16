@@ -116,16 +116,19 @@ namespace LiveBot.Discord.SlashCommands
             if (info != null)
             {
                 var endpoint = info.Endpoint;
-                var token = "";
                 if (endpoint.StartsWith("webhooks"))
                 {
                     var splitEndpoint = endpoint.Split('/').LastOrDefault()?.Split('?')?.FirstOrDefault();
-                    token = splitEndpoint ?? "";
+                    var token = splitEndpoint ?? "";
+                    if (!string.IsNullOrEmpty(token))
+                        endpoint = endpoint.Replace(token, ":token");
+                }
+                else if (endpoint.StartsWith("interactions"))
+                {
+                    endpoint = Regex.Replace(endpoint, @"/\w*/callback", "/:token/callback");
                 }
 
                 endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
-                if (!string.IsNullOrEmpty(token))
-                    endpoint = endpoint.Replace(token, ":token");
 
                 Log.Logger.Information(
                     "Rate Limit Information: {IsGlobal} {Limit} {Remaining} {Reset} {ResetAfter} {Bucket} {Lag} {Endpoint}",
