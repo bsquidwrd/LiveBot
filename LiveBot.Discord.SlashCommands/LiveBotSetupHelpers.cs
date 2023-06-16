@@ -127,7 +127,17 @@ namespace LiveBot.Discord.SlashCommands
                 if (!string.IsNullOrEmpty(token))
                     endpoint = endpoint.Replace(token, ":token");
 
-                Log.Logger.Information("Rate Limit Information: {@RateLimitInfo} {RateLimitInfo_Endpoint}", info, endpoint);
+                Log.Logger.Information(
+                    "Rate Limit Information: {RateLimitInfo.IsGlobal} {RateLimitInfo.Limit} {RateLimitInfo.Remaining} {RateLimitInfo.RetryAfter} {RateLimitInfo.Reset} {RateLimitInfo.ResetAfter} {RateLimitInfo.Bucket} {RateLimitInfo.Lag} {RateLimitInfo.Endpoint}",
+                    info.IsGlobal,
+                    info.Limit,
+                    info.Remaining,
+                    info.Reset,
+                    info.ResetAfter,
+                    info.Bucket,
+                    info.Lag,
+                    endpoint
+                );
             }
             return Task.CompletedTask;
         }
