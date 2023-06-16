@@ -116,16 +116,13 @@ namespace LiveBot.Discord.SlashCommands
             if (info != null)
             {
                 var endpoint = info.Endpoint;
-                if (endpoint.StartsWith("webhooks"))
+                var pattern = new Regex(@"(interactions|webhooks)/(\d{16,20})/(?<token>[a-zA-Z0-9_-]{1,})(/|\?).*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+                var matches = pattern.Match(endpoint);
+                if (matches.Success)
                 {
-                    var splitEndpoint = endpoint.Split('/').LastOrDefault()?.Split('?')?.FirstOrDefault();
-                    var token = splitEndpoint ?? "";
-                    if (!string.IsNullOrEmpty(token))
-                        endpoint = endpoint.Replace(token, ":token");
-                }
-                else if (endpoint.StartsWith("interactions"))
-                {
-                    endpoint = Regex.Replace(endpoint, @"/\w*/callback", "/:token/callback");
+                    var endpointToken = matches.Groups["token"].Value;
+                    if (endpointToken != null)
+                        endpoint = endpoint.Replace(endpointToken, ":token");
                 }
 
                 endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
