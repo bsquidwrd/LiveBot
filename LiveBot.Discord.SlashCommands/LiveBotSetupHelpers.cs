@@ -128,7 +128,7 @@ namespace LiveBot.Discord.SlashCommands
                     endpoint = endpoint.Replace(token, ":token");
 
                 Log.Logger.Information(
-                    "Rate Limit Information: {IsGlobal} {Limit} {Remaining} {RetryAfter} {Reset} {ResetAfter} {Bucket} {Lag} {Endpoint}",
+                    "Rate Limit Information: {IsGlobal} {Limit} {Remaining} {Reset} {ResetAfter} {Bucket} {Lag} {Endpoint}",
                     info.IsGlobal,
                     info.Limit,
                     info.Remaining,
