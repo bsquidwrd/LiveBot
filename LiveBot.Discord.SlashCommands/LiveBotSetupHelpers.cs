@@ -126,7 +126,8 @@ namespace LiveBot.Discord.SlashCommands
                 endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
                 if (!string.IsNullOrEmpty(token))
                     endpoint = endpoint.Replace(token, ":token");
-                Console.WriteLine(endpoint);
+
+                Log.Logger.Information("Rate Limit Information: {@RateLimitInfo} {RateLimitInfo_Endpoint}", info, endpoint);
             }
             return Task.CompletedTask;
         }
