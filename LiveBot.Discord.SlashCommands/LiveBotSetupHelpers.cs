@@ -8,6 +8,7 @@ using LiveBot.Discord.SlashCommands.DiscordStats;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
 using Serilog;
+using System.Text.RegularExpressions;
 
 namespace LiveBot.Discord.SlashCommands
 {
@@ -52,6 +53,16 @@ namespace LiveBot.Discord.SlashCommands
                 SuppressUnknownDispatchWarnings = true,
                 AlwaysDownloadUsers = true,
                 FormatUsersInBidirectionalUnicode = true,
+                DefaultRetryMode = RetryMode.AlwaysFail,
+                DefaultRatelimitCallback = info =>
+                {
+                    if (info != null)
+                    {
+                        var endpoint = Regex.Replace(info.Endpoint ?? "invalid", @"\d{16,20}", ":id");
+                        Log.Logger.Information("Rate Limit Information: {@RateLimitInfo} {RateLimitInfo_Endpoint}", info, endpoint);
+                    }
+                    return Task.CompletedTask;
+                },
             };
             var discord = new DiscordShardedClient(discordConfig);
 
