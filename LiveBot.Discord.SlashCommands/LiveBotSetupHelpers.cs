@@ -58,8 +58,18 @@ namespace LiveBot.Discord.SlashCommands
                 {
                     if (info != null)
                     {
-                        var endpoint = Regex.Replace(info.Endpoint ?? "invalid", @"\d{16,20}", ":id");
-                        Log.Logger.Information("Rate Limit Information: {@RateLimitInfo} {RateLimitInfo_Endpoint}", info, endpoint);
+                        var endpoint = info.Endpoint;
+                        var token = "";
+                        if (endpoint.StartsWith("webhooks"))
+                        {
+                            var splitEndpoint = endpoint.Split('/').LastOrDefault()?.Split('?')?.FirstOrDefault();
+                            token = splitEndpoint ?? "";
+                        }
+
+                        endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
+                        if (!string.IsNullOrEmpty(token))
+                            endpoint = endpoint.Replace(token, ":token");
+                        Console.WriteLine(endpoint);
                     }
                     return Task.CompletedTask;
                 },
