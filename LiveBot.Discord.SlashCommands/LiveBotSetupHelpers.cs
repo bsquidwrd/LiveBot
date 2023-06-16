@@ -54,25 +54,7 @@ namespace LiveBot.Discord.SlashCommands
                 AlwaysDownloadUsers = true,
                 FormatUsersInBidirectionalUnicode = true,
                 DefaultRetryMode = RetryMode.AlwaysFail,
-                DefaultRatelimitCallback = info =>
-                {
-                    if (info != null)
-                    {
-                        var endpoint = info.Endpoint;
-                        var token = "";
-                        if (endpoint.StartsWith("webhooks"))
-                        {
-                            var splitEndpoint = endpoint.Split('/').LastOrDefault()?.Split('?')?.FirstOrDefault();
-                            token = splitEndpoint ?? "";
-                        }
-
-                        endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
-                        if (!string.IsNullOrEmpty(token))
-                            endpoint = endpoint.Replace(token, ":token");
-                        Console.WriteLine(endpoint);
-                    }
-                    return Task.CompletedTask;
-                },
+                DefaultRatelimitCallback = LogRateLimitInfo,
             };
             var discord = new DiscordShardedClient(discordConfig);
 
@@ -127,6 +109,26 @@ namespace LiveBot.Discord.SlashCommands
             }
 
             return app;
+        }
+
+        private static Task LogRateLimitInfo(IRateLimitInfo info)
+        {
+            if (info != null)
+            {
+                var endpoint = info.Endpoint;
+                var token = "";
+                if (endpoint.StartsWith("webhooks"))
+                {
+                    var splitEndpoint = endpoint.Split('/').LastOrDefault()?.Split('?')?.FirstOrDefault();
+                    token = splitEndpoint ?? "";
+                }
+
+                endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
+                if (!string.IsNullOrEmpty(token))
+                    endpoint = endpoint.Replace(token, ":token");
+                Console.WriteLine(endpoint);
+            }
+            return Task.CompletedTask;
         }
     }
 }
