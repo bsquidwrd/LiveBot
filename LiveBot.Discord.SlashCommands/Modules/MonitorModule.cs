@@ -65,30 +65,45 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IRole? role5 = null
         )
         {
-            if (GuildChannel is not ITextChannel)
-                throw new ArgumentException("Channel must be a text channel");
-            var WhereToPost = (ITextChannel)GuildChannel;
-
-            var monitor = GetMonitor(ProfileURL);
-            var guild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
-
-            LiveMessage = LiveMessage.Trim();
-            if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = "default";
-            if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
-                LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
-
+            var ResponseMessage = "";
             var allowedMentions = new AllowedMentions()
             {
                 AllowedTypes = AllowedMentionTypes.None
             };
 
-            var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
-            await MonitorUtils.ConsolidateRoleMentions(work: _work, subscription: subscription, role1, role2, role3, role4, role5);
+            if (GuildChannel is not ITextChannel)
+                throw new ArgumentException("Channel must be a text channel");
+            var WhereToPost = (ITextChannel)GuildChannel;
 
-            var ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning the selected roles (if any)\n";
+            var guildUser = Context.Guild.CurrentUser;
+            var channelPerms = guildUser.GetPermissions(WhereToPost);
 
-            var monitorUser = await monitor.GetUser(userId: subscription.User.SourceID);
-            monitor.AddChannel(monitorUser);
+            if (
+                channelPerms.ViewChannel
+                && channelPerms.SendMessages
+                && channelPerms.EmbedLinks
+                && channelPerms.UseExternalEmojis
+            )
+            {
+                var monitor = GetMonitor(ProfileURL);
+                var guild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
+                LiveMessage = LiveMessage.Trim();
+                if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = "default";
+                if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
+                    LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
+
+                var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
+                await MonitorUtils.ConsolidateRoleMentions(work: _work, subscription: subscription, role1, role2, role3, role4, role5);
+
+                ResponseMessage = $"Success! I will post in {WhereToPost.Mention} when {Format.Bold(subscription.User.DisplayName)} goes live on {monitor.ServiceType} with the message {Format.Code(subscription.Message)} and mentioning the selected roles (if any)\n";
+
+                var monitorUser = await monitor.GetUser(userId: subscription.User.SourceID);
+                monitor.AddChannel(monitorUser);
+            }
+            else
+            {
+                ResponseMessage = $"I don't have proper permissions to to post in {WhereToPost.Mention}. Please use my {Format.Code("perm-check")} command for that channel then try again.";
+            }
 
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
         }
@@ -133,6 +148,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
             IRole? role5 = null
         )
         {
+            var ResponseMessage = "";
+            var allowedMentions = new AllowedMentions()
+            {
+                AllowedTypes = AllowedMentionTypes.None
+            };
+
             ITextChannel? WhereToPost = null;
             if (GuildChannel is not ITextChannel && GuildChannel != null)
                 throw new ArgumentException("Channel must be a text channel");
@@ -142,9 +163,25 @@ namespace LiveBot.Discord.SlashCommands.Modules
             var monitor = GetMonitor(ProfileURL);
             var guild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == Context.Guild.Id);
 
-            var ResponseMessage = "";
             if (WhereToPost != null)
-                ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
+            {
+                var guildUser = Context.Guild.CurrentUser;
+                var channelPerms = guildUser.GetPermissions(WhereToPost);
+                if (
+                    channelPerms.ViewChannel
+                    && channelPerms.SendMessages
+                    && channelPerms.EmbedLinks
+                    && channelPerms.UseExternalEmojis
+                )
+                {
+                    ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
+                }
+                else
+                {
+                    ResponseMessage += $"Missing permissions in {WhereToPost.Mention}. Channel not updated. ";
+                }
+            }
+
             if (!String.IsNullOrWhiteSpace(LiveMessage))
             {
                 if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
@@ -153,11 +190,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             }
 
             var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
-
-            var allowedMentions = new AllowedMentions()
-            {
-                AllowedTypes = AllowedMentionTypes.None
-            };
 
             var RolesUpdated = false;
             if (role1 != null || role2 != null || role3 != null || role4 != null || role5 != null)
