@@ -234,11 +234,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                     await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
 
                     _logger.LogInformation(
-                        message: "Stream Subscription deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                        message: "Stream Subscription deleted for {ServiceType} {Username} ({UserId}) by {DiscordUsername} ({DiscordUserId}) in {GuildName} ({GuildId}))",
                         subscription.User.ServiceType,
                         subscription.User.Username,
                         subscription.User.SourceID,
-                        Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                        Context.User.Username,
                         Context.User.Id.ToString(),
                         Context.Guild.Name,
                         Context.Guild.Id.ToString()
@@ -250,11 +250,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 {
                     _logger.LogError(
                         exception: ex,
-                        message: "Stream Subscription could not be deleted for {ServiceType} {StreamUsername} ({StreamUserId}) by {Username} ({UserId}) in {GuildName} ({GuildId}))",
+                        message: "Stream Subscription could not be deleted for {ServiceType} {Username} ({UserId}) by {DiscordUsername} ({DiscordUserId}) in {GuildName} ({GuildId}))",
                         subscription.User.ServiceType,
                         subscription.User.Username,
                         subscription.User.SourceID,
-                        Format.UsernameAndDiscriminator(user: Context.User, doBidirectional: true),
+                        Context.User.Username,
                         Context.User.Id.ToString(),
                         Context.Guild.Name,
                         Context.Guild.Id.ToString()

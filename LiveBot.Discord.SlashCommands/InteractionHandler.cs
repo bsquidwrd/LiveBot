@@ -102,7 +102,7 @@ namespace LiveBot.Discord.SlashCommands
                     message: "Running {ModuleName} {CommandName} for {Username} ({UserId}) in {GuildName} ({GuildId}) - {ErrorType}: {ErrorReason}",
                     commandInfo?.Module?.Name ?? "Unknown",
                     commandInfo?.Name ?? "Unknown",
-                    Format.UsernameAndDiscriminator(user: context.User, doBidirectional: true),
+                    context.User.Username,
                     context.User.Id.ToString(),
                     context.Guild.Name,
                     context.Guild.Id.ToString(),

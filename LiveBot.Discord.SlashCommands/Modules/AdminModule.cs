@@ -198,7 +198,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .AddField(name: "Created Date", value: $"{TimestampTag.FromDateTime(user.CreatedAt.UtcDateTime, TimestampTagStyles.Relative)}", inline: true)
                 .AddField(name: "Mutual Servers", value: $"{mutualGuilds.Count}", inline: true);
 
-            await FollowupAsync(text: $"User information for {Format.Bold(Format.UsernameAndDiscriminator(user: user, doBidirectional: true))}", embed: userEmbedBuilder.Build(), ephemeral: true);
+            await FollowupAsync(text: $"User information for {Format.Bold(Context.User.Username)}", embed: userEmbedBuilder.Build(), ephemeral: true);
 
             foreach (var guildChunk in mutualGuilds.Chunk(10))
             {
