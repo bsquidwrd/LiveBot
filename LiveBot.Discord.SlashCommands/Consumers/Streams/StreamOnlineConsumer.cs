@@ -282,19 +282,52 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(
-                                exception: ex,
-                                message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
-                                streamNotification.Id,
-                                streamNotification.ServiceType,
-                                streamNotification.User_Username,
-                                streamNotification.DiscordGuild_DiscordId.ToString(),
-                                streamNotification.DiscordChannel_DiscordId.ToString(),
-                                streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
-                                streamNotification.Message,
-                                false,
-                                notificationDelay
-                            );
+                            if (ex is HttpException httpException)
+                            {
+                                if (
+                                    httpException.DiscordCode == DiscordErrorCode.MissingPermissions
+                                    || httpException.DiscordCode == DiscordErrorCode.InsufficientPermissions
+                                )
+                                {
+                                    _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because missing permissions in {GuildId} {ChannelId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, channel.Id, streamSubscription.Id);
+                                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
+                                    foreach (var roleToMention in rolesToMention)
+                                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
+                                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                                }
+                                else
+                                {
+                                    _logger.LogError(
+                                        exception: ex,
+                                        message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                                        streamNotification.Id,
+                                        streamNotification.ServiceType,
+                                        streamNotification.User_Username,
+                                        streamNotification.DiscordGuild_DiscordId.ToString(),
+                                        streamNotification.DiscordChannel_DiscordId.ToString(),
+                                        streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
+                                        streamNotification.Message,
+                                        false,
+                                        notificationDelay
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogError(
+                                    exception: ex,
+                                    message: "Error sending notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                                    streamNotification.Id,
+                                    streamNotification.ServiceType,
+                                    streamNotification.User_Username,
+                                    streamNotification.DiscordGuild_DiscordId.ToString(),
+                                    streamNotification.DiscordChannel_DiscordId.ToString(),
+                                    streamSubscription.RolesToMention.Select(i => i.DiscordRoleId.ToString()).Distinct().ToList(),
+                                    streamNotification.Message,
+                                    false,
+                                    notificationDelay
+                                );
+                            }
                         }
                     }
                 }
