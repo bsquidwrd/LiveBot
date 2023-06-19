@@ -81,8 +81,6 @@ namespace LiveBot.Discord.SlashCommands.Modules
             if (
                 channelPerms.ViewChannel
                 && channelPerms.SendMessages
-                && channelPerms.EmbedLinks
-                && channelPerms.UseExternalEmojis
             )
             {
                 var monitor = GetMonitor(ProfileURL);
@@ -102,7 +100,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             }
             else
             {
-                ResponseMessage = $"I don't have proper permissions to to post in {WhereToPost.Mention}. Please use my {Format.Code("perm-check")} command for that channel then try again.";
+                ResponseMessage = $"I don't have View and Send permissions to to post in {WhereToPost.Mention}. Please use my {Format.Code("perm-check")} command for that channel then try again.";
             }
 
             await FollowupAsync(text: ResponseMessage, ephemeral: true, allowedMentions: allowedMentions);
@@ -170,15 +168,13 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 if (
                     channelPerms.ViewChannel
                     && channelPerms.SendMessages
-                    && channelPerms.EmbedLinks
-                    && channelPerms.UseExternalEmojis
                 )
                 {
                     ResponseMessage += $"Updated channel to {WhereToPost.Mention}. ";
                 }
                 else
                 {
-                    ResponseMessage += $"Missing permissions in {WhereToPost.Mention}. Channel not updated. ";
+                    ResponseMessage += $"Missing View and Send permissions in {WhereToPost.Mention}. Channel not updated. ";
                 }
             }
 
