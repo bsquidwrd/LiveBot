@@ -256,16 +256,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         {
                             // Setup a cancellation token
                             CancellationTokenSource cancellationToken = new();
-                            System.Timers.Timer cancellationTimer = new()
-                            {
-                                AutoReset = false,
-                                Enabled = true,
-                                Interval = lockTimeout.Milliseconds
-                            };
-                            cancellationTimer.Elapsed += (sender, e) =>
-                            {
-                                cancellationToken.Cancel();
-                            };
+                            cancellationToken.CancelAfter(lockTimeout.Milliseconds);
 
                             var messageRequestOptions = new RequestOptions()
                             {
