@@ -140,20 +140,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     }
                 }
 
-                // If the channel can't be found (null) and the shard
-                // is online, check if the Guild is online
+                // If the channel can't be found (null)
+                // but the subscription lives, assume guild/channel
+                // offline and try again on next run
                 if (channel == null)
                 {
-                    // If the Guild is online, but the channel isn't found
-                    // remove the subscription
-                    if (guild != null)
-                    {
-                        _logger.LogInformation("Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
-                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
-                        foreach (var roleToMention in rolesToMention)
-                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                        await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
-                    }
                     continue;
                 }
 
