@@ -217,13 +217,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 // Lock for user and guild
+                TimeSpan lockTimeout = TimeSpan.FromMinutes(1);
                 bool obtainedLock = false;
                 string recordId = $"subscription:{stream.ServiceType}:{user.Id}:{guild.Id}";
                 Guid lockGuid = Guid.NewGuid();
 
                 do
                 {
-                    obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(10));
+                    obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: lockTimeout);
                 }
                 while (!obtainedLock);
 
@@ -253,7 +254,26 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                         try
                         {
-                            var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed);
+                            // Setup a cancellation token
+                            CancellationTokenSource cancellationToken = new();
+                            System.Timers.Timer cancellationTimer = new()
+                            {
+                                AutoReset = false,
+                                Enabled = true,
+                                Interval = lockTimeout.Milliseconds
+                            };
+                            cancellationTimer.Elapsed += (sender, e) =>
+                            {
+                                cancellationToken.Cancel();
+                            };
+
+                            var messageRequestOptions = new RequestOptions()
+                            {
+                                RetryMode = RetryMode.AlwaysFail,
+                                Timeout = lockTimeout.Milliseconds,
+                                CancelToken = cancellationToken.Token
+                            };
+                            var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed, options: messageRequestOptions);
                             streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
                             streamNotification.Success = true;
                             await _work.NotificationRepository.UpdateAsync(streamNotification);
