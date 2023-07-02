@@ -255,14 +255,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         try
                         {
                             // Setup a cancellation token
-                            CancellationTokenSource cancellationToken = new();
-                            cancellationToken.CancelAfter(lockTimeout.Milliseconds);
+                            //CancellationTokenSource cancellationToken = new();
+                            //cancellationToken.CancelAfter(lockTimeout.Milliseconds);
 
                             var messageRequestOptions = new RequestOptions()
                             {
                                 RetryMode = RetryMode.AlwaysFail,
                                 Timeout = lockTimeout.Milliseconds,
-                                CancelToken = cancellationToken.Token
+                                //CancelToken = cancellationToken.Token
                             };
                             var discordMessage = await channel.SendMessageAsync(text: notificationMessage, embed: embed, options: messageRequestOptions);
                             streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
