@@ -217,7 +217,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 // Lock for user and guild
-                TimeSpan lockTimeout = TimeSpan.FromMinutes(1);
+                TimeSpan lockTimeout = TimeSpan.FromSeconds(30);
                 bool obtainedLock = false;
                 string recordId = $"subscription:{stream.ServiceType}:{user.Id}:{guild.Id}";
                 Guid lockGuid = Guid.NewGuid();
