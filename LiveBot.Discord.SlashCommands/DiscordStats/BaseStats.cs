@@ -63,7 +63,7 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
                 !string.IsNullOrEmpty(UpdateUrl)
             )
             {
-                TimeSpan timeSpan = TimeSpan.FromMinutes(5);
+                TimeSpan timeSpan = TimeSpan.FromHours(6);
                 var timer = new System.Timers.Timer(timeSpan.Duration().TotalMilliseconds)
                 {
                     AutoReset = true
