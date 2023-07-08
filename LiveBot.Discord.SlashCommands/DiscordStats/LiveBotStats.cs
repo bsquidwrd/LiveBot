@@ -27,6 +27,7 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            LogInformation();
             _timer.Start();
             return Task.CompletedTask;
         }
@@ -37,10 +38,20 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             return Task.CompletedTask;
         }
 
-        public async void LogInformation(object? sender, ElapsedEventArgs e)
+        private class Stats
         {
-            _logger.LogInformation("Currently in {GuildCount} Discord Guilds", _discordClient.Guilds.Count);
-            _logger.LogInformation("Currently have {SubscriptionCount} subscriptions", await _work.SubscriptionRepository.LongCountAsync());
+            public long GuildCount;
+            public long SubscriptionCount;
+        }
+
+        public async void LogInformation(object? sender = null, ElapsedEventArgs? e = null)
+        {
+            var stats = new Stats()
+            {
+                GuildCount = _discordClient.Guilds.Count,
+                SubscriptionCount = await _work.SubscriptionRepository.LongCountAsync(),
+            };
+            _logger.LogInformation("Current Stats: {@LiveBotStats}", stats);
         }
     }
 }
