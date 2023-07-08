@@ -101,7 +101,10 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             if (apiKey == null)
                 return;
 
-            HttpClient httpClient = new();
+            HttpClient httpClient = new()
+            {
+                Timeout = TimeSpan.FromSeconds(30)
+            };
             SetAuthorization(httpClient, apiKey);
 
             var guilds = _discordClient.Guilds;
