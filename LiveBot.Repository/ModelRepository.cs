@@ -62,6 +62,14 @@ namespace LiveBot.Repository
         }
 
         /// <inheritdoc/>
+        public Task<long> LongCountAsync() =>
+            DbSet.LongCountAsync();
+
+        /// <inheritdoc/>
+        public Task<long> LongCountAsync(Expression<Func<TEntity, bool>> predicate) =>
+            GetQueryable(predicate).LongCountAsync();
+
+        /// <inheritdoc/>
         public Task<TEntity> GetAsync(long Id)
         {
             return DbSet

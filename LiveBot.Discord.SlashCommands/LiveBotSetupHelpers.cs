@@ -91,6 +91,9 @@ namespace LiveBot.Discord.SlashCommands
             builder.Services.AddHostedService<DiscordBots>();
             builder.Services.AddHostedService<TopGG>();
 
+            // Add my own stats logging
+            builder.Services.AddHostedService<LiveBotStats>();
+
             await Task.CompletedTask;
             return builder;
         }

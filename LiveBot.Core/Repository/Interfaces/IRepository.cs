@@ -13,6 +13,19 @@ namespace LiveBot.Core.Repository.Interfaces
     public interface IRepository<TModel> where TModel : BaseModel<TModel>
     {
         /// <summary>
+        /// Get the count of all entities
+        /// </summary>
+        /// <returns></returns>
+        Task<long> LongCountAsync();
+
+        /// <summary>
+        /// Get the count of entities that match the given predicate
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <returns></returns>
+        Task<long> LongCountAsync(Expression<Func<TModel, bool>> predicate);
+
+        /// <summary>
         /// Gets an entity based on it's Id.
         /// </summary>
         /// <param name="Id">The Id of the entity.</param>
