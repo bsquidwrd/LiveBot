@@ -159,6 +159,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 var gameIDs = new List<string> { gameId };
                 GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
                 return games.Games.FirstOrDefault(i => i.Id == gameId);
@@ -186,6 +187,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 var usernameList = new List<string> { username.ToLower() };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Login == username);
@@ -213,6 +215,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 var userIdList = new List<string> { userId };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Id == userId);
@@ -240,6 +243,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 GetUsersResponse apiUsers = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUsers;
             }
@@ -266,6 +270,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
                 return await API_GetUserByLogin(username: username);
             }
@@ -292,6 +297,7 @@ namespace LiveBot.Watcher.Twitch
         {
             try
             {
+                await WaitForAuthUnlockAsync();
                 var userIds = new List<string>
                 {
                     user.Id
@@ -321,6 +327,20 @@ namespace LiveBot.Watcher.Twitch
         #endregion API Calls
 
         #region Misc Functions
+
+        /// <summary>
+        /// Wait for an Auth lock to not be in place
+        /// </summary>
+        /// <returns></returns>
+        private async Task WaitForAuthUnlockAsync()
+        {
+            bool authLocked;
+            do
+            {
+                authLocked = await _cache.CheckForLockAsync(recordId: _authCacheName);
+            }
+            while (authLocked);
+        }
 
         private static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize = 30)
         {
