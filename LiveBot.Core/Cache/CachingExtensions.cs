@@ -147,6 +147,22 @@ namespace LiveBot.Core.Cache
         }
 
         /// <summary>
+        /// Returns true is there is a lock in place for <paramref name="recordId"/>
+        /// </summary>
+        /// <param name="redis"></param>
+        /// <param name="recordId"></param>
+        /// <returns></returns>
+        public static async Task<bool> CheckForLockAsync(this ConnectionMultiplexer redis, string recordId)
+        {
+            StackExchange.Redis.IDatabase cache = redis.GetDatabase();
+            string lockRecordId = $"lock:{redis.ClientName}:{recordId}".ToLower();
+
+            var lockValue = await cache.StringGetAsync(key: lockRecordId);
+
+            return lockValue.HasValue;
+        }
+
+        /// <summary>
         /// Obtain a lock for a record
         /// </summary>
         /// <param name="redis"></param>
