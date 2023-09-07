@@ -1,4 +1,6 @@
-﻿using Discord;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using Discord;
 using Discord.Interactions;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
@@ -6,6 +8,7 @@ using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Helpers;
+using System.Globalization;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
@@ -426,23 +429,68 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         /// </summary>
         /// <returns></returns>
         [SlashCommand(name: "list", description: "List all stream monitors")]
-        public async Task ListStreamMonitorAsync()
+        public async Task ListStreamMonitorAsync(
+               [Summary(name: "export", description: "Export all monitors to a CSV file")]
+               bool Export = false
+        )
         {
             var subscriptions = await _work.SubscriptionRepository.FindAsync(i => i.DiscordGuild.DiscordId == Context.Guild.Id);
-            subscriptions = subscriptions.OrderBy(i => i.User.DisplayName);
 
-            if (!subscriptions.Any())
+            if (!Export)
             {
-                await FollowupAsync("There are no subscriptions for this server!", ephemeral: true);
-                return;
+                subscriptions = subscriptions.OrderBy(i => i.User.DisplayName);
+
+                if (!subscriptions.Any())
+                {
+                    await FollowupAsync("There are no subscriptions for this server!", ephemeral: true);
+                    return;
+                }
+
+                var subscription = subscriptions.First();
+
+                var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(guild: Context.Guild, currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
+                var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
+
+                await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
             }
+            else
+            {
+                string monitorListFilePath = @$".\{Context.Guild.Id}.csv";
+                if (File.Exists(monitorListFilePath))
+                {
+                    File.Delete(monitorListFilePath);
+                }
 
-            var subscription = subscriptions.First();
+                var monitorListData = new List<object>();
+                foreach (var subscription in subscriptions)
+                {
+                    monitorListData.Add(new
+                    {
+                        subscription.User.Username,
+                        subscription.User.DisplayName,
+                        DiscordChannel = $"#{subscription.DiscordChannel.Name}",
+                        LiveMessage = subscription.Message
+                    });
+                }
 
-            var subscriptionEmbed = MonitorUtils.GetSubscriptionEmbed(guild: Context.Guild, currentSpot: 0, subscription: subscription, subscriptionCount: subscriptions.Count());
-            var messageComponents = MonitorUtils.GetSubscriptionComponents(subscription: subscription, previousSpot: -1, nextSpot: 1);
+                var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    ShouldQuote = args => true
+                };
 
-            await FollowupAsync(text: $"Streams being monitored for this server", ephemeral: true, embed: subscriptionEmbed, components: messageComponents);
+                using (var writer = new StreamWriter(path: monitorListFilePath, append: false))
+                using (var csv = new CsvWriter(writer, csvConfig))
+                {
+                    csv.WriteRecords(records: monitorListData);
+                }
+
+                await FollowupWithFileAsync(text: $"Here's a CSV of subscriptions in this server", ephemeral: true, filePath: monitorListFilePath, fileName: $"{Context.Guild.Name} Monitors.csv");
+
+                if (File.Exists(monitorListFilePath))
+                {
+                    File.Delete(monitorListFilePath);
+                }
+            }
         }
 
         #endregion List command
