@@ -5,11 +5,12 @@ using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
+using LiveBot.Discord.SlashCommands.Attributes;
 using System.Globalization;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {
-    [RequireOwner]
+    [RequireBotOwner]
     [DontAutoRegister]
     [Group(name: "admin", description: "Administrative functions for the Bot Owner")]
     public class AdminModule : InteractionModuleBase<ShardedInteractionContext>
