@@ -6,7 +6,7 @@
 [Click here to have the bot added to your server](https://livebot.bsquid.io/invite)
 
 ### Example notification
-<img src="https://i.imgur.com/n2RXb1E.png" />
+<img src="./images/examples/bsquidwrd.png" />
 
 ## Documentation
 [Click here for documentation on the bot](https://bsquidwrd.gitbook.io/livebot-docs/)
