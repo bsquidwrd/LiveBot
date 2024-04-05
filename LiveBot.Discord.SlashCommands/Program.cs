@@ -13,7 +13,7 @@ await app.RegisterLiveBot();
 
 app.MapGet("/", () => "Up");
 app.MapGet("/healthcheck", () => {
-  Console.WriteLine("Healthcheck Success");
+  app.Logger.LogInformation("Healthcheck Success");
   return "OK";
 });
 
