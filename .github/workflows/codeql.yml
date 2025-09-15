@@ -40,7 +40,14 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    # Ensure .NET 8 SDK is available for building C# during CodeQL autobuild
+    - name: Setup .NET 8
+      if: matrix.language == 'csharp'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
