@@ -36,4 +36,5 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=publish /app/healthcheck-publish /app/healthcheck
 COPY --from=publish /app/healthcheck-publish/LiveBot.Core.HealthCheck.* /app/
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
 ENTRYPOINT ["dotnet", "LiveBot.Watcher.Twitch.dll"]

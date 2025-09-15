@@ -48,4 +48,6 @@ COPY --from=publish /app/publish .
 # Include healthcheck app (folder and root-level files for compatibility)
 COPY --from=publish /app/healthcheck-publish /app/healthcheck
 COPY --from=publish /app/healthcheck-publish/LiveBot.Core.HealthCheck.* /app/
+# Built-in container healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
 ENTRYPOINT ["dotnet", "LiveBot.Discord.SlashCommands.dll"]
