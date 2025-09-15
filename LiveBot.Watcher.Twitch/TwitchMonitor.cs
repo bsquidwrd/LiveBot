@@ -456,7 +456,7 @@ namespace LiveBot.Watcher.Twitch
                             await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
                             AccessToken = newAuth.AccessToken;
 
-                            _logger.LogDebug(message: "{ServiceType} Expiration time: {ExpirationSeconds}", refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn);
+                            _logger.LogDebug("{ServiceType} Expiration time: {ExpirationSeconds}", ServiceType, refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn);
 
                             // Force all other tokens to be expired
                             var oldAuths = await _work.AuthRepository.FindAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false && i.AccessToken != newAuth.AccessToken);

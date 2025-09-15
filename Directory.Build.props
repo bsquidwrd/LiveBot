@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Treat use of [Obsolete] APIs as errors across the solution -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS0612;CS0618</WarningsAsErrors>
+  </PropertyGroup>
+</Project>
+
