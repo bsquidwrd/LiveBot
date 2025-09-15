@@ -2,12 +2,14 @@
 using CsvHelper.Configuration;
 using Discord;
 using Discord.Interactions;
+using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Helpers;
+using MassTransit;
 using System.Globalization;
 using System.Linq.Expressions;
 
@@ -18,14 +20,18 @@ namespace LiveBot.Discord.SlashCommands.Modules
     public class MonitorModule : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly ILogger<MonitorModule> _logger;
+        private readonly IConfiguration _configuration;
         private readonly IUnitOfWork _work;
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
+        private readonly MassTransit.IBus _bus;
 
-        public MonitorModule(ILogger<MonitorModule> logger, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors)
+        public MonitorModule(ILogger<MonitorModule> logger, IConfiguration configuration, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors, MassTransit.IBus bus)
         {
             _logger = logger;
+            _configuration = configuration;
             _work = factory.Create();
             _monitors = monitors;
+            _bus = bus;
         }
 
         #region Slash Commands
@@ -318,19 +324,101 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
             [Summary(name: "profile-url", description: "The profile page of the streamer")] Uri ProfileURL
         )
         {
-            var monitor = GetMonitor(uri: ProfileURL);
-            var user = await monitor.GetUser(profileURL: ProfileURL.AbsoluteUri);
-            var stream = await monitor.GetStream_Force(user: user);
-            if (stream == null)
+            // Determine target service and whether this app runs watchers locally
+            var serviceType = ServiceUtils.ToServiceEnum(ProfileURL);
+            if (serviceType == ServiceEnum.None)
             {
-                await FollowupAsync(text: $"Looks like {user.DisplayName} is not live right now", ephemeral: true);
+                await FollowupAsync(text: "Unsupported or invalid profile URL", ephemeral: true);
+                return;
             }
-            else
+            var runWatchersInDiscord = Convert.ToBoolean(_configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
+            var hasLocalServiceMonitor = _monitors.Any(m => m.IsEnabled && m.ServiceType == serviceType);
+
+            // If watchers are running locally in this process and the service monitor exists, prefer local check first
+            if (runWatchersInDiscord && hasLocalServiceMonitor)
             {
-                var streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: stream.User, game: stream.Game);
+                try
+                {
+                    var monitor = GetMonitor(uri: ProfileURL);
+                    var user = await monitor.GetUser(profileURL: ProfileURL.AbsoluteUri);
+                    var stream = await monitor.GetStream_Force(user: user);
+                    if (stream == null)
+                    {
+                        await FollowupAsync(text: $"Looks like {user.DisplayName} is not live right now", ephemeral: true);
+                        return;
+                    }
+
+                    var streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: stream.User, game: stream.Game);
+                    var bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
+                    var notificationMessage = NotificationHelpers.GetNotificationMessage(guild: Context.Guild, stream: stream, subscription: bogusSubscription);
+                    await FollowupAsync(text: notificationMessage, embed: streamEmbed, ephemeral: true);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Local watcher check failed; falling back to remote watcher via RabbitMQ");
+                }
+            }
+
+            // Prefer back-and-forth via RabbitMQ so Watcher and Discord can run separately
+            try
+            {
+                var endpoint = new Uri($"{Queues.QueueURL}/{Queues.GetStreamCheckQueueName(serviceType)}");
+                var requestClient = _bus.CreateRequestClient<IStreamCheckRequest>(endpoint, MassTransit.RequestTimeout.After(s: 60));
+                var checkResponse = await requestClient.GetResponse<IStreamCheckResponse>(new
+                {
+                    ServiceType = serviceType,
+                    ProfileURL = ProfileURL.AbsoluteUri
+                });
+
+                var result = checkResponse.Message;
+                if (!result.IsLive || result.Stream == null)
+                {
+                    // Try to show a nicer display name if possible
+                    try
+                    {
+                        var localMonitor = _monitors.FirstOrDefault(x => x.IsValid(ProfileURL.AbsoluteUri) && x.IsEnabled);
+                        var localUser = localMonitor != null ? await localMonitor.GetUser(profileURL: ProfileURL.AbsoluteUri) : null;
+                        if (localUser != null)
+                        {
+                            await FollowupAsync(text: $"Looks like {localUser.DisplayName} is not live right now", ephemeral: true);
+                            return;
+                        }
+                    }
+                    catch { }
+
+                    await FollowupAsync(text: "Looks like this channel is not live right now", ephemeral: true);
+                    return;
+                }
+
+                var stream = result.Stream;
+                ILiveBotUser user = stream.User;
+                ILiveBotGame game = stream.Game;
+                if (user == null || game == null)
+                {
+                    try
+                    {
+                        var localMonitor = _monitors.FirstOrDefault(x => x.ServiceType == serviceType && x.IsEnabled);
+                        if (localMonitor != null)
+                        {
+                            if (user == null && !string.IsNullOrEmpty(stream.UserId))
+                                user = await localMonitor.GetUserById(stream.UserId);
+                            if (game == null && !string.IsNullOrEmpty(stream.GameId))
+                                game = await localMonitor.GetGame(stream.GameId);
+                        }
+                    }
+                    catch { }
+                }
+
+                var streamEmbed = NotificationHelpers.GetStreamEmbed(stream: stream, user: user, game: game);
                 var bogusSubscription = new StreamSubscription() { Message = Defaults.NotificationMessage };
                 var notificationMessage = NotificationHelpers.GetNotificationMessage(guild: Context.Guild, stream: stream, subscription: bogusSubscription);
                 await FollowupAsync(text: notificationMessage, embed: streamEmbed, ephemeral: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking stream status for {Url}", ProfileURL.AbsoluteUri);
+                await FollowupAsync(text: "Error checking stream status; please try again later", ephemeral: true);
             }
         }
 

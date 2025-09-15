@@ -10,6 +10,7 @@ namespace LiveBot.Watcher.Twitch
             // Add Messaging
             services.AddMassTransit(x =>
             {
+                x.AddConsumer<Consumers.TwitchStreamCheckConsumer>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(Queues.QueueURL, x =>
@@ -18,6 +19,9 @@ namespace LiveBot.Watcher.Twitch
                         x.Password(Queues.QueuePassword);
                     });
                     cfg.PrefetchCount = Queues.PrefetchCount;
+
+                    // Request/Response endpoint for on-demand checks (service-specific queue)
+                    cfg.ReceiveEndpoint(Queues.GetStreamCheckQueueName(LiveBot.Core.Repository.Static.ServiceEnum.Twitch), ep => ep.Consumer<Consumers.TwitchStreamCheckConsumer>(context));
                 });
             });
             return services;

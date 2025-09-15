@@ -81,8 +81,12 @@ namespace LiveBot.Discord.SlashCommands
             // Setup MassTransit
             builder.Services.AddLiveBotQueueing();
 
-            // Add Monitors
-            builder.Services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
+            // Add Monitors (optional: allow running Watchers separately)
+            var runWatchersInDiscord = Convert.ToBoolean(builder.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
+            if (runWatchersInDiscord)
+            {
+                builder.Services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
+            }
 
             // Add Discord Stats
             builder.Services.AddHostedService<BotsForDiscord>();
@@ -105,10 +109,14 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public static async Task<WebApplication> RegisterLiveBot(this WebApplication app)
         {
-            foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
+            var runWatchersInDiscord = Convert.ToBoolean(app.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
+            if (runWatchersInDiscord)
             {
-                await monitor.StartAsync(IsWatcher: true);
-                app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
+                foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
+                {
+                    await monitor.StartAsync(IsWatcher: true);
+                    app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
+                }
             }
 
             return app;
