@@ -326,7 +326,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         {
             // Determine target service and whether this app runs watchers locally
             var serviceType = ServiceUtils.ToServiceEnum(ProfileURL);
-            if (serviceType == ServiceEnum.None)
+            if (serviceType != ServiceEnum.Twitch)
             {
                 await FollowupAsync(text: "Unsupported or invalid profile URL", ephemeral: true);
                 return;
@@ -357,6 +357,8 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Local watcher check failed; falling back to remote watcher via RabbitMQ");
+                    await FollowupAsync(text: "Error checking stream status; please try again later", ephemeral: true);
+                    return;
                 }
             }
 
