@@ -49,5 +49,5 @@ COPY --from=publish /app/publish .
 COPY --from=publish /app/healthcheck-publish /app/healthcheck
 COPY --from=publish /app/healthcheck-publish/LiveBot.Core.HealthCheck.* /app/
 # Built-in container healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
+# HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
 ENTRYPOINT ["dotnet", "LiveBot.Discord.SlashCommands.dll"]
