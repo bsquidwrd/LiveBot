@@ -21,6 +21,7 @@ ENV LiveBot_DiscordBotList_API=""
 ENV LiveBot_DiscordBots_API=""
 ENV LiveBot_TopGG_API=""
 ENV Redis_connectionstring=""
+ENV RunWatchersInDiscord=""
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src

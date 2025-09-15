@@ -18,9 +18,10 @@
                 Console.WriteLine("Request returned success status");
                 Environment.Exit(0);
             }
-            catch
+            catch (Exception ex)
             {
                 Console.WriteLine("Request did not return success status");
+                Console.WriteLine($"Exception: {ex}");
                 Environment.Exit(1);
             }
         }
