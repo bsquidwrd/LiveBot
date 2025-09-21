@@ -5,6 +5,8 @@ using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
+using System;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
@@ -37,10 +39,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             foreach (var subscription in streamSubscriptions)
             {
-                if (!subscription.DiscordGuild.IsInBeta)
-                    continue;
-
-                if (subscription.DiscordGuild.DiscordId != 225471771355250688)
+                if (subscription.DiscordGuild == null || subscription.DiscordChannel == null)
                     continue;
 
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
@@ -54,12 +53,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 );
                 var lastNotification = await _work.NotificationRepository.SingleOrDefaultAsync(previousNotificationPredicate);
 
-                if (lastNotification == null)
-                    continue;
-                if (lastNotification.DiscordMessage_DiscordId == null)
+                if (lastNotification == null || lastNotification.DiscordMessage_DiscordId == null)
                     continue;
 
-                // Try to get the guild
                 SocketGuild? guild = null;
                 try
                 {
@@ -67,19 +63,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
                 catch (HttpException ex)
                 {
-                    // If it's an unknown/invalid guild, just continue on
-                    if (
-                        ex.DiscordCode == DiscordErrorCode.UnknownGuild ||
-                        ex.DiscordCode == DiscordErrorCode.InvalidGuild
-                    )
+                    if (ex.DiscordCode == DiscordErrorCode.UnknownGuild || ex.DiscordCode == DiscordErrorCode.InvalidGuild)
                         continue;
-                    // Throw any error that wasn't expected
                     throw;
                 }
+
                 if (guild == null)
                     continue;
 
-                // Try to get the channel
                 SocketTextChannel? channel = null;
                 try
                 {
@@ -87,15 +78,30 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
                 catch (HttpException ex)
                 {
-                    // If it's an unknown channel, just continue on
                     if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
                         continue;
                     throw;
                 }
+
                 if (channel == null)
                     continue;
 
-                // Try to get the message
+                async Task RemoveSubscriptionAsync()
+                {
+                    _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because missing permissions in {GuildId} {ChannelId} - {SubscriptionId}",
+                        streamUser.Username,
+                        stream.ServiceType,
+                        subscription.DiscordGuild.DiscordId,
+                        subscription.DiscordChannel.DiscordId,
+                        subscription.Id);
+
+                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
+                    foreach (var roleToMention in rolesToMention)
+                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
+
+                    await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                }
+
                 IMessage? message = null;
                 try
                 {
@@ -103,36 +109,74 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
                 catch (HttpException ex)
                 {
-                    // If it's an unknown message, just continue on
                     if (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+                    {
+                        lastNotification.DiscordMessage_DiscordId = null;
+                        lastNotification.Success = false;
+                        lastNotification.LogMessage = $"Notification message missing when marking offline at {DateTime.UtcNow:o}";
+                        await _work.NotificationRepository.UpdateAsync(lastNotification);
                         continue;
+                    }
+
+                    if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                    {
+                        await RemoveSubscriptionAsync();
+                        continue;
+                    }
+
                     throw;
                 }
 
-                if (message == null || message?.Author?.Id != _client.CurrentUser.Id || message is not SocketUserMessage)
+                if (message == null || message.Author?.Id != _client.CurrentUser.Id || message is not SocketUserMessage)
+                {
+                    lastNotification.DiscordMessage_DiscordId = null;
+                    lastNotification.Success = false;
+                    lastNotification.LogMessage = $"Notification message inaccessible when marking offline at {DateTime.UtcNow:o}";
+                    await _work.NotificationRepository.UpdateAsync(lastNotification);
                     continue;
+                }
 
                 var embed = message.Embeds.FirstOrDefault();
-                if (embed == null)
-                    continue;
+                var embedBuilder = embed?.ToEmbedBuilder() ?? new EmbedBuilder();
+                embedBuilder.WithColor(Color.LightGrey);
 
-                var newEmbed = embed.ToEmbedBuilder();
-                newEmbed.WithColor(Color.LightGrey);
+                var offlineAt = DateTime.UtcNow;
+                var relativeTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.Relative);
+                var absoluteTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.LongDateTime);
+                var statusMessage = $"Offline {relativeTimestamp} ({absoluteTimestamp})";
 
-                var offlineTimestamp = TimestampTag.FromDateTime(DateTime.UtcNow, TimestampTagStyles.Relative);
-                var statusMessage = $"Offline {offlineTimestamp}";
-                var statusField = newEmbed.Fields.Where(i => i.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-
-                if (statusField == null)
-                    newEmbed.AddField(name: "Status", value: statusMessage, inline: false);
-                else
-                    statusField.WithValue(statusMessage).WithIsInline(false);
-
-                await channel.ModifyMessageAsync(messageId: message.Id, i =>
+                var statusIndex = embedBuilder.Fields.FindIndex(field => field.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase));
+                if (statusIndex >= 0)
                 {
-                    i.Embed = newEmbed.Build();
-                });
+                    embedBuilder.Fields[statusIndex].WithValue(statusMessage).WithIsInline(false);
+                }
+                else
+                {
+                    embedBuilder.AddField(name: "Status", value: statusMessage, inline: false);
+                }
+
+                try
+                {
+                    await channel.ModifyMessageAsync(message.Id, properties =>
+                    {
+                        properties.Embed = embedBuilder.Build();
+                    });
+                }
+                catch (HttpException ex)
+                {
+                    if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                    {
+                        await RemoveSubscriptionAsync();
+                        continue;
+                    }
+
+                    throw;
+                }
+
+                lastNotification.LogMessage = $"Marked offline at {offlineAt:o}";
+                await _work.NotificationRepository.UpdateAsync(lastNotification);
             }
         }
+
     }
 }

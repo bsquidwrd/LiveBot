@@ -74,7 +74,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             if (!streamSubscriptions.Any())
                 return;
 
-            List<StreamSubscription> unsentSubscriptions = new List<StreamSubscription>();
+            bool hasValidSubscriptions = false;
 
             foreach (StreamSubscription streamSubscription in streamSubscriptions)
             {
@@ -88,26 +88,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
                 }
 
-                var discordChannel = streamSubscription.DiscordChannel;
-                var discordGuild = streamSubscription.DiscordGuild;
-
-                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                    i.User_SourceID == streamUser.SourceID &&
-                    i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
-                    i.DiscordChannel_DiscordId == discordChannel.DiscordId &&
-                    i.Stream_StartTime == stream.StartTime &&
-                    i.Stream_SourceID == stream.Id &&
-                    i.Success == true
-                );
-
-                var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-                if (previousNotifications.Any())
-                    continue;
-
-                unsentSubscriptions.Add(streamSubscription);
+                hasValidSubscriptions = true;
             }
 
-            if (unsentSubscriptions.Count > 0)
+            if (hasValidSubscriptions)
             {
                 await _bus.Publish<IStreamOnline>(new { Stream = stream });
             }
