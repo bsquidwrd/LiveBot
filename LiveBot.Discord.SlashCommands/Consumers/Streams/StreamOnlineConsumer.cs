@@ -325,6 +325,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 if (recentNotification != null && stale.Id == recentNotification.Id)
                     continue;
 
+                // Only delete messages from the last 24 hours
+                if ((DateTime.UtcNow - stale.Stream_StartTime).TotalHours > 24)
+                {
+                    continue;
+                }
+
                 bool deleted = await TryDeleteStaleMessage(channel, stale);
                 await UpdateStaleNotification(stale, deleted);
             }
@@ -466,8 +472,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         {
             if (deleted)
             {
-                stale.DiscordMessage_DiscordId = null;
-                stale.Success = false;
                 stale.LogMessage = $"Deleted stale notification at {DateTime.UtcNow:o}";
             }
             else
