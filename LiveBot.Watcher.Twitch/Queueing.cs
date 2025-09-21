@@ -11,6 +11,7 @@ namespace LiveBot.Watcher.Twitch
             services.AddMassTransit(x =>
             {
                 x.AddConsumer<Consumers.TwitchStreamCheckConsumer>();
+                x.AddConsumer<Consumers.TwitchStartupCatchupConsumer>();
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(Queues.QueueURL, x =>
@@ -22,6 +23,9 @@ namespace LiveBot.Watcher.Twitch
 
                     // Request/Response endpoint for on-demand checks (service-specific queue)
                     cfg.ReceiveEndpoint(Queues.GetStreamCheckQueueName(LiveBot.Core.Repository.Static.ServiceEnum.Twitch), ep => ep.Consumer<Consumers.TwitchStreamCheckConsumer>(context));
+                    
+                    // Endpoint for startup catch-up processing
+                    cfg.ReceiveEndpoint("twitch-startup-catchup", ep => ep.Consumer<Consumers.TwitchStartupCatchupConsumer>(context));
                 });
             });
             return services;
