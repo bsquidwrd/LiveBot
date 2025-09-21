@@ -8,4 +8,3 @@ namespace LiveBot.Core.Contracts
         public string ProfileURL { get; set; }
     }
 }
-

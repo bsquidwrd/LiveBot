@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace LiveBot.Core.Interfaces.Discord
 {

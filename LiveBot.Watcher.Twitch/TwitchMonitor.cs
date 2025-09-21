@@ -1,4 +1,6 @@
-﻿using LiveBot.Core.Cache;
+﻿using System.Collections.Concurrent;
+using System.Timers;
+using LiveBot.Core.Cache;
 using LiveBot.Core.Repository.Base.Monitor;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
@@ -8,8 +10,6 @@ using LiveBot.Watcher.Twitch.Contracts;
 using LiveBot.Watcher.Twitch.Models;
 using MassTransit;
 using StackExchange.Redis;
-using System.Collections.Concurrent;
-using System.Timers;
 using TwitchLib.Api;
 using TwitchLib.Api.Auth;
 using TwitchLib.Api.Core.Exceptions;
@@ -652,7 +652,71 @@ namespace LiveBot.Watcher.Twitch
                 SetupCacheTimer();
                 SetupRefreshMonitoredUsers();
 
+                // Perform startup catch-up before starting the monitor
+                await PerformStartupCatchup();
+
                 await Task.Run(Monitor.Start);
+            }
+        }
+
+        /// <summary>
+        /// Performs startup catch-up to check for streams that changed state while the watcher was offline
+        /// </summary>
+        private async Task PerformStartupCatchup()
+        {
+            try
+            {
+                _logger.LogInformation("Starting startup catch-up for {ServiceType}", ServiceType);
+
+                // Get all users that have subscriptions
+                var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
+                var distinctUsers = streamSubscriptions
+                    .Select(s => s.User)
+                    .DistinctBy(u => u.SourceID)
+                    .ToList();
+
+                if (!distinctUsers.Any())
+                {
+                    _logger.LogInformation("No users to catch up for {ServiceType}", ServiceType);
+                    return;
+                }
+
+                // Convert to ILiveBotUser objects
+                var liveBotUsers = new List<ILiveBotUser>();
+                foreach (var dbUser in distinctUsers)
+                {
+                    try
+                    {
+                        var liveBotUser = await GetUserById(dbUser.SourceID);
+                        if (liveBotUser != null)
+                        {
+                            liveBotUsers.Add(liveBotUser);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to get user data for {UserId} during startup catch-up", dbUser.SourceID);
+                    }
+                }
+
+                if (liveBotUsers.Any())
+                {
+                    // Publish startup catch-up request
+                    var catchupRequest = new TwitchStartupCatchup
+                    {
+                        ServiceType = ServiceType.ToString(),
+                        StreamUsers = liveBotUsers
+                    };
+
+                    await _bus.Publish(catchupRequest);
+                    _logger.LogInformation("Published startup catch-up request for {UserCount} users on {ServiceType}",
+                        liveBotUsers.Count, ServiceType);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during startup catch-up for {ServiceType}", ServiceType);
+                // Don't throw - we don't want to prevent the watcher from starting
             }
         }
 

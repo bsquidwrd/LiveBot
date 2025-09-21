@@ -9,4 +9,3 @@ namespace LiveBot.Core.Contracts
         public string? Error { get; set; }
     }
 }
-

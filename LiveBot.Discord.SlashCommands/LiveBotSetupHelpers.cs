@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Text.RegularExpressions;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Cache;
@@ -8,7 +9,6 @@ using LiveBot.Discord.SlashCommands.DiscordStats;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
 using Serilog;
-using System.Text.RegularExpressions;
 
 namespace LiveBot.Discord.SlashCommands
 {

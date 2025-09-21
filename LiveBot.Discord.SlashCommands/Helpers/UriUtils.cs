@@ -1,6 +1,6 @@
-﻿using Discord;
+﻿using System.Text.RegularExpressions;
+using Discord;
 using Discord.Interactions;
-using System.Text.RegularExpressions;
 
 namespace LiveBot.Discord.SlashCommands.Helpers
 {

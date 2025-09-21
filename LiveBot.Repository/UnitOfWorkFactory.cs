@@ -1,7 +1,7 @@
-﻿using LiveBot.Core.Repository.Interfaces;
+﻿using System;
+using LiveBot.Core.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
 
 namespace LiveBot.Repository
 {

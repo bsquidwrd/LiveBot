@@ -1,5 +1,5 @@
-﻿using LiveBot.Core.Repository.Static;
-using System;
+﻿using System;
+using LiveBot.Core.Repository.Static;
 
 namespace LiveBot.Core.Repository.Models
 {

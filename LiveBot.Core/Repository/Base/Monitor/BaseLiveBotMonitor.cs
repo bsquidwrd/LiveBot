@@ -1,9 +1,9 @@
-﻿using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Interfaces.Monitor;
-using LiveBot.Core.Repository.Static;
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Static;
 
 namespace LiveBot.Core.Repository.Base.Monitor
 {

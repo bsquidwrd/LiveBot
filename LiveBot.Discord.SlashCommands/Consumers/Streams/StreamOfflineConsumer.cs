@@ -14,9 +14,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private readonly ILogger<StreamOfflineConsumer> _streamOfflineLogger;
 
         public StreamOfflineConsumer(
-            DiscordShardedClient client, 
-            IUnitOfWorkFactory factory, 
-            IBus bus, 
+            DiscordShardedClient client,
+            IUnitOfWorkFactory factory,
+            IBus bus,
             ILogger<StreamOfflineConsumer> logger)
             : base(client, factory.Create(), bus, logger)
         {
@@ -31,7 +31,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var streamUser = await GetStreamUserAsync(stream.ServiceType.ToString(), user.Id);
             if (streamUser == null)
                 return;
-            
+
             var streamSubscriptions = await GetStreamSubscriptionsAsync(streamUser);
             if (!streamSubscriptions.Any())
                 return;
@@ -69,19 +69,19 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task ProcessOfflineMessage(
-            ILiveBotStream stream, 
-            StreamUser streamUser, 
-            StreamSubscription subscription, 
-            StreamNotification lastNotification, 
+            ILiveBotStream stream,
+            StreamUser streamUser,
+            StreamSubscription subscription,
+            StreamNotification lastNotification,
             SocketTextChannel channel)
         {
             try
             {
                 var message = await GetMessageSafelyAsync(channel, (ulong)lastNotification.DiscordMessage_DiscordId!);
-                
+
                 if (!IsValidBotMessage(message))
                 {
-                    await UpdateNotificationWithErrorAsync(lastNotification, 
+                    await UpdateNotificationWithErrorAsync(lastNotification,
                         "Notification message inaccessible when marking offline");
                     return;
                 }
@@ -94,7 +94,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
             catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
             {
-                await UpdateNotificationWithErrorAsync(lastNotification, 
+                await UpdateNotificationWithErrorAsync(lastNotification,
                     "Notification message missing when marking offline");
             }
         }
@@ -109,17 +109,17 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 properties.Embed = embedBuilder.Build();
             });
 
-            await UpdateNotificationWithSuccessAsync(lastNotification, 
+            await UpdateNotificationWithSuccessAsync(lastNotification,
                 StreamOfflineHelper.CreateOfflineLogMessage().Replace($" at {DateTime.UtcNow:o}", ""));
         }
 
         private async Task HandlePermissionError(StreamUser streamUser, ILiveBotStream stream, StreamSubscription subscription)
         {
             var reason = StreamOfflineHelper.CreateRemovalReason(
-                streamUser, 
-                stream.ServiceType.ToString(), 
-                subscription.DiscordGuild.DiscordId, 
-                subscription.DiscordChannel.DiscordId, 
+                streamUser,
+                stream.ServiceType.ToString(),
+                subscription.DiscordGuild.DiscordId,
+                subscription.DiscordChannel.DiscordId,
                 (int)subscription.Id);
 
             _streamOfflineLogger.LogInformation(reason);

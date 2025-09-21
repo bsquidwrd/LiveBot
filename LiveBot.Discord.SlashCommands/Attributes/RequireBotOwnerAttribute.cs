@@ -1,5 +1,5 @@
-﻿using Discord.Interactions;
-using Discord;
+﻿using Discord;
+using Discord.Interactions;
 
 namespace LiveBot.Discord.SlashCommands.Attributes
 {

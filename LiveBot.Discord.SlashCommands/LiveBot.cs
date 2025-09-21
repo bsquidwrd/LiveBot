@@ -1,9 +1,9 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.SlashCommands.Helpers;
-using System.Reflection;
 
 namespace LiveBot.Discord.SlashCommands
 {

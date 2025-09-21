@@ -108,7 +108,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private async Task<(SocketGuild? guild, SocketTextChannel? channel)> GetGuildAndChannel(StreamSubscription streamSubscription, StreamUser streamUser, ILiveBotStream stream)
         {
             var guild = await GetGuildSafelyAsync(streamSubscription.DiscordGuild.DiscordId);
-            
+
             if (guild == null)
             {
                 // Check if it's a permission issue that should trigger guild deletion
@@ -130,10 +130,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
 
             var channel = await GetChannelSafelyAsync(guild, streamSubscription.DiscordChannel.DiscordId);
-            
+
             if (channel == null)
             {
-                _streamOnlineLogger.LogError("Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", 
+                _streamOnlineLogger.LogError("Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}",
                     streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
                 await RemoveSubscriptionWithRoles(streamSubscription);
                 return (null, null);

@@ -1,8 +1,8 @@
-﻿using Discord;
+﻿using System.Collections.Concurrent;
+using Discord;
 using Discord.WebSocket;
 using LiveBot.Discord.SlashCommands.Contracts.Discord;
 using MassTransit;
-using System.Collections.Concurrent;
 
 namespace LiveBot.Discord.SlashCommands
 {

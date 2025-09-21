@@ -1,12 +1,12 @@
-﻿using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Core.Repository.Models;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace LiveBot.Repository
 {

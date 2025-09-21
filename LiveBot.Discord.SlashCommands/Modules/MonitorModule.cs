@@ -1,4 +1,6 @@
-﻿using CsvHelper;
+﻿using System.Globalization;
+using System.Linq.Expressions;
+using CsvHelper;
 using CsvHelper.Configuration;
 using Discord;
 using Discord.Interactions;
@@ -10,8 +12,6 @@ using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Helpers;
 using MassTransit;
-using System.Globalization;
-using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {

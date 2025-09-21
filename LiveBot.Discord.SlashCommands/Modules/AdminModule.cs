@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Globalization;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
@@ -6,7 +7,6 @@ using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Attributes;
-using System.Globalization;
 
 namespace LiveBot.Discord.SlashCommands.Modules
 {

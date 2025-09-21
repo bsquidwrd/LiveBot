@@ -1,7 +1,6 @@
-using Discord;
-using Discord.WebSocket;
-using LiveBot.Core.Repository.Models.Streams;
 using System.Linq.Expressions;
+using Discord;
+using LiveBot.Core.Repository.Models.Streams;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
@@ -14,8 +13,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// Creates the predicate for finding previous notifications for a stream
         /// </summary>
         public static Expression<Func<StreamNotification, bool>> CreatePreviousNotificationPredicate(
-            StreamSubscription subscription, 
-            StreamUser streamUser, 
+            StreamSubscription subscription,
+            StreamUser streamUser,
             string streamId)
         {
             return i =>
@@ -41,9 +40,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var absoluteTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.LongDateTime);
             var statusMessage = $"Offline {relativeTimestamp} ({absoluteTimestamp})";
 
-            var statusIndex = embedBuilder.Fields.FindIndex(field => 
+            var statusIndex = embedBuilder.Fields.FindIndex(field =>
                 field.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase));
-            
+
             if (statusIndex >= 0)
             {
                 embedBuilder.Fields[statusIndex].WithValue(statusMessage).WithIsInline(false);

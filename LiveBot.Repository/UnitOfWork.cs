@@ -1,9 +1,9 @@
-﻿using LiveBot.Core.Repository.Interfaces;
+﻿using System;
+using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Discord;
 using LiveBot.Core.Repository.Interfaces.Streams;
 using LiveBot.Repository.Discord;
 using LiveBot.Repository.Streams;
-using System;
 
 namespace LiveBot.Repository
 {

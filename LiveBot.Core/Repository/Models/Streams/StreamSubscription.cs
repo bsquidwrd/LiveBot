@@ -1,6 +1,6 @@
-﻿using LiveBot.Core.Repository.Models.Discord;
+﻿using System.Collections.Generic;
+using LiveBot.Core.Repository.Models.Discord;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace LiveBot.Core.Repository.Models.Streams
 {

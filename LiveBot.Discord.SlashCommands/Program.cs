@@ -12,9 +12,10 @@ app.UseSerilogRequestLogging();
 await app.RegisterLiveBot();
 
 app.MapGet("/", () => "Up");
-app.MapGet("/healthcheck", () => {
-  app.Logger.LogInformation("Healthcheck Success");
-  return "OK";
+app.MapGet("/healthcheck", () =>
+{
+    app.Logger.LogInformation("Healthcheck Success");
+    return "OK";
 });
 
 app.Run();

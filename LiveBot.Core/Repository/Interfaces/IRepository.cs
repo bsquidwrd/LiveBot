@@ -1,8 +1,8 @@
-﻿using LiveBot.Core.Repository.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using LiveBot.Core.Repository.Models;
 
 namespace LiveBot.Core.Repository.Interfaces
 {

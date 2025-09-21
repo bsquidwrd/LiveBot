@@ -1,6 +1,6 @@
-﻿using LiveBot.Core.Repository.Interfaces.Monitor;
+﻿using System;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Static;
-using System;
 
 namespace LiveBot.Core.Repository.Base.Monitor
 {

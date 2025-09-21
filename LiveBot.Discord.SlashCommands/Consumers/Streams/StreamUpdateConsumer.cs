@@ -1,10 +1,10 @@
-﻿using Discord.WebSocket;
+﻿using System.Linq.Expressions;
+using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
-using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {

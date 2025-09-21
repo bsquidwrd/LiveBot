@@ -1,10 +1,10 @@
-﻿using Discord;
+﻿using System.Globalization;
+using Discord;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Discord;
 using LiveBot.Core.Repository.Models.Streams;
 using LiveBot.Core.Repository.Static;
-using System.Globalization;
 
 namespace LiveBot.Discord.SlashCommands.Helpers
 {

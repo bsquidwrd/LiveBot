@@ -1,6 +1,6 @@
-﻿using Discord.WebSocket;
+﻿using System.Timers;
+using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
-using System.Timers;
 
 namespace LiveBot.Discord.SlashCommands.DiscordStats
 {

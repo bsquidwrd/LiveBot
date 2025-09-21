@@ -1,8 +1,8 @@
-﻿using LiveBot.Core.Contracts.Discord;
+﻿using System.Linq.Expressions;
+using LiveBot.Core.Contracts.Discord;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Discord;
 using MassTransit;
-using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {

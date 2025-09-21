@@ -1,8 +1,8 @@
-﻿using Discord;
+﻿using System.Text;
+using System.Text.Json;
+using Discord;
 using Discord.WebSocket;
 using LiveBot.Core.Interfaces.Discord;
-using System.Text;
-using System.Text.Json;
 
 namespace LiveBot.Discord.SlashCommands.DiscordStats
 {

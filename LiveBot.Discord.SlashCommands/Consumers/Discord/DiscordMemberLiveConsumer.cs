@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Linq.Expressions;
+using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts.Discord;
@@ -9,7 +10,6 @@ using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Helpers;
 using LiveBot.Discord.SlashCommands.Models;
 using MassTransit;
-using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 {
