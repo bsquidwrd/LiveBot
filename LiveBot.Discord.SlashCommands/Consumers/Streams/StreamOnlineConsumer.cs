@@ -243,155 +243,178 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     var recentNotification = previousNotifications
                         .FirstOrDefault(i => Math.Abs((stream.StartTime - i.Stream_StartTime).TotalMinutes) < NotificationCooldownMinutes);
 
-                    var staleNotifications = previousNotifications
-                        .Where(i => (stream.StartTime - i.Stream_StartTime).TotalMinutes >= NotificationCooldownMinutes)
-                        .ToList();
-
-                    foreach (var stale in staleNotifications)
+                    // Only perform message deletion and updating for beta servers
+                    if (discordGuild.IsInBeta)
                     {
-                        if (recentNotification != null && stale.Id == recentNotification.Id)
-                            continue;
+                        var staleNotifications = previousNotifications
+                            .Where(i => (stream.StartTime - i.Stream_StartTime).TotalMinutes >= NotificationCooldownMinutes)
+                            .ToList();
 
-                        bool deleted = true;
-
-                        if (stale.DiscordMessage_DiscordId.HasValue)
+                        foreach (var stale in staleNotifications)
                         {
-                            try
+                            if (recentNotification != null && stale.Id == recentNotification.Id)
+                                continue;
+
+                            bool deleted = true;
+
+                            if (stale.DiscordMessage_DiscordId.HasValue)
                             {
-                                await channel.DeleteMessageAsync(stale.DiscordMessage_DiscordId.Value);
-                            }
-                            catch (HttpException ex)
-                            {
-                                if (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+                                try
                                 {
-                                    deleted = true;
+                                    await channel.DeleteMessageAsync(stale.DiscordMessage_DiscordId.Value);
                                 }
-                                else if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                                catch (HttpException ex)
                                 {
-                                    deleted = false;
-
-                                    _logger.LogWarning(
-                                        ex,
-                                        "Missing permissions to delete stale notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                                        stale.Id,
-                                        stale.ServiceType,
-                                        stale.User_Username,
-                                        stale.DiscordGuild_DiscordId,
-                                        stale.DiscordChannel_DiscordId);
-                                }
-                                else
-                                {
-                                    deleted = false;
-
-                                    _logger.LogWarning(
-                                        ex,
-                                        "Failed to delete stale notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                                        stale.Id,
-                                        stale.ServiceType,
-                                        stale.User_Username,
-                                        stale.DiscordGuild_DiscordId,
-                                        stale.DiscordChannel_DiscordId);
-                                }
-                            }
-                        }
-
-                        if (deleted)
-                        {
-                            stale.DiscordMessage_DiscordId = null;
-                            stale.Success = false;
-                            stale.LogMessage = $"Deleted stale notification at {DateTime.UtcNow:o}";
-                        }
-                        else
-                        {
-                            stale.LogMessage = $"Unable to delete stale notification at {DateTime.UtcNow:o}";
-                        }
-
-                        await _work.NotificationRepository.UpdateAsync(stale);
-                    }
-
-                    if (recentNotification != null)
-                    {
-                        if (recentNotification.DiscordMessage_DiscordId.HasValue)
-                        {
-                            IUserMessage? existingMessage = null;
-
-                            try
-                            {
-                                existingMessage = await channel.GetMessageAsync(recentNotification.DiscordMessage_DiscordId.Value) as IUserMessage;
-                            }
-                            catch (HttpException ex)
-                            {
-                                if (ex.DiscordCode != DiscordErrorCode.UnknownMessage)
-                                    _logger.LogWarning(ex, "Unable to fetch existing notification message for {NotificationId}", recentNotification.Id);
-                            }
-
-                            if (existingMessage != null && existingMessage.Author.Id == _client.CurrentUser.Id)
-                            {
-                                var currentEmbed = existingMessage.Embeds.FirstOrDefault();
-
-                                bool shouldUpdate = HasNotificationChanged(recentNotification, newStreamNotification)
-                                    || ShouldUpdateEmbed(currentEmbed, embed)
-                                    || !string.Equals(existingMessage.Content ?? string.Empty, notificationMessage, StringComparison.Ordinal);
-
-                                if (shouldUpdate)
-                                {
-                                    try
+                                    if (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
                                     {
-                                        await channel.ModifyMessageAsync(existingMessage.Id, properties =>
-                                        {
-                                            properties.Content = notificationMessage;
-                                            properties.Embed = embed;
-                                        });
+                                        deleted = true;
                                     }
-                                    catch (HttpException ex)
+                                    else if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
                                     {
-                                        if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                                        deleted = false;
+
+                                        _logger.LogWarning(
+                                            ex,
+                                            "Missing permissions to delete stale notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
+                                            stale.Id,
+                                            stale.ServiceType,
+                                            stale.User_Username,
+                                            stale.DiscordGuild_DiscordId,
+                                            stale.DiscordChannel_DiscordId);
+                                    }
+                                    else
+                                    {
+                                        deleted = false;
+
+                                        _logger.LogWarning(
+                                            ex,
+                                            "Failed to delete stale notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
+                                            stale.Id,
+                                            stale.ServiceType,
+                                            stale.User_Username,
+                                            stale.DiscordGuild_DiscordId,
+                                            stale.DiscordChannel_DiscordId);
+                                    }
+                                }
+                            }
+
+                            if (deleted)
+                            {
+                                stale.DiscordMessage_DiscordId = null;
+                                stale.Success = false;
+                                stale.LogMessage = $"Deleted stale notification at {DateTime.UtcNow:o}";
+                            }
+                            else
+                            {
+                                stale.LogMessage = $"Unable to delete stale notification at {DateTime.UtcNow:o}";
+                            }
+
+                            await _work.NotificationRepository.UpdateAsync(stale);
+                        }
+
+                        // Beta server: Handle message updating
+                        if (recentNotification != null)
+                        {
+                            if (recentNotification.DiscordMessage_DiscordId.HasValue)
+                            {
+                                IUserMessage? existingMessage = null;
+
+                                try
+                                {
+                                    existingMessage = await channel.GetMessageAsync(recentNotification.DiscordMessage_DiscordId.Value) as IUserMessage;
+                                }
+                                catch (HttpException ex)
+                                {
+                                    if (ex.DiscordCode != DiscordErrorCode.UnknownMessage)
+                                        _logger.LogWarning(ex, "Unable to fetch existing notification message for {NotificationId}", recentNotification.Id);
+                                }
+
+                                if (existingMessage != null && existingMessage.Author.Id == _client.CurrentUser.Id)
+                                {
+                                    var currentEmbed = existingMessage.Embeds.FirstOrDefault();
+
+                                    bool shouldUpdate = HasNotificationChanged(recentNotification, newStreamNotification)
+                                        || ShouldUpdateEmbed(currentEmbed, embed)
+                                        || !string.Equals(existingMessage.Content ?? string.Empty, notificationMessage, StringComparison.Ordinal);
+
+                                    if (shouldUpdate)
+                                    {
+                                        try
                                         {
-                                            await RemoveSubscriptionAsync();
-                                            continue;
+                                            await channel.ModifyMessageAsync(existingMessage.Id, properties =>
+                                            {
+                                                properties.Content = notificationMessage;
+                                                properties.Embed = embed;
+                                            });
+                                        }
+                                        catch (HttpException ex)
+                                        {
+                                            if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
+                                            {
+                                                await RemoveSubscriptionAsync();
+                                                continue;
+                                            }
+
+                                            _logger.LogError(
+                                                ex,
+                                                "Error updating notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
+                                                recentNotification.Id,
+                                                recentNotification.ServiceType,
+                                                recentNotification.User_Username,
+                                                recentNotification.DiscordGuild_DiscordId,
+                                                recentNotification.DiscordChannel_DiscordId);
+
+                                            throw;
                                         }
 
-                                        _logger.LogError(
-                                            ex,
-                                            "Error updating notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
+                                        _logger.LogInformation(
+                                            "Updated notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
                                             recentNotification.Id,
                                             recentNotification.ServiceType,
                                             recentNotification.User_Username,
                                             recentNotification.DiscordGuild_DiscordId,
                                             recentNotification.DiscordChannel_DiscordId);
-
-                                        throw;
                                     }
 
-                                    _logger.LogInformation(
-                                        "Updated notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                                        recentNotification.Id,
-                                        recentNotification.ServiceType,
-                                        recentNotification.User_Username,
-                                        recentNotification.DiscordGuild_DiscordId,
-                                        recentNotification.DiscordChannel_DiscordId);
+                                    CopyNotificationValues(recentNotification, newStreamNotification);
+
+                                    recentNotification.DiscordMessage_DiscordId = existingMessage.Id;
+
+                                    recentNotification.LogMessage = $"Updated at {DateTime.UtcNow:o}";
+
+                                    recentNotification.Success = true;
+
+                                    await _work.NotificationRepository.UpdateAsync(recentNotification);
+
+                                    continue;
                                 }
+
+                                recentNotification.DiscordMessage_DiscordId = null;
 
                                 CopyNotificationValues(recentNotification, newStreamNotification);
 
-                                recentNotification.DiscordMessage_DiscordId = existingMessage.Id;
-
-                                recentNotification.LogMessage = $"Updated at {DateTime.UtcNow:o}";
-
                                 recentNotification.Success = true;
+
+                                recentNotification.LogMessage = $"Existing notification message missing or inaccessible at {DateTime.UtcNow:o}. Cooldown active.";
 
                                 await _work.NotificationRepository.UpdateAsync(recentNotification);
 
+                                _logger.LogInformation(
+                                    "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
+                                    recentNotification.Id,
+                                    recentNotification.ServiceType,
+                                    recentNotification.User_Username,
+                                    recentNotification.DiscordGuild_DiscordId,
+                                    recentNotification.DiscordChannel_DiscordId);
+
                                 continue;
                             }
-
-                            recentNotification.DiscordMessage_DiscordId = null;
 
                             CopyNotificationValues(recentNotification, newStreamNotification);
 
                             recentNotification.Success = true;
 
-                            recentNotification.LogMessage = $"Existing notification message missing or inaccessible at {DateTime.UtcNow:o}. Cooldown active.";
+                            recentNotification.LogMessage = $"Cooldown active at {DateTime.UtcNow:o}. Suppressing duplicate notification.";
 
                             await _work.NotificationRepository.UpdateAsync(recentNotification);
 
@@ -405,24 +428,30 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                             continue;
                         }
+                    }
+                    else
+                    {
+                        // Non-beta server: Use standard 60-minute cooldown logic
+                        if (recentNotification != null)
+                        {
+                            CopyNotificationValues(recentNotification, newStreamNotification);
 
-                        CopyNotificationValues(recentNotification, newStreamNotification);
+                            recentNotification.Success = true;
 
-                        recentNotification.Success = true;
+                            recentNotification.LogMessage = $"Cooldown active at {DateTime.UtcNow:o}. Suppressing duplicate notification.";
 
-                        recentNotification.LogMessage = $"Cooldown active at {DateTime.UtcNow:o}. Suppressing duplicate notification.";
+                            await _work.NotificationRepository.UpdateAsync(recentNotification);
 
-                        await _work.NotificationRepository.UpdateAsync(recentNotification);
+                            _logger.LogInformation(
+                                "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
+                                recentNotification.Id,
+                                recentNotification.ServiceType,
+                                recentNotification.User_Username,
+                                recentNotification.DiscordGuild_DiscordId,
+                                recentNotification.DiscordChannel_DiscordId);
 
-                        _logger.LogInformation(
-                            "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
-                            recentNotification.Id,
-                            recentNotification.ServiceType,
-                            recentNotification.User_Username,
-                            recentNotification.DiscordGuild_DiscordId,
-                            recentNotification.DiscordChannel_DiscordId);
-
-                        continue;
+                            continue;
+                        }
                     }
 
                     await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
