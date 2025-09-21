@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LiveBot.Core.Repository.Interfaces.Monitor;
+using LiveBot.Core.Repository.Static;
 
 namespace LiveBot.Core.Contracts
 {
@@ -11,7 +12,7 @@ namespace LiveBot.Core.Contracts
         /// <summary>
         /// The service type for the catch-up
         /// </summary>
-        string ServiceType { get; set; }
+        ServiceEnum ServiceType { get; set; }
 
         /// <summary>
         /// The streams to check for catch-up

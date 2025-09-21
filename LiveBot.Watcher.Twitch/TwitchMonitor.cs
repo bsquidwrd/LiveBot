@@ -704,7 +704,7 @@ namespace LiveBot.Watcher.Twitch
                     // Publish startup catch-up request
                     var catchupRequest = new TwitchStartupCatchup
                     {
-                        ServiceType = ServiceType.ToString(),
+                        ServiceType = ServiceType,
                         StreamUsers = liveBotUsers
                     };
 

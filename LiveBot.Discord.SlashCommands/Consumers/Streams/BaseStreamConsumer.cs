@@ -3,6 +3,7 @@ using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using MassTransit;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
@@ -170,10 +171,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// <summary>
         /// Gets the stream user from the repository
         /// </summary>
-        protected async Task<StreamUser?> GetStreamUserAsync(string serviceType, string userId)
+        protected async Task<StreamUser?> GetStreamUserAsync(ServiceEnum serviceType, string userId)
         {
             return await _work.UserRepository.SingleOrDefaultAsync(
-                i => i.ServiceType.ToString() == serviceType && i.SourceID == userId);
+                i => i.ServiceType == serviceType && i.SourceID == userId);
         }
 
         /// <summary>

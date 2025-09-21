@@ -4,6 +4,7 @@ using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Consumers.Streams;
 using MassTransit;
 
@@ -40,7 +41,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Startup
             _startupLogger.LogInformation("Completed catch-up for {ServiceType}", catchupRequest.ServiceType);
         }
 
-        private async Task ProcessUserCatchup(ILiveBotUser streamUser, string serviceType)
+        private async Task ProcessUserCatchup(ILiveBotUser streamUser, ServiceEnum serviceType)
         {
             try
             {
@@ -70,7 +71,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Startup
             }
         }
 
-        private async Task ProcessSubscriptionCatchup(StreamUser dbUser, StreamSubscription subscription, string serviceType)
+        private async Task ProcessSubscriptionCatchup(StreamUser dbUser, StreamSubscription subscription, ServiceEnum serviceType)
         {
             if (subscription.DiscordGuild == null || subscription.DiscordChannel == null)
                 return;
@@ -106,7 +107,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Startup
         }
 
         private async Task ProcessNotificationCatchup(StreamUser dbUser, StreamSubscription subscription,
-            StreamNotification notification, string serviceType)
+            StreamNotification notification, ServiceEnum serviceType)
         {
             try
             {
@@ -189,11 +190,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Startup
             await UpdateNotificationWithSuccessAsync(notification, logMessage);
         }
 
-        private async Task HandlePermissionError(StreamUser streamUser, string serviceType, StreamSubscription subscription)
+        private async Task HandlePermissionError(StreamUser streamUser, ServiceEnum serviceType, StreamSubscription subscription)
         {
             var reason = StreamOfflineHelper.CreateRemovalReason(
                 streamUser,
-                serviceType,
+                serviceType.ToString(),
                 subscription.DiscordGuild.DiscordId,
                 subscription.DiscordChannel.DiscordId,
                 (int)subscription.Id);

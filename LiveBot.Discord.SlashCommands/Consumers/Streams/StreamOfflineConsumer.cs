@@ -28,7 +28,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var stream = context.Message.Stream;
             var user = stream.User;
 
-            var streamUser = await GetStreamUserAsync(stream.ServiceType.ToString(), user.Id);
+            var streamUser = await GetStreamUserAsync(stream.ServiceType, user.Id);
             if (streamUser == null)
                 return;
 
