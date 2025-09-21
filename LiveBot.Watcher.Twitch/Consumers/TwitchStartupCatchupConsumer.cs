@@ -70,7 +70,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
 
             // Check if the user was marked as live in the database
             var wasLive = await WasUserLiveBeforeShutdown(dbUser, work);
-            
+
             // Check the current live state from Twitch API
             var currentStream = await _monitor.GetStream_Force(user);
             var isCurrentlyLive = currentStream != null;
@@ -82,7 +82,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
             if (wasLive && !isCurrentlyLive)
             {
                 _logger.LogInformation("Detected offline transition for {Username} during startup catch-up", user.Username);
-                
+
                 // Create a synthetic stream object for the offline event
                 // We need to get the last known stream info from the database
                 var lastNotification = await GetLastStreamNotification(dbUser, work);
@@ -94,6 +94,14 @@ namespace LiveBot.Watcher.Twitch.Consumers
                         await _monitor.PublishStreamOffline(offlineStream);
                         _logger.LogInformation("Published offline event for {Username} during startup catch-up", user.Username);
                     }
+                    else
+                    {
+                        _logger.LogWarning("Failed to create stream object for offline event for {Username}", user.Username);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("No last notification found for {Username}, skipping offline event", user.Username);
                 }
             }
             // Note: We don't need to handle the online case here because the regular monitor will pick that up
@@ -106,7 +114,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
         {
             // Look for recent stream notifications (within the last 24 hours)
             var cutoffTime = DateTime.UtcNow.AddHours(-24);
-            
+
             var recentNotifications = await work.NotificationRepository.FindAsync(n =>
                 n.ServiceType == dbUser.ServiceType &&
                 n.User_SourceID == dbUser.SourceID &&
@@ -147,7 +155,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
         /// Creates a stream object from the last known notification for offline event
         /// </summary>
         private async Task<Core.Repository.Interfaces.Monitor.ILiveBotStream?> CreateStreamFromLastNotification(
-            StreamNotification lastNotification, 
+            StreamNotification lastNotification,
             Core.Repository.Interfaces.Monitor.ILiveBotUser user)
         {
             try
@@ -155,21 +163,22 @@ namespace LiveBot.Watcher.Twitch.Consumers
                 // Create a minimal stream object for the offline event
                 // We don't have all the original stream data, but we have enough for an offline event
                 var game = await _monitor.GetGame(lastNotification.Game_SourceID ?? "");
-                
-                // Create a basic TwitchStream for the offline event using the parameterless constructor
-                var offlineStream = new TwitchStream
+
+                // Create a TwitchStream for the offline event using the parameterless constructor
+                // and manually setting the required properties
+                var offlineStream = new TwitchStream(_monitor.BaseURL, _monitor.ServiceType)
                 {
                     Id = lastNotification.Stream_SourceID ?? "",
                     UserId = user.Id,
                     User = user,
                     GameId = game.Id,
                     Game = game,
-                    Title = "Stream Offline", // Generic title for offline event
-                    StartTime = lastNotification.TimeStamp, // Use notification time as start time
-                    StreamURL = user.ProfileURL,
-                    ThumbnailURL = "",
-                    ServiceType = _monitor.ServiceType,
-                    BaseURL = _monitor.BaseURL
+                    Title = lastNotification.Stream_Title ?? "Unknown Title",
+                    StartTime = lastNotification.Stream_StartTime != DateTime.MinValue 
+                        ? lastNotification.Stream_StartTime 
+                        : lastNotification.TimeStamp,
+                    ThumbnailURL = lastNotification.Stream_ThumbnailURL ?? "",
+                    StreamURL = user.ProfileURL ?? ""
                 };
 
                 return offlineStream;

@@ -37,8 +37,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             var offlineAt = DateTime.UtcNow;
             var relativeTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.Relative);
-            var absoluteTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.LongDateTime);
-            var statusMessage = $"Offline {relativeTimestamp} ({absoluteTimestamp})";
+            var statusMessage = $"Offline {relativeTimestamp}";
 
             var statusIndex = embedBuilder.Fields.FindIndex(field =>
                 field.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase));

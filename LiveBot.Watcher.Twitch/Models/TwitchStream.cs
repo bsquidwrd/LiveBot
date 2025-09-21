@@ -23,6 +23,10 @@ namespace LiveBot.Watcher.Twitch.Models
             StreamURL = $"{User.ProfileURL}";
         }
 
+        public TwitchStream(string baseURL, ServiceEnum serviceType) : base(baseURL, serviceType)
+        {
+        }
+
         public TwitchStream()
         { }
     }
