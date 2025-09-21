@@ -174,8 +174,8 @@ namespace LiveBot.Watcher.Twitch.Consumers
                     GameId = game.Id,
                     Game = game,
                     Title = lastNotification.Stream_Title ?? "Unknown Title",
-                    StartTime = lastNotification.Stream_StartTime != DateTime.MinValue 
-                        ? lastNotification.Stream_StartTime 
+                    StartTime = lastNotification.Stream_StartTime != DateTime.MinValue
+                        ? lastNotification.Stream_StartTime
                         : lastNotification.TimeStamp,
                     ThumbnailURL = lastNotification.Stream_ThumbnailURL ?? "",
                     StreamURL = user.ProfileURL ?? ""
