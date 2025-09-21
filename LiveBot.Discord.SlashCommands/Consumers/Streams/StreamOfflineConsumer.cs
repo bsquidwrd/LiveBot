@@ -3,27 +3,24 @@ using Discord.Net;
 using Discord.WebSocket;
 using LiveBot.Core.Contracts;
 using LiveBot.Core.Repository.Interfaces;
+using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Core.Repository.Models.Streams;
 using MassTransit;
-using System;
-using System.Linq;
-using System.Linq.Expressions;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
-    public class StreamOfflineConsumer : IConsumer<IStreamOffline>
+    public class StreamOfflineConsumer : BaseStreamConsumer, IConsumer<IStreamOffline>
     {
-        private readonly DiscordShardedClient _client;
-        private readonly IUnitOfWork _work;
-        private readonly IBus _bus;
-        private readonly ILogger<StreamOfflineConsumer> _logger;
+        private readonly ILogger<StreamOfflineConsumer> _streamOfflineLogger;
 
-        public StreamOfflineConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus, ILogger<StreamOfflineConsumer> logger)
+        public StreamOfflineConsumer(
+            DiscordShardedClient client, 
+            IUnitOfWorkFactory factory, 
+            IBus bus, 
+            ILogger<StreamOfflineConsumer> logger)
+            : base(client, factory.Create(), bus, logger)
         {
-            _client = client;
-            _work = factory.Create();
-            _bus = bus;
-            _logger = logger;
+            _streamOfflineLogger = logger;
         }
 
         public async Task Consume(ConsumeContext<IStreamOffline> context)
@@ -31,152 +28,102 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var stream = context.Message.Stream;
             var user = stream.User;
 
-            var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
-            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
-
+            var streamUser = await GetStreamUserAsync(stream.ServiceType.ToString(), user.Id);
+            if (streamUser == null)
+                return;
+            
+            var streamSubscriptions = await GetStreamSubscriptionsAsync(streamUser);
             if (!streamSubscriptions.Any())
                 return;
 
             foreach (var subscription in streamSubscriptions)
             {
-                if (subscription.DiscordGuild == null || subscription.DiscordChannel == null)
-                    continue;
-
-                Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
-                    i.ServiceType == subscription.User.ServiceType &&
-                    i.User_SourceID == subscription.User.SourceID &&
-                    i.DiscordGuild_DiscordId == subscription.DiscordGuild.DiscordId &&
-                    i.DiscordChannel_DiscordId == subscription.DiscordChannel.DiscordId &&
-                    i.DiscordMessage_DiscordId != null &&
-                    i.Stream_SourceID == stream.Id &&
-                    i.Success == true
-                );
-                var lastNotification = await _work.NotificationRepository.SingleOrDefaultAsync(previousNotificationPredicate);
-
-                if (lastNotification == null || lastNotification.DiscordMessage_DiscordId == null)
-                    continue;
-
-                SocketGuild? guild = null;
-                try
-                {
-                    guild = _client.GetGuild(subscription.DiscordGuild.DiscordId);
-                }
-                catch (HttpException ex)
-                {
-                    if (ex.DiscordCode == DiscordErrorCode.UnknownGuild || ex.DiscordCode == DiscordErrorCode.InvalidGuild)
-                        continue;
-                    throw;
-                }
-
-                if (guild == null)
-                    continue;
-
-                SocketTextChannel? channel = null;
-                try
-                {
-                    channel = guild.GetTextChannel(subscription.DiscordChannel.DiscordId);
-                }
-                catch (HttpException ex)
-                {
-                    if (ex.DiscordCode == DiscordErrorCode.UnknownChannel)
-                        continue;
-                    throw;
-                }
-
-                if (channel == null)
-                    continue;
-
-                async Task RemoveSubscriptionAsync()
-                {
-                    _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because missing permissions in {GuildId} {ChannelId} - {SubscriptionId}",
-                        streamUser.Username,
-                        stream.ServiceType,
-                        subscription.DiscordGuild.DiscordId,
-                        subscription.DiscordChannel.DiscordId,
-                        subscription.Id);
-
-                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
-                    foreach (var roleToMention in rolesToMention)
-                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-
-                    await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
-                }
-
-                IMessage? message = null;
-                try
-                {
-                    message = await channel.GetMessageAsync((ulong)lastNotification.DiscordMessage_DiscordId);
-                }
-                catch (HttpException ex)
-                {
-                    if (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
-                    {
-                        lastNotification.DiscordMessage_DiscordId = null;
-                        lastNotification.Success = false;
-                        lastNotification.LogMessage = $"Notification message missing when marking offline at {DateTime.UtcNow:o}";
-                        await _work.NotificationRepository.UpdateAsync(lastNotification);
-                        continue;
-                    }
-
-                    if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
-                    {
-                        await RemoveSubscriptionAsync();
-                        continue;
-                    }
-
-                    throw;
-                }
-
-                if (message == null || message.Author?.Id != _client.CurrentUser.Id || message is not SocketUserMessage)
-                {
-                    lastNotification.DiscordMessage_DiscordId = null;
-                    lastNotification.Success = false;
-                    lastNotification.LogMessage = $"Notification message inaccessible when marking offline at {DateTime.UtcNow:o}";
-                    await _work.NotificationRepository.UpdateAsync(lastNotification);
-                    continue;
-                }
-
-                var embed = message.Embeds.FirstOrDefault();
-                var embedBuilder = embed?.ToEmbedBuilder() ?? new EmbedBuilder();
-                embedBuilder.WithColor(Color.LightGrey);
-
-                var offlineAt = DateTime.UtcNow;
-                var relativeTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.Relative);
-                var absoluteTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.LongDateTime);
-                var statusMessage = $"Offline {relativeTimestamp} ({absoluteTimestamp})";
-
-                var statusIndex = embedBuilder.Fields.FindIndex(field => field.Name.Equals("Status", StringComparison.InvariantCultureIgnoreCase));
-                if (statusIndex >= 0)
-                {
-                    embedBuilder.Fields[statusIndex].WithValue(statusMessage).WithIsInline(false);
-                }
-                else
-                {
-                    embedBuilder.AddField(name: "Status", value: statusMessage, inline: false);
-                }
-
-                try
-                {
-                    await channel.ModifyMessageAsync(message.Id, properties =>
-                    {
-                        properties.Embed = embedBuilder.Build();
-                    });
-                }
-                catch (HttpException ex)
-                {
-                    if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
-                    {
-                        await RemoveSubscriptionAsync();
-                        continue;
-                    }
-
-                    throw;
-                }
-
-                lastNotification.LogMessage = $"Marked offline at {offlineAt:o}";
-                await _work.NotificationRepository.UpdateAsync(lastNotification);
+                await ProcessSubscriptionOffline(stream, streamUser, subscription);
             }
         }
 
+        private async Task ProcessSubscriptionOffline(ILiveBotStream stream, StreamUser streamUser, StreamSubscription subscription)
+        {
+            if (subscription.DiscordGuild == null || subscription.DiscordChannel == null)
+                return;
+
+            var lastNotification = await GetLastNotification(subscription, stream.Id);
+            if (lastNotification?.DiscordMessage_DiscordId == null)
+                return;
+
+            var guild = await GetGuildSafelyAsync(subscription.DiscordGuild.DiscordId);
+            if (guild == null)
+                return;
+
+            var channel = await GetChannelSafelyAsync(guild, subscription.DiscordChannel.DiscordId);
+            if (channel == null)
+                return;
+
+            await ProcessOfflineMessage(stream, streamUser, subscription, lastNotification, channel);
+        }
+
+        private async Task<StreamNotification?> GetLastNotification(StreamSubscription subscription, string streamId)
+        {
+            var predicate = StreamOfflineHelper.CreatePreviousNotificationPredicate(subscription, subscription.User, streamId);
+            return await _work.NotificationRepository.SingleOrDefaultAsync(predicate);
+        }
+
+        private async Task ProcessOfflineMessage(
+            ILiveBotStream stream, 
+            StreamUser streamUser, 
+            StreamSubscription subscription, 
+            StreamNotification lastNotification, 
+            SocketTextChannel channel)
+        {
+            try
+            {
+                var message = await GetMessageSafelyAsync(channel, (ulong)lastNotification.DiscordMessage_DiscordId!);
+                
+                if (!IsValidBotMessage(message))
+                {
+                    await UpdateNotificationWithErrorAsync(lastNotification, 
+                        "Notification message inaccessible when marking offline");
+                    return;
+                }
+
+                await UpdateMessageToOffline(message, channel, lastNotification);
+            }
+            catch (InsufficientPermissionsException)
+            {
+                await HandlePermissionError(streamUser, stream, subscription);
+            }
+            catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+            {
+                await UpdateNotificationWithErrorAsync(lastNotification, 
+                    "Notification message missing when marking offline");
+            }
+        }
+
+        private async Task UpdateMessageToOffline(IMessage message, SocketTextChannel channel, StreamNotification lastNotification)
+        {
+            var embed = message.Embeds.FirstOrDefault();
+            var embedBuilder = StreamOfflineHelper.UpdateEmbedWithOfflineStatus(embed);
+
+            await ModifyMessageSafelyAsync(channel, message.Id, properties =>
+            {
+                properties.Embed = embedBuilder.Build();
+            });
+
+            await UpdateNotificationWithSuccessAsync(lastNotification, 
+                StreamOfflineHelper.CreateOfflineLogMessage().Replace($" at {DateTime.UtcNow:o}", ""));
+        }
+
+        private async Task HandlePermissionError(StreamUser streamUser, ILiveBotStream stream, StreamSubscription subscription)
+        {
+            var reason = StreamOfflineHelper.CreateRemovalReason(
+                streamUser, 
+                stream.ServiceType.ToString(), 
+                subscription.DiscordGuild.DiscordId, 
+                subscription.DiscordChannel.DiscordId, 
+                (int)subscription.Id);
+
+            _streamOfflineLogger.LogInformation(reason);
+            await RemoveSubscriptionWithRolesAsync(subscription, reason);
+        }
     }
 }

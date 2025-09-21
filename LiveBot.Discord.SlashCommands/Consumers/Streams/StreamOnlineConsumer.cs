@@ -14,23 +14,18 @@ using StackExchange.Redis;
 
 namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 {
-    public class StreamOnlineConsumer : IConsumer<IStreamOnline>
+    public class StreamOnlineConsumer : BaseStreamConsumer, IConsumer<IStreamOnline>
     {
         private static readonly double NotificationCooldownMinutes = 60;
 
-        private readonly IBus _bus;
         private readonly ConnectionMultiplexer _cache;
-        private readonly DiscordShardedClient _client;
-        private readonly ILogger<StreamOnlineConsumer> _logger;
-        private readonly IUnitOfWork _work;
+        private readonly ILogger<StreamOnlineConsumer> _streamOnlineLogger;
 
         public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus, ConnectionMultiplexer cache)
+            : base(client, factory.Create(), bus, logger)
         {
-            _logger = logger;
-            _client = client;
-            _work = factory.Create();
-            _bus = bus;
             _cache = cache;
+            _streamOnlineLogger = logger;
         }
 
         public async Task Consume(ConsumeContext<IStreamOnline> context)
@@ -38,7 +33,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             ILiveBotStream stream = context.Message.Stream;
             ILiveBotUser user = stream.User;
             ILiveBotGame game = stream.Game;
-            
+
             var streamGame = await GetOrCreateStreamGame(stream, game);
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
@@ -52,7 +47,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     continue;
 
                 var (guild, channel) = await GetGuildAndChannel(streamSubscription, streamUser, stream);
-                
+
                 if (guild == null || channel == null)
                     continue;
 
@@ -112,48 +107,36 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task<(SocketGuild? guild, SocketTextChannel? channel)> GetGuildAndChannel(StreamSubscription streamSubscription, StreamUser streamUser, ILiveBotStream stream)
         {
-            SocketGuild? guild = null;
-
-            try
-            {
-                guild = _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
-            }
-            catch (HttpException ex)
-            {
-                if (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions || ex.DiscordCode == DiscordErrorCode.MissingPermissions)
-                {
-                    await _bus.Publish(new DiscordGuildDelete()
-                    {
-                        GuildId = streamSubscription.DiscordGuild.DiscordId,
-                    });
-
-                    return (null, null);
-                }
-            }
-
+            var guild = await GetGuildSafelyAsync(streamSubscription.DiscordGuild.DiscordId);
+            
             if (guild == null)
+            {
+                // Check if it's a permission issue that should trigger guild deletion
+                try
+                {
+                    _client.GetGuild(streamSubscription.DiscordGuild.DiscordId);
+                }
+                catch (HttpException ex)
+                {
+                    if (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions || ex.DiscordCode == DiscordErrorCode.MissingPermissions)
+                    {
+                        await _bus.Publish(new DiscordGuildDelete()
+                        {
+                            GuildId = streamSubscription.DiscordGuild.DiscordId,
+                        });
+                    }
+                }
                 return (null, null);
-
-            SocketTextChannel? channel = null;
-
-            try
-            {
-                channel = guild.GetTextChannel(streamSubscription.DiscordChannel.DiscordId);
             }
-            catch (HttpException ex)
+
+            var channel = await GetChannelSafelyAsync(guild, streamSubscription.DiscordChannel.DiscordId);
+            
+            if (channel == null)
             {
-                if (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions || 
-                    ex.DiscordCode == DiscordErrorCode.MissingPermissions || 
-                    ex.DiscordCode == DiscordErrorCode.UnknownChannel)
-                {
-                    _logger.LogError(exception: ex, message: "Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
-                    await RemoveSubscriptionWithRoles(streamSubscription);
-                    return (null, null);
-                }
-                else
-                {
-                    throw;
-                }
+                _streamOnlineLogger.LogError("Removing orphaned Stream Subscription for {Username} on {ServiceType} because channel could not be found in {GuildId} - {SubscriptionId}", 
+                    streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
+                await RemoveSubscriptionWithRoles(streamSubscription);
+                return (null, null);
             }
 
             return (guild, channel);
@@ -161,16 +144,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task RemoveSubscriptionWithRoles(StreamSubscription streamSubscription)
         {
-            var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
-
-            foreach (var roleToMention in rolesToMention)
-                await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-
-            await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+            await RemoveSubscriptionWithRolesAsync(streamSubscription, "Subscription removed during online processing");
         }
 
-        private async Task ProcessSubscriptionNotification(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game, 
-            StreamGame streamGame, StreamUser streamUser, StreamSubscription streamSubscription, 
+        private async Task ProcessSubscriptionNotification(ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game,
+            StreamGame streamGame, StreamUser streamUser, StreamSubscription streamSubscription,
             SocketGuild guild, SocketTextChannel channel)
         {
             var discordChannel = streamSubscription.DiscordChannel;
@@ -221,7 +199,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 if (recentNotification != null)
                     return;
 
-                await SendNewNotification(newStreamNotification, notificationPredicate, channel, notificationMessage, embed, 
+                await SendNewNotification(newStreamNotification, notificationPredicate, channel, notificationMessage, embed,
                     streamSubscription, lockTimeout, RemoveSubscriptionAsync);
             }
             finally
@@ -238,8 +216,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             return discordGuild.IsInBeta;
         }
 
-        private async Task HandleEnhancedNotifications(ILiveBotStream stream, SocketTextChannel channel, 
-            List<StreamNotification> previousNotifications, StreamNotification recentNotification, 
+        private async Task HandleEnhancedNotifications(ILiveBotStream stream, SocketTextChannel channel,
+            List<StreamNotification> previousNotifications, StreamNotification recentNotification,
             StreamNotification newStreamNotification, string notificationMessage, Embed embed)
         {
             await HandleStaleNotifications(stream, channel, previousNotifications, recentNotification);
@@ -288,7 +266,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             };
         }
 
-        private (Expression<Func<StreamNotification, bool>> notificationPredicate, Expression<Func<StreamNotification, bool>> previousNotificationPredicate) 
+        private (Expression<Func<StreamNotification, bool>> notificationPredicate, Expression<Func<StreamNotification, bool>> previousNotificationPredicate)
             CreateNotificationPredicates(StreamNotification newStreamNotification, StreamUser streamUser, global::LiveBot.Core.Repository.Models.Discord.DiscordGuild discordGuild, global::LiveBot.Core.Repository.Models.Discord.DiscordChannel discordChannel)
         {
             Expression<Func<StreamNotification, bool>> notificationPredicate = (i =>
@@ -335,7 +313,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 .FirstOrDefault(i => Math.Abs((stream.StartTime - i.Stream_StartTime).TotalMinutes) < NotificationCooldownMinutes);
         }
 
-        private async Task HandleStaleNotifications(ILiveBotStream stream, SocketTextChannel channel, 
+        private async Task HandleStaleNotifications(ILiveBotStream stream, SocketTextChannel channel,
             List<StreamNotification> previousNotifications, StreamNotification recentNotification)
         {
             var staleNotifications = previousNotifications
@@ -352,7 +330,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
         }
 
-        private async Task HandleExistingNotificationUpdate(SocketTextChannel channel, StreamNotification recentNotification, 
+        private async Task HandleExistingNotificationUpdate(SocketTextChannel channel, StreamNotification recentNotification,
             StreamNotification newStreamNotification, string notificationMessage, Embed embed)
         {
             if (recentNotification.DiscordMessage_DiscordId.HasValue)
@@ -365,7 +343,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
         }
 
-        private async Task HandleExistingMessageUpdate(SocketTextChannel channel, StreamNotification recentNotification, 
+        private async Task HandleExistingMessageUpdate(SocketTextChannel channel, StreamNotification recentNotification,
             StreamNotification newStreamNotification, string notificationMessage, Embed embed)
         {
             var existingMessage = await TryGetExistingMessage(channel, recentNotification);
@@ -384,17 +362,21 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         {
             try
             {
-                return await channel.GetMessageAsync(recentNotification.DiscordMessage_DiscordId.Value) as IUserMessage;
+                var message = await GetMessageSafelyAsync(channel, recentNotification.DiscordMessage_DiscordId.Value);
+                return message as IUserMessage;
             }
-            catch (HttpException ex)
+            catch (InsufficientPermissionsException)
             {
-                if (ex.DiscordCode != DiscordErrorCode.UnknownMessage)
-                    _logger.LogWarning(ex, "Unable to fetch existing notification message for {NotificationId}", recentNotification.Id);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _streamOnlineLogger.LogWarning(ex, "Unable to fetch existing notification message for {NotificationId}", recentNotification.Id);
                 return null;
             }
         }
 
-        private async Task ProcessExistingMessageUpdate(SocketTextChannel channel, IUserMessage existingMessage, 
+        private async Task ProcessExistingMessageUpdate(SocketTextChannel channel, IUserMessage existingMessage,
             StreamNotification recentNotification, StreamNotification newStreamNotification, string notificationMessage, Embed embed)
         {
             var currentEmbed = existingMessage.Embeds.FirstOrDefault();
@@ -410,7 +392,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             await FinalizeNotificationUpdate(recentNotification, newStreamNotification, existingMessage);
         }
 
-        private async Task UpdateExistingMessage(SocketTextChannel channel, IUserMessage existingMessage, 
+        private async Task UpdateExistingMessage(SocketTextChannel channel, IUserMessage existingMessage,
             StreamNotification recentNotification, string notificationMessage, Embed embed)
         {
             try
@@ -422,7 +404,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 });
 
                 _logger.LogInformation("Updated notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                    recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username, 
+                    recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                     recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
             }
             catch (HttpException ex)
@@ -434,7 +416,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 }
 
                 _logger.LogError(ex, "Error updating notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                    recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username, 
+                    recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                     recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
                 throw;
             }
@@ -506,7 +488,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             _logger.LogInformation(
                 "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
-                recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username, 
+                recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                 recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
         }
 
@@ -519,13 +501,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             _logger.LogInformation(
                 "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
-                recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username, 
+                recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                 recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
         }
 
-        private async Task SendNewNotification(StreamNotification newStreamNotification, 
-            Expression<Func<StreamNotification, bool>> notificationPredicate, SocketTextChannel channel, 
-            string notificationMessage, Embed embed, StreamSubscription streamSubscription, 
+        private async Task SendNewNotification(StreamNotification newStreamNotification,
+            Expression<Func<StreamNotification, bool>> notificationPredicate, SocketTextChannel channel,
+            string notificationMessage, Embed embed, StreamSubscription streamSubscription,
             TimeSpan lockTimeout, Func<Task> removeSubscriptionAsync)
         {
             await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);
@@ -593,7 +575,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             );
         }
 
-        private async Task HandleNotificationError(StreamNotification streamNotification, StreamSubscription streamSubscription, 
+        private async Task HandleNotificationError(StreamNotification streamNotification, StreamSubscription streamSubscription,
             Exception ex, double notificationDelay, Func<Task> removeSubscriptionAsync)
         {
             streamNotification.LogMessage = $"Error sending notification at {DateTime.UtcNow:o}: {ex.Message}";
@@ -626,8 +608,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task<StreamSubscription> GetSubscriptionFromNotification(StreamNotification notification)
         {
-            return await _work.SubscriptionRepository.SingleOrDefaultAsync(s => 
-                s.DiscordGuild.DiscordId == notification.DiscordGuild_DiscordId && 
+            return await _work.SubscriptionRepository.SingleOrDefaultAsync(s =>
+                s.DiscordGuild.DiscordId == notification.DiscordGuild_DiscordId &&
                 s.DiscordChannel.DiscordId == notification.DiscordChannel_DiscordId);
         }
 
