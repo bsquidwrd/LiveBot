@@ -163,10 +163,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// </summary>
         protected bool IsValidBotMessage(IMessage? message)
         {
-            _logger.LogDebug("Validating message {MessageId} authored by {AuthorId} for Offline Handling. Message is {MessageType}", message?.Id, message?.Author?.Id, message?.GetType());
-            return message != null &&
-                   message.Author?.Id == _client.CurrentUser.Id &&
-                   message is SocketUserMessage;
+            _logger.LogDebug("Validating message {MessageId} authored by {AuthorId} (current user {CurrentUserId} for Offline Handling. Message is IUserMessage? {IsIUserMessage}", message?.Id, message?.Author?.Id, _client.CurrentUser.Id, message is IUserMessage);
+            return message is IUserMessage userMessage &&
+                   userMessage.Author?.Id == _client.CurrentUser.Id;
         }
 
         /// <summary>
