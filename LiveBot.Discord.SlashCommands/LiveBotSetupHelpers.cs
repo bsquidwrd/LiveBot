@@ -35,7 +35,7 @@ namespace LiveBot.Discord.SlashCommands
 
             builder.Host.UseSerilog((ctx, lc) =>
                 lc
-                    .MinimumLevel.Information()
+                    .MinimumLevel.Is(IsDebug ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
                     .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                     .WriteTo.DatadogLogs(apiKey: apiKey, source: source, service: service, host: hostname, tags: tags)
                     .Enrich.FromLogContext()
