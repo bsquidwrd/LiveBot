@@ -125,8 +125,6 @@ namespace LiveBot.Watcher.Twitch
         {
             if (!IsWatcher) return;
             
-            _logger.LogInformation("Stream online event triggered for user {UserId}", e.Stream.UserId);
-            
             ILiveBotUser? user = await GetUserById(e.Stream.UserId);
             if (user == null) 
             {
@@ -137,15 +135,12 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotGame game = await GetGame(e.Stream.GameId);
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
             
-            _logger.LogInformation("Publishing stream online event for {Username} ({UserId})", user.Username, user.Id);
             await PublishStreamOnline(stream);
         }
 
         public async void Monitor_OnStreamUpdate(object? sender, OnStreamUpdateArgs e)
         {
             if (!IsWatcher) return;
-            
-            _logger.LogDebug("Stream update event triggered for user {UserId}", e.Stream.UserId);
             
             ILiveBotUser? user = await GetUserById(e.Stream.UserId);
             if (user == null) 
@@ -157,15 +152,12 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotGame game = await GetGame(e.Stream.GameId);
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
             
-            _logger.LogDebug("Publishing stream update event for {Username} ({UserId})", user.Username, user.Id);
             await PublishStreamUpdate(stream);
         }
 
         public async void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs e)
         {
             if (!IsWatcher) return;
-            
-            _logger.LogInformation("Stream offline event triggered for user {UserId}", e.Stream.UserId);
             
             ILiveBotUser? user = await GetUserById(e.Stream.UserId);
             if (user == null) 
@@ -177,7 +169,6 @@ namespace LiveBot.Watcher.Twitch
             ILiveBotGame game = await GetGame(e.Stream.GameId);
             ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
             
-            _logger.LogInformation("Publishing stream offline event for {Username} ({UserId})", user.Username, user.Id);
             await PublishStreamOffline(stream);
         }
 

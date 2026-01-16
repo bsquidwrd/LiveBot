@@ -409,9 +409,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     properties.Embed = embed;
                 });
 
-                _logger.LogInformation("Updated notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId}",
-                    recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
-                    recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
             }
             catch (HttpException ex)
             {
