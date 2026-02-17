@@ -33,13 +33,19 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             if (monitor == null)
                 return;
 
-            ILiveBotUser user = stream.User ?? await monitor.GetUserById(stream.UserId);
+            ILiveBotUser? user = stream.User ?? await monitor.GetUserById(stream.UserId);
+            if (user == null)
+            {
+                _logger.LogWarning("Could not resolve user for stream {StreamId} on {ServiceType} during stream update; skipping",
+                    stream.Id, stream.ServiceType);
+                return;
+            }
+
             ILiveBotGame game = stream.Game ?? await monitor.GetGame(stream.GameId);
 
             Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
-            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
             if (streamUser == null)
             {
@@ -47,6 +53,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     user.Id, stream.ServiceType);
                 return;
             }
+
+            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
             StreamGame streamGame;
             if (game.Id == "0" || string.IsNullOrEmpty(game.Id))
