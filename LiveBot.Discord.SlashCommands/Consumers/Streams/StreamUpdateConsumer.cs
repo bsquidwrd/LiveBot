@@ -41,6 +41,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
+            if (streamUser == null)
+            {
+                _logger.LogWarning("StreamUser not found for {UserId} on {ServiceType} during stream update; skipping",
+                    user.Id, stream.ServiceType);
+                return;
+            }
+
             StreamGame streamGame;
             if (game.Id == "0" || string.IsNullOrEmpty(game.Id))
             {

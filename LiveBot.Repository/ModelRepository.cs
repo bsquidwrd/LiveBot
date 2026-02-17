@@ -234,11 +234,18 @@ namespace LiveBot.Repository
             }
             else // Update the db entry from the entity and save.
             {
-                entity.Id = exists.Id;
-                Context.Entry(exists).CurrentValues.SetValues(entity);
-                await Context.SaveChangesAsync().ConfigureAwait(false);
+                try
+                {
+                    entity.Id = exists.Id;
+                    Context.Entry(exists).CurrentValues.SetValues(entity);
+                    await Context.SaveChangesAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    syncLock.Release();
+                }
+                return;
             }
-            syncLock.Release();
         }
 
         /// <inheritdoc/>
@@ -254,6 +261,8 @@ namespace LiveBot.Repository
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
                 TEntity entity = await DbSet.FindAsync(Id).ConfigureAwait(false);
+                if (entity == null)
+                    return;
                 DbSet.Remove(entity);
                 await Context.SaveChangesAsync().ConfigureAwait(false);
             }

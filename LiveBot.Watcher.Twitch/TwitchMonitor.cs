@@ -124,52 +124,70 @@ namespace LiveBot.Watcher.Twitch
         public async void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs e)
         {
             if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for online event", e.Stream.UserId);
-                return;
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for online event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamOnline(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamOnline(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception in Monitor_OnStreamOnline for user {UserId}", e.Stream.UserId);
+            }
         }
 
         public async void Monitor_OnStreamUpdate(object? sender, OnStreamUpdateArgs e)
         {
             if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for update event", e.Stream.UserId);
-                return;
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for update event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamUpdate(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamUpdate(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception in Monitor_OnStreamUpdate for user {UserId}", e.Stream.UserId);
+            }
         }
 
         public async void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs e)
         {
             if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for offline event", e.Stream.UserId);
-                return;
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for offline event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamOffline(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamOffline(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception in Monitor_OnStreamOffline for user {UserId}", e.Stream.UserId);
+            }
         }
 
         #endregion Events
@@ -350,15 +368,27 @@ namespace LiveBot.Watcher.Twitch
         #region Misc Functions
 
         /// <summary>
-        /// Wait for an Auth lock to not be in place
+        /// Wait for an Auth lock to not be in place, with exponential backoff and a timeout
         /// </summary>
         /// <returns></returns>
         private async Task WaitForAuthUnlockAsync()
         {
+            var deadline = DateTime.UtcNow.AddSeconds(30);
+            int delayMs = 100;
             bool authLocked;
             do
             {
                 authLocked = await _cache.CheckForLockAsync(recordId: _authCacheName);
+                if (authLocked)
+                {
+                    if (DateTime.UtcNow >= deadline)
+                    {
+                        _logger.LogWarning("Timed out waiting for auth lock to be released after 30s; proceeding anyway");
+                        return;
+                    }
+                    await Task.Delay(delayMs);
+                    delayMs = Math.Min(delayMs * 2, 2000);
+                }
             }
             while (authLocked);
         }
@@ -377,6 +407,12 @@ namespace LiveBot.Watcher.Twitch
             if (auth is null || auth.Expired || auth.ExpiresAt <= DateTime.UtcNow)
             {
                 var tempAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+
+                if (tempAuth == null)
+                {
+                    _logger.LogError("No active auth entry found for {ServiceType} with ClientId {ClientId}", ServiceType, ClientId);
+                    throw new InvalidOperationException($"No active auth entry found for {ServiceType} with ClientId {ClientId}");
+                }
 
                 auth = new TwitchAuth
                 {
@@ -448,10 +484,22 @@ namespace LiveBot.Watcher.Twitch
 
                 if (oldAuth.Expired || oldAuth.ExpiresAt <= DateTime.UtcNow || force)
                 {
+                    var lockDeadline = DateTime.UtcNow.AddSeconds(30);
+                    int lockDelayMs = 100;
                     do
                     {
                         // Obtain a lock for a maximum of 30 seconds
                         obtainedLock = await _cache.ObtainLockAsync(recordId: _authCacheName, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(30));
+                        if (!obtainedLock)
+                        {
+                            if (DateTime.UtcNow >= lockDeadline)
+                            {
+                                _logger.LogWarning("Timed out waiting for auth lock; skipping token refresh");
+                                break;
+                            }
+                            await Task.Delay(lockDelayMs);
+                            lockDelayMs = Math.Min(lockDelayMs * 2, 2000);
+                        }
                     }
                     while (!obtainedLock);
 
