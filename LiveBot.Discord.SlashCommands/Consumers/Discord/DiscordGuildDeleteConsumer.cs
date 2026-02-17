@@ -33,16 +33,32 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             // Remove Stream Subscriptions for this Guild
             foreach (var streamSubscription in streamSubscriptions)
             {
-                _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because have left the Guild {GuildId} - {SubscriptionId}", streamSubscription.User.Username, streamSubscription.User.ServiceType, discordGuild.DiscordId, streamSubscription.Id);
-                var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
-                foreach (var roleToMention in rolesToMention)
-                    await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                try
+                {
+                    _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because have left the Guild {GuildId} - {SubscriptionId}", streamSubscription.User.Username, streamSubscription.User.ServiceType, discordGuild.DiscordId, streamSubscription.Id);
+                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
+                    foreach (var roleToMention in rolesToMention)
+                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
+                    await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to remove Stream Subscription {SubscriptionId} for guild {GuildId}", streamSubscription.Id, discordGuild.DiscordId);
+                }
             }
 
             // Remove Discord Channels for this Guild
             foreach (var discordChannel in discordChannels)
-                await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
+            {
+                try
+                {
+                    await _work.ChannelRepository.RemoveAsync(discordChannel.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to remove Discord Channel {ChannelId} for guild {GuildId}", discordChannel.DiscordId, discordGuild.DiscordId);
+                }
+            }
 
             // Remove Discord Guild
             await _work.GuildRepository.RemoveAsync(discordGuild.Id);
