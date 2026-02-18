@@ -216,9 +216,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetGame(gameId);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetGame(gameId, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -244,9 +248,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByLogin(username);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserByLogin(username, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -272,9 +280,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserById(userId);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserById(userId, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -299,9 +311,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUsersById(userIdList);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUsersById(userIdList, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -326,9 +342,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByURL(url);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetUserByURL(url, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -357,9 +377,13 @@ namespace LiveBot.Watcher.Twitch
             catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
             {
                 _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetStream(user);
+                if (retryCount <= ApiRetryCount)
+                {
+                    await UpdateAuth(force: true);
+                    await Task.Delay(RetryDelay);
+                    return await API_GetStream(user, retryCount + 1);
+                }
+                return null;
             }
         }
 
@@ -522,7 +546,7 @@ namespace LiveBot.Watcher.Twitch
                             await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: newAuth, expiryTime: timeToExpire.Duration());
 
                             oldAuth.Expired = true;
-                            await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
+                            await _work.AuthRepository.UpdateAsync(oldAuth);
                             AccessToken = newAuth.AccessToken;
 
                             _logger.LogDebug("{ServiceType} Expiration time: {ExpirationSeconds}", ServiceType, refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn);
@@ -549,16 +573,25 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupAuthTimer(TimeSpan timeSpan)
         {
-            RefreshAuthTimer?.Stop();
-
             if (timeSpan.TotalSeconds < 1800)
                 timeSpan = TimeSpan.FromSeconds(1800);
 
-            RefreshAuthTimer = new System.Timers.Timer(timeSpan.Duration().TotalMilliseconds)
+            if (RefreshAuthTimer == null)
             {
-                AutoReset = false
-            };
-            RefreshAuthTimer.Elapsed += async (sender, e) => await UpdateAuth();
+                RefreshAuthTimer = new System.Timers.Timer { AutoReset = false };
+                RefreshAuthTimer.Elapsed += (sender, e) =>
+                {
+                    _ = UpdateAuth().ContinueWith(t =>
+                        _logger.LogError(t.Exception, "Unhandled exception in auth refresh timer for {ServiceType}", ServiceType),
+                        TaskContinuationOptions.OnlyOnFaulted);
+                };
+            }
+            else
+            {
+                RefreshAuthTimer.Stop();
+            }
+
+            RefreshAuthTimer.Interval = timeSpan.Duration().TotalMilliseconds;
             RefreshAuthTimer.Start();
         }
 
