@@ -573,14 +573,7 @@ namespace LiveBot.Watcher.Twitch
                     foreach (User user in users.Users)
                     {
                         var twitchUser = new TwitchUser(BaseURL, ServiceType, user);
-                        if (_userCache.ContainsKey(user.Id))
-                        {
-                            _userCache[user.Id] = twitchUser;
-                        }
-                        else
-                        {
-                            _userCache.TryAdd(user.Id, twitchUser);
-                        }
+                        _userCache[user.Id] = twitchUser;
                         await _cache.SetListItemAsync<TwitchUser>(recordId: _userCacheName, fieldName: twitchUser.Id, data: twitchUser);
                         try
                         {

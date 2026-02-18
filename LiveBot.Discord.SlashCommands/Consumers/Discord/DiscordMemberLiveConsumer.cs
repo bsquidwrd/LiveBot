@@ -57,14 +57,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             if (userGame == null)
                 return;
 
+            var seenGuildIds = new HashSet<ulong>();
             var mutualGuilds = new List<SocketGuild>();
             foreach (DiscordSocketClient shard in _client.Shards)
             {
                 foreach (SocketGuild guild in shard.Guilds)
                 {
-                    if (guild.GetUser(user.Id) != null)
-                        if (!mutualGuilds.Any(i => i.Id == guild.Id))
-                            mutualGuilds.Add(guild);
+                    if (guild.GetUser(user.Id) != null && seenGuildIds.Add(guild.Id))
+                        mutualGuilds.Add(guild);
                 }
             }
 

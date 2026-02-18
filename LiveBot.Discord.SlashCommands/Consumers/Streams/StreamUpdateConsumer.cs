@@ -43,8 +43,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             ILiveBotGame game = stream.Game ?? await monitor.GetGame(stream.GameId);
 
-            Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
-            var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
 
             if (streamUser == null)
@@ -56,9 +54,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
 
-            StreamGame streamGame;
+            if (!streamSubscriptions.Any())
+                return;
+
+            // Ensure the game record exists in the database
+            Expression<Func<StreamGame, bool>> templateGamePredicate = (i => i.ServiceType == stream.ServiceType && i.SourceId == "0");
             if (game.Id == "0" || string.IsNullOrEmpty(game.Id))
             {
+                var templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
                 if (templateGame == null)
                 {
                     StreamGame newStreamGame = new StreamGame
@@ -69,9 +72,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         ThumbnailURL = ""
                     };
                     await _work.GameRepository.AddOrUpdateAsync(newStreamGame, templateGamePredicate);
-                    templateGame = await _work.GameRepository.SingleOrDefaultAsync(templateGamePredicate);
                 }
-                streamGame = templateGame;
             }
             else
             {
@@ -83,11 +84,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     ThumbnailURL = game.ThumbnailURL
                 };
                 await _work.GameRepository.AddOrUpdateAsync(newStreamGame, i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
-                streamGame = await _work.GameRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceId == stream.GameId);
             }
-
-            if (!streamSubscriptions.Any())
-                return;
 
             bool hasValidSubscriptions = false;
 
