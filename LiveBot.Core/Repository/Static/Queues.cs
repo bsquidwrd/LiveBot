@@ -4,13 +4,15 @@ namespace LiveBot.Core.Repository.Static
 {
     public class Queues
     {
-        public static string QueueURL
-        {
-            get => $"rabbitmq://{Environment.GetEnvironmentVariable("RabbitMQ_URL")}";
-        }
+        private static readonly string _queueHost = Environment.GetEnvironmentVariable("RabbitMQ_URL")
+            ?? throw new InvalidOperationException("Required environment variable 'RabbitMQ_URL' is not set.");
 
-        public static readonly string QueueUsername = Environment.GetEnvironmentVariable("RabbitMQ_Username");
-        public static readonly string QueuePassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
+        public static string QueueURL => $"rabbitmq://{_queueHost}";
+
+        public static readonly string QueueUsername = Environment.GetEnvironmentVariable("RabbitMQ_Username")
+            ?? throw new InvalidOperationException("Required environment variable 'RabbitMQ_Username' is not set.");
+        public static readonly string QueuePassword = Environment.GetEnvironmentVariable("RabbitMQ_Password")
+            ?? throw new InvalidOperationException("Required environment variable 'RabbitMQ_Password' is not set.");
 
         public static readonly ushort PrefetchCount = 32;
 

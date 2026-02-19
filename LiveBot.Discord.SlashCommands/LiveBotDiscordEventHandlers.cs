@@ -73,8 +73,8 @@ namespace LiveBot.Discord.SlashCommands
         public async Task GuildUpdated(SocketGuild beforeGuild, SocketGuild afterGuild)
         {
             if (
-                beforeGuild.Name.Equals(afterGuild.Name, StringComparison.InvariantCultureIgnoreCase) &&
-                beforeGuild.IconUrl.Equals(afterGuild.IconUrl, StringComparison.InvariantCultureIgnoreCase)
+                string.Equals(beforeGuild.Name, afterGuild.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                string.Equals(beforeGuild.IconUrl, afterGuild.IconUrl, StringComparison.InvariantCultureIgnoreCase)
             )
                 return;
             var context = new DiscordGuildUpdate { GuildId = afterGuild.Id, GuildName = afterGuild.Name, IconUrl = afterGuild.IconUrl };

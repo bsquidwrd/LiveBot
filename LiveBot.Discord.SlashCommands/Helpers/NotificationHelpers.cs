@@ -10,8 +10,10 @@ namespace LiveBot.Discord.SlashCommands.Helpers
 {
     public static class NotificationHelpers
     {
-        public static string EscapeSpecialDiscordCharacters(string input)
+        public static string EscapeSpecialDiscordCharacters(string? input)
         {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
             return Format.Sanitize(input);
         }
 
@@ -121,10 +123,10 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 .WithThumbnailUrl(user.AvatarURL);
 
             // Add Game field
-            builder.AddField(name: "Game", value: game.Name, inline: true);
+            builder.AddField(name: "Game", value: string.IsNullOrWhiteSpace(game.Name) ? "[Not Set]" : game.Name, inline: true);
 
             // Add Stream URL field
-            builder.AddField(name: "Stream", value: stream.StreamURL, inline: true);
+            builder.AddField(name: "Stream", value: string.IsNullOrWhiteSpace(stream.StreamURL) ? user.ProfileURL : stream.StreamURL, inline: true);
 
             // Add Status Field
             //builder.AddField(name: "Status", value: "", inline: false);
