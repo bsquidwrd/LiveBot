@@ -28,9 +28,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var stream = context.Message.Stream;
             var user = stream.User;
 
-            _streamOfflineLogger.LogInformation("Processing stream offline for {Username} ({UserId}) on {ServiceType}",
-                user.Username, user.Id, stream.ServiceType);
-
             var streamUser = await GetStreamUserAsync(stream.ServiceType, user.Id);
             if (streamUser == null)
             {
@@ -46,9 +43,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     user.Username, user.Id);
                 return;
             }
-
-            _streamOfflineLogger.LogInformation("Found {SubscriptionCount} subscriptions for {Username}",
-                streamSubscriptions.Count(), user.Username);
 
             foreach (var subscription in streamSubscriptions)
             {
@@ -72,9 +66,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 return;
             }
 
-            _streamOfflineLogger.LogDebug("Processing offline for subscription {SubscriptionId} in guild {GuildId} channel {ChannelId}",
-                subscription.Id, subscription.DiscordGuild.DiscordId, subscription.DiscordChannel.DiscordId);
-
             var lastNotification = await GetLastNotification(subscription, stream.Id);
             if (lastNotification?.DiscordMessage_DiscordId == null)
             {
@@ -82,9 +73,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                     subscription.Id);
                 return;
             }
-
-            _streamOfflineLogger.LogDebug("Found last notification {NotificationId} with message ID {MessageId} for subscription {SubscriptionId}",
-                lastNotification.Id, lastNotification.DiscordMessage_DiscordId, subscription.Id);
 
             var guild = await GetGuildSafelyAsync(subscription.DiscordGuild.DiscordId);
             if (guild == null)
@@ -120,9 +108,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         {
             try
             {
-                _streamOfflineLogger.LogDebug("Attempting to get message {MessageId} in channel {ChannelId} for offline processing",
-                    lastNotification.DiscordMessage_DiscordId, channel.Id);
-
                 var message = await GetMessageSafelyAsync(channel, (ulong)lastNotification.DiscordMessage_DiscordId!);
 
                 if (!IsValidBotMessage(message))
@@ -133,9 +118,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                         "Notification message inaccessible when marking offline");
                     return;
                 }
-
-                _streamOfflineLogger.LogInformation("Successfully retrieved message {MessageId}, updating to offline status",
-                    lastNotification.DiscordMessage_DiscordId);
 
                 await UpdateMessageToOffline(message!, channel, lastNotification);
             }
@@ -165,8 +147,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         {
             try
             {
-                _streamOfflineLogger.LogDebug("Updating message {MessageId} embed to offline status", message.Id);
-
                 var embed = message.Embeds.FirstOrDefault();
                 var embedBuilder = StreamOfflineHelper.UpdateEmbedWithOfflineStatus(embed);
 
@@ -174,8 +154,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 {
                     properties.Embed = embedBuilder.Build();
                 });
-
-                _streamOfflineLogger.LogInformation("Successfully updated message {MessageId} to offline status", message.Id);
 
                 await UpdateNotificationWithSuccessAsync(lastNotification,
                     StreamOfflineHelper.CreateOfflineLogMessage().Replace($" at {DateTime.UtcNow:o}", ""));
