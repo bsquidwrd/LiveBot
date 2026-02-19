@@ -480,13 +480,13 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task UpdateAuth(bool force = false)
         {
-            _logger.LogInformation(message: "Updating Auth for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
+            _logger.LogDebug(message: "Updating Auth for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
             if (!IsWatcher)
             {
                 try
                 {
                     var activeAuth = await GetAndSetActiveAuth();
-                    _logger.LogInformation(message: "Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth", ServiceType, ClientId);
+                    _logger.LogDebug(message: "Successfully set AccessToken for {ServiceType} with Client Id {ClientId} to active auth", ServiceType, ClientId);
 
                     // Trigger it 5 minutes before expiration time to be safe
                     var timeToExpire = activeAuth.ExpiresAt - DateTime.UtcNow;
