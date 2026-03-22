@@ -1,0 +1,41 @@
+name: Cleanup Workflow Runs
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Daily at 6am UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cutoff=$(date -u -d '3 days ago' +%Y-%m-%dT%H:%M:%SZ)
+
+          gh api repos/${GH_REPO}/actions/workflows --paginate --jq '.workflows[].id' | while read -r workflow_id; do
+            run_index=0
+            gh api "repos/${GH_REPO}/actions/workflows/${workflow_id}/runs?per_page=100&status=completed" \
+              --paginate --jq '.workflow_runs[] | [.id, .created_at] | @tsv' | while read -r run_id created_at; do
+              run_index=$((run_index + 1))
+
+              # Always keep the first X runs (most recent)
+              if [ "$run_index" -le 1 ]; then
+                continue
+              fi
+
+              # Always keep runs from the last X days
+              if [ "$created_at" \> "$cutoff" ] || [ "$created_at" = "$cutoff" ]; then
+                continue
+              fi
+
+              echo "Deleting run $run_id (created $created_at) from workflow $workflow_id"
+              gh api "repos/${GH_REPO}/actions/runs/${run_id}" -X DELETE
+            done
+          done
