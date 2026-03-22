@@ -3,8 +3,14 @@ name: .NET
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - 'images/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - 'images/**'
 
 jobs:
   build:
