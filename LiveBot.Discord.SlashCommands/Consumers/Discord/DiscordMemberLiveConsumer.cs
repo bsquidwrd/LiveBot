@@ -57,19 +57,22 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             if (userGame == null)
                 return;
 
+            var seenGuildIds = new HashSet<ulong>();
             var mutualGuilds = new List<SocketGuild>();
             foreach (DiscordSocketClient shard in _client.Shards)
             {
                 foreach (SocketGuild guild in shard.Guilds)
                 {
-                    if (guild.GetUser(user.Id) != null)
-                        if (!mutualGuilds.Any(i => i.Id == guild.Id))
-                            mutualGuilds.Add(guild);
+                    if (guild.GetUser(user.Id) != null && seenGuildIds.Add(guild.Id))
+                        mutualGuilds.Add(guild);
                 }
             }
 
             foreach (var guild in mutualGuilds)
             {
+                try
+                {
+
                 if (guild?.Id == null) continue;
 
                 var discordGuild = await _work.GuildRepository.SingleOrDefaultAsync(i => i.DiscordId == guild.Id);
@@ -240,6 +243,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                             (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
                         );
                     }
+                }
+
+                } // end per-guild try
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unhandled error processing member live notification for guild {GuildId}", guild?.Id);
                 }
             }
         }

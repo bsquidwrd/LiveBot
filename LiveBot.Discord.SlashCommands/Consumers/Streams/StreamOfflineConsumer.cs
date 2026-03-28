@@ -39,7 +39,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             var streamSubscriptions = await GetStreamSubscriptionsAsync(streamUser);
             if (!streamSubscriptions.Any())
             {
-                _streamOfflineLogger.LogInformation("No subscriptions found for {Username} ({UserId})",
+                _streamOfflineLogger.LogDebug("No subscriptions found for {Username} ({UserId})",
                     user.Username, user.Id);
                 return;
             }

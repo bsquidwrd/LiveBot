@@ -612,6 +612,9 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
         private async Task<StreamUser> GetStreamUserAsync(ILiveBotMonitor monitor, Uri uri)
         {
             var monitorUser = await monitor.GetUser(profileURL: uri.AbsoluteUri);
+            if (monitorUser == null)
+                throw new ArgumentException($"Could not find a user for the provided URL: {Format.EscapeUrl(uri.AbsoluteUri)}");
+
             StreamUser streamUser = new()
             {
                 ServiceType = monitorUser.ServiceType,

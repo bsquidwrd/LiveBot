@@ -46,7 +46,10 @@ namespace LiveBot.Discord.SlashCommands
                     _logger.LogInformation(message: "Finished registering AdminModule with shard {ShardId}", client.ShardId);
                     RegisteredCommands = true;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to register AdminModule on shard {ShardId}", client.ShardId);
+                }
             }
         }
 
@@ -65,8 +68,9 @@ namespace LiveBot.Discord.SlashCommands
 
                 await Task.CompletedTask;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled exception executing interaction {InteractionType}", interaction.Type);
                 // If Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
                 // response, or at least let the user know that something went wrong during the command execution.
                 if (interaction.Type is InteractionType.ApplicationCommand)
@@ -89,7 +93,10 @@ namespace LiveBot.Discord.SlashCommands
 
                     await context.Interaction.FollowupAsync(ephemeral: true, embed: embed);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send error followup for {CommandName}", commandInfo?.Name ?? "Unknown");
+                }
             }
 
             var logLevel = LogLevel.Information;

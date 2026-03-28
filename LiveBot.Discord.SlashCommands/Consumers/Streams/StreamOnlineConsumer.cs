@@ -289,10 +289,22 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task<bool> ObtainLock(string recordId, Guid lockGuid, TimeSpan lockTimeout)
         {
+            var deadline = DateTime.UtcNow.Add(lockTimeout);
+            int delayMs = 50;
             bool obtainedLock;
             do
             {
                 obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: lockTimeout);
+                if (!obtainedLock)
+                {
+                    if (DateTime.UtcNow >= deadline)
+                    {
+                        _streamOnlineLogger.LogWarning("Timed out waiting for lock on {RecordId} after {Timeout}s", recordId, lockTimeout.TotalSeconds);
+                        return false;
+                    }
+                    await Task.Delay(delayMs);
+                    delayMs = Math.Min(delayMs * 2, 1000);
+                }
             }
             while (!obtainedLock);
 
@@ -542,14 +554,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task<IUserMessage> SendDiscordMessage(SocketTextChannel channel, string notificationMessage, Embed embed, TimeSpan lockTimeout)
         {
-            CancellationTokenSource cancellationToken = new();
-            cancellationToken.CancelAfter((int)lockTimeout.TotalMilliseconds);
+            using var cts = new CancellationTokenSource((int)lockTimeout.TotalMilliseconds);
 
             var messageRequestOptions = new RequestOptions()
             {
                 RetryMode = RetryMode.AlwaysFail,
                 Timeout = (int)lockTimeout.TotalMilliseconds,
-                CancelToken = cancellationToken.Token
+                CancelToken = cts.Token
             };
 
             return await channel.SendMessageAsync(text: notificationMessage, embed: embed, options: messageRequestOptions);

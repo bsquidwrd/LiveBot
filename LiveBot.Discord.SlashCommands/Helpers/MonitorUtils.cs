@@ -45,7 +45,10 @@ namespace LiveBot.Discord.SlashCommands.Helpers
         {
             var roles = new List<SocketRole>();
             if (subscription.RolesToMention.Any())
-                roles = subscription.RolesToMention.Select(i => guild.GetRole(i.DiscordRoleId)).ToList();
+                roles = subscription.RolesToMention
+                    .Select(i => guild.GetRole(i.DiscordRoleId))
+                    .Where(r => r != null)
+                    .ToList();
 
             var roleStrings = new List<string>();
             foreach (var role in roles.OrderBy(i => i.Name))
@@ -86,7 +89,8 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 if (currentRolesToMention.Any())
                 {
                     var rolesToDelete = currentRolesToMention.Where(i => !roleIds.Contains(i.DiscordRoleId)).ToList();
-                    rolesToDelete.ForEach(async i => await work.RoleToMentionRepository.RemoveAsync(i.Id));
+                    foreach (var roleToDelete in rolesToDelete)
+                        await work.RoleToMentionRepository.RemoveAsync(roleToDelete.Id);
                     RolesUpdated = true;
                 }
                 foreach (var roleId in roleIds)
