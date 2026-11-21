@@ -21,11 +21,6 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public ServiceEnum ServiceType { get; set; }
         public IUnitOfWorkFactory _factory { get; set; }
 
-        public IUnitOfWork _work
-        {
-            get => _factory.Create();
-        }
-
         public DateTime StartTime { get; set; }
         public bool IsEnabled { get; set; }
 

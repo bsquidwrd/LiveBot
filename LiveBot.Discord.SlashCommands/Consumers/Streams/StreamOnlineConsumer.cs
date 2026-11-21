@@ -22,8 +22,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private readonly ConnectionMultiplexer _cache;
         private readonly ILogger<StreamOnlineConsumer> _streamOnlineLogger;
 
-        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus, ConnectionMultiplexer cache)
-            : base(client, factory.Create(), bus, logger)
+        public StreamOnlineConsumer(ILogger<StreamOnlineConsumer> logger, DiscordShardedClient client, IUnitOfWork work, IBus bus, ConnectionMultiplexer cache)
+            : base(client, work, bus, logger)
         {
             _cache = cache;
             _streamOnlineLogger = logger;

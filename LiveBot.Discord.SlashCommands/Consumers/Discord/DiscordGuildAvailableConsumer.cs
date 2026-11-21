@@ -14,10 +14,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly DiscordShardedClient _client;
         private readonly IBus _bus;
 
-        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWorkFactory factory, DiscordShardedClient client, IBus bus)
+        public DiscordGuildAvailableConsumer(ILogger<DiscordGuildAvailableConsumer> logger, IUnitOfWork work, DiscordShardedClient client, IBus bus)
         {
             _logger = logger;
-            _work = factory.Create();
+            _work = work;
             _client = client;
             _bus = bus;
         }

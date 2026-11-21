@@ -9,10 +9,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly ILogger<DiscordGuildDeleteConsumer> _logger;
         private readonly IUnitOfWork _work;
 
-        public DiscordGuildDeleteConsumer(ILogger<DiscordGuildDeleteConsumer> logger, IUnitOfWorkFactory factory)
+        public DiscordGuildDeleteConsumer(ILogger<DiscordGuildDeleteConsumer> logger, IUnitOfWork work)
         {
             _logger = logger;
-            _work = factory.Create();
+            _work = work;
         }
 
         public async Task Consume(ConsumeContext<IDiscordGuildDelete> context)

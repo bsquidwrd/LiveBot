@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
 using System.Threading.Tasks;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models;
@@ -24,12 +23,6 @@ namespace LiveBot.Repository
         /// The db set that contains the entities.
         /// </summary>
         protected readonly DbSet<TEntity> DbSet;
-
-        /// <summary>
-        /// The lock used to synchronize threads during certain actions as EF is not entirely multi
-        /// thread capable.
-        /// </summary>
-        private readonly SemaphoreSlim syncLock = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ModelRepository{TEntity}"/> class.
@@ -197,121 +190,63 @@ namespace LiveBot.Repository
         /// <inheritdoc/>
         public async Task AddAsync(TEntity entity)
         {
-            try
-            {
-                await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.Add(entity);
-                await Context.SaveChangesAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                syncLock.Release();
-            }
+            DbSet.Add(entity);
+            await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task AddAsync(IEnumerable<TEntity> entities)
         {
-            try
-            {
-                await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.AddRange(entities);
-                await Context.SaveChangesAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                syncLock.Release();
-            }
+            DbSet.AddRange(entities);
+            await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        /// <exception cref="SemaphoreFullException">
-        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has already been disposed.
-        /// </exception>
         public async Task UpdateAsync(TEntity entity)
         {
-            try
+            if (Context.Entry(entity).State == EntityState.Detached)
             {
-                await syncLock.WaitAsync().ConfigureAwait(false);
-                if (Context.Entry(entity).State == EntityState.Detached)
-                {
-                    // A detached entity has no snapshot to diff against, so every column has to be written.
-                    DbSet.Attach(entity);
-                    Context.Entry(entity).State = EntityState.Modified;
-                }
+                // A detached entity has no snapshot to diff against, so every column has to be written.
+                DbSet.Attach(entity);
+                Context.Entry(entity).State = EntityState.Modified;
+            }
 
-                await Context.SaveChangesAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                syncLock.Release();
-            }
+            await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        /// <exception cref="SemaphoreFullException">
-        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has already been disposed.
-        /// </exception>
         public virtual async Task AddOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> predicate)
         {
-            await syncLock.WaitAsync().ConfigureAwait(false);
-            try
+            var exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
+            if (exists == null)
             {
-                var exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
-                if (exists == null)
+                DbSet.Add(entity);
+                try
                 {
-                    DbSet.Add(entity);
-                    try
-                    {
-                        await Context.SaveChangesAsync().ConfigureAwait(false);
-                        return;
-                    }
-                    catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-                    {
-                        // Another consumer inserted the same row between the read and the insert.
-                        Context.Entry(entity).State = EntityState.Detached;
-                        exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
-                        if (exists == null)
-                            throw;
-                    }
+                    await Context.SaveChangesAsync().ConfigureAwait(false);
+                    return;
                 }
+                catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+                {
+                    // Another consumer inserted the same row between the read and the insert.
+                    Context.Entry(entity).State = EntityState.Detached;
+                    exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
+                    if (exists == null)
+                        throw;
+                }
+            }
 
-                entity.Id = exists.Id;
-                Context.Entry(exists).CurrentValues.SetValues(entity);
-                await Context.SaveChangesAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                syncLock.Release();
-            }
+            entity.Id = exists.Id;
+            Context.Entry(exists).CurrentValues.SetValues(entity);
+            await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
-        /// <exception cref="SemaphoreFullException">
-        /// The <see cref="T:System.Threading.SemaphoreSlim"></see> has already reached its maximum size.
-        /// </exception>
-        /// <exception cref="ObjectDisposedException">
-        /// The current instance has already been disposed.
-        /// </exception>
         public async Task RemoveAsync(long Id)
         {
-            try
-            {
-                await syncLock.WaitAsync().ConfigureAwait(false);
-                TEntity entity = await DbSet.FindAsync(Id).ConfigureAwait(false);
-                DbSet.Remove(entity);
-                await Context.SaveChangesAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                syncLock.Release();
-            }
+            TEntity entity = await DbSet.FindAsync(Id).ConfigureAwait(false);
+            DbSet.Remove(entity);
+            await Context.SaveChangesAsync().ConfigureAwait(false);
         }
     }
 }

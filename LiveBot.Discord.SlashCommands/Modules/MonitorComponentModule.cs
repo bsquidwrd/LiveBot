@@ -12,10 +12,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
         private readonly ILogger<MonitorComponentModule> _logger;
         private readonly IUnitOfWork _work;
 
-        public MonitorComponentModule(ILogger<MonitorComponentModule> logger, IUnitOfWorkFactory factory)
+        public MonitorComponentModule(ILogger<MonitorComponentModule> logger, IUnitOfWork work)
         {
             _logger = logger;
-            _work = factory.Create();
+            _work = work;
         }
 
         #region monitor.list

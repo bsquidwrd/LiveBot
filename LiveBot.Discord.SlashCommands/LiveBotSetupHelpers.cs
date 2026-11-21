@@ -43,10 +43,10 @@ namespace LiveBot.Discord.SlashCommands
                     .Enrich.FromLogContext()
             );
 
-            builder.Services.AddScoped<LiveBotDBContext>(_ => new LiveBotDBContext(builder.Configuration.GetValue<string>("connectionstring")));
-            var unitOfWorkFactory = new UnitOfWorkFactory(builder.Configuration);
-            builder.Services.AddSingleton<IUnitOfWorkFactory>(unitOfWorkFactory);
-            unitOfWorkFactory.Migrate();
+            builder.Services.AddLiveBotDatabase(builder.Configuration);
+            // MassTransit consumers and interaction modules each run in their own DI scope, so the scope
+            // bounds the unit of work to one message or command and disposes it afterwards.
+            builder.Services.AddScoped<IUnitOfWork>(services => services.GetRequiredService<IUnitOfWorkFactory>().Create());
 
             var discordConfig = new DiscordSocketConfig()
             {
@@ -72,6 +72,8 @@ namespace LiveBot.Discord.SlashCommands
                 LogLevel = LogSeverity.Info,
                 UseCompiledLambda = true,
                 DefaultRunMode = RunMode.Async,
+                // Modules take a scoped IUnitOfWork, which needs a scope per command to be disposed.
+                AutoServiceScopes = true,
             };
             builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordShardedClient>(), interactionConfig));
             builder.Services.AddSingleton<InteractionHandler>();
@@ -111,6 +113,9 @@ namespace LiveBot.Discord.SlashCommands
         /// <returns></returns>
         public static async Task<WebApplication> RegisterLiveBot(this WebApplication app)
         {
+            // The context factory only exists once the container is built, and hosted services start after this.
+            app.Services.GetRequiredService<IUnitOfWorkFactory>().Migrate();
+
             var runWatchersInDiscord = Convert.ToBoolean(app.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
             if (runWatchersInDiscord)
             {

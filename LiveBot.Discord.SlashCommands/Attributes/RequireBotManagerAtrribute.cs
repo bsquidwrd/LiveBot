@@ -20,8 +20,8 @@ namespace LiveBot.Discord.SlashCommands.Attributes
                 return PreconditionResult.FromSuccess();
             }
 
-            var _work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
-            var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(x => x.DiscordGuild.DiscordId == context.Guild.Id);
+            await using var work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
+            var guildConfig = await work.GuildConfigRepository.SingleOrDefaultAsync(x => x.DiscordGuild.DiscordId == context.Guild.Id);
             ulong? adminRoleId = guildConfig.AdminRoleDiscordId;
             if (adminRoleId != null)
             {

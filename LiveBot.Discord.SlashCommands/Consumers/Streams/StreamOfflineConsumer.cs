@@ -15,10 +15,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         public StreamOfflineConsumer(
             DiscordShardedClient client,
-            IUnitOfWorkFactory factory,
+            IUnitOfWork work,
             IBus bus,
             ILogger<StreamOfflineConsumer> logger)
-            : base(client, factory.Create(), bus, logger)
+            : base(client, work, bus, logger)
         {
             _streamOfflineLogger = logger;
         }

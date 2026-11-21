@@ -25,11 +25,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
         private readonly MassTransit.IBus _bus;
 
-        public MonitorModule(ILogger<MonitorModule> logger, IConfiguration configuration, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors, MassTransit.IBus bus)
+        public MonitorModule(ILogger<MonitorModule> logger, IConfiguration configuration, IUnitOfWork work, IEnumerable<ILiveBotMonitor> monitors, MassTransit.IBus bus)
         {
             _logger = logger;
             _configuration = configuration;
-            _work = factory.Create();
+            _work = work;
             _monitors = monitors;
             _bus = bus;
         }
