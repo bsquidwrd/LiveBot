@@ -57,14 +57,15 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             if (userGame == null)
                 return;
 
+            // SocketUser.MutualGuilds only covers the shard that owns the user, so walk every shard.
             var mutualGuilds = new List<SocketGuild>();
+            var seenGuildIds = new HashSet<ulong>();
             foreach (DiscordSocketClient shard in _client.Shards)
             {
                 foreach (SocketGuild guild in shard.Guilds)
                 {
-                    if (guild.GetUser(user.Id) != null)
-                        if (!mutualGuilds.Any(i => i.Id == guild.Id))
-                            mutualGuilds.Add(guild);
+                    if (guild.GetUser(user.Id) != null && seenGuildIds.Add(guild.Id))
+                        mutualGuilds.Add(guild);
                 }
             }
 

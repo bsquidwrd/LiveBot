@@ -185,13 +185,13 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 .WithFooter(user.Id.ToString());
 
             var mutualGuilds = new List<SocketGuild>();
+            var seenGuildIds = new HashSet<ulong>();
             foreach (DiscordSocketClient shard in Context.Client.Shards)
             {
                 foreach (SocketGuild guild in shard.Guilds)
                 {
-                    if (guild.GetUser(user.Id) != null)
-                        if (!mutualGuilds.Any(i => i.Id == guild.Id))
-                            mutualGuilds.Add(guild);
+                    if (guild.GetUser(user.Id) != null && seenGuildIds.Add(guild.Id))
+                        mutualGuilds.Add(guild);
                 }
             }
 
