@@ -26,6 +26,23 @@ namespace LiveBot.Core.Repository.Interfaces
         Task<long> LongCountAsync(Expression<Func<TModel, bool>> predicate);
 
         /// <summary>
+        /// Counts the non-deleted entities for each distinct value of the given key. Keys with no
+        /// entities are absent from the result.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key to group by.</typeparam>
+        /// <param name="keySelector">Selects the key to group by. Must be translatable to SQL.</param>
+        /// <returns>The number of entities per key.</returns>
+        Task<Dictionary<TKey, long>> LongCountByAsync<TKey>(Expression<Func<TModel, TKey>> keySelector);
+
+        /// <summary>
+        /// Counts the distinct values of the given selector across non-deleted entities; a null counts as one value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the selected value.</typeparam>
+        /// <param name="selector">Selects the value to count. Must be translatable to SQL.</param>
+        /// <returns>The number of distinct values.</returns>
+        Task<long> LongDistinctCountAsync<TValue>(Expression<Func<TModel, TValue>> selector);
+
+        /// <summary>
         /// Gets an entity based on it's Id.
         /// </summary>
         /// <param name="Id">The Id of the entity.</param>

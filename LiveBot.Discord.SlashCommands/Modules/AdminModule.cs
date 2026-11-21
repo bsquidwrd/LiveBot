@@ -267,10 +267,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
         public async Task StatsCommandAsync()
         {
             var appInfo = await Context.Client.GetApplicationInfoAsync();
-            var subscriptions = await work.SubscriptionRepository.GetAllAsync();
+            var subscriptionCount = await work.SubscriptionRepository.LongCountAsync(i => true);
+            var uniqueUserCount = await work.SubscriptionRepository.LongDistinctCountAsync(i => i.User.Id);
+            var subscriptionsByService = await work.SubscriptionRepository.LongCountByAsync(i => i.User.ServiceType);
 
             var reportPeriod = DateTime.UtcNow.Subtract(TimeSpan.FromDays(30));
-            var notifications = await work.NotificationRepository.FindAsync(n => n.Success == true && n.TimeStamp >= reportPeriod);
+            var notificationCount = await work.NotificationRepository.LongCountAsync(n => n.Success == true && n.TimeStamp >= reportPeriod);
 
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor(appInfo.Owner)
@@ -279,17 +281,17 @@ namespace LiveBot.Discord.SlashCommands.Modules
 
             embedBuilder.AddField(name: "Shard Count", value: $"{Context.Client.Shards.Count}", inline: true);
             embedBuilder.AddField(name: "Guild Count", value: $"{Context.Client.Guilds.Count}", inline: true);
-            embedBuilder.AddField(name: "Last 30 days", value: $"{notifications.LongCount()}", inline: true);
-            embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptions.Count()}", inline: true);
-            embedBuilder.AddField(name: "Unique Users", value: $"{subscriptions.Select(i => i.User).Distinct().Count()}", inline: true);
+            embedBuilder.AddField(name: "Last 30 days", value: $"{notificationCount}", inline: true);
+            embedBuilder.AddField(name: "Subscriptions", value: $"{subscriptionCount}", inline: true);
+            embedBuilder.AddField(name: "Unique Users", value: $"{uniqueUserCount}", inline: true);
 
             Enum.GetValues<ServiceEnum>()
                 .Where(i => i != ServiceEnum.None)
                 .ToList()
                 .ForEach(service =>
             {
-                if (subscriptions.Any(i => i.User.ServiceType == service))
-                    embedBuilder.AddField(name: $"{service} Subscriptions", value: $"{subscriptions.Count(i => i.User.ServiceType == service)}", inline: true);
+                if (subscriptionsByService.TryGetValue(service, out var serviceCount))
+                    embedBuilder.AddField(name: $"{service} Subscriptions", value: $"{serviceCount}", inline: true);
             });
 
             await FollowupAsync(text: "General bot statistics", embed: embedBuilder.Build(), ephemeral: true);
