@@ -78,6 +78,12 @@ namespace LiveBot.Watcher.Twitch
 
         private ConcurrentDictionary<string, ILiveBotUser> _userCache = new ConcurrentDictionary<string, ILiveBotUser>();
 
+        // TwitchLib raises OnStreamUpdate on every poll for every live stream, changed or not.
+        private readonly ConcurrentDictionary<string, PublishedStreamState> _publishedStreamState = new ConcurrentDictionary<string, PublishedStreamState>();
+
+        // The stream id changes when a channel restarts between polls without TwitchLib seeing it go offline.
+        private readonly record struct PublishedStreamState(string StreamId, string Title, string GameId);
+
         /// <summary>
         /// Represents the whole Service for Twitch Monitoring
         /// </summary>
@@ -154,7 +160,8 @@ namespace LiveBot.Watcher.Twitch
                 ILiveBotGame game = await GetGame(e.Stream.GameId);
                 ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
 
-                await PublishStreamOnline(stream);
+                if (await PublishStreamOnline(stream))
+                    _publishedStreamState[e.Stream.UserId] = ToPublishedState(e.Stream);
             }
             catch (Exception ex)
             {
@@ -168,6 +175,10 @@ namespace LiveBot.Watcher.Twitch
             {
                 if (!IsWatcher) return;
 
+                PublishedStreamState current = ToPublishedState(e.Stream);
+                if (_publishedStreamState.TryGetValue(e.Stream.UserId, out PublishedStreamState published) && published == current)
+                    return;
+
                 ILiveBotUser? user = await GetUserById(e.Stream.UserId);
                 if (user == null)
                 {
@@ -178,7 +189,8 @@ namespace LiveBot.Watcher.Twitch
                 ILiveBotGame game = await GetGame(e.Stream.GameId);
                 ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
 
-                await PublishStreamUpdate(stream);
+                if (await PublishStreamUpdate(stream))
+                    _publishedStreamState[e.Stream.UserId] = current;
             }
             catch (Exception ex)
             {
@@ -191,6 +203,8 @@ namespace LiveBot.Watcher.Twitch
             try
             {
                 if (!IsWatcher) return;
+
+                _publishedStreamState.TryRemove(e.Stream.UserId, out _);
 
                 ILiveBotUser? user = await GetUserById(e.Stream.UserId);
                 if (user == null)
@@ -648,29 +662,36 @@ namespace LiveBot.Watcher.Twitch
 
         #region Messaging Implementation
 
-        public async Task PublishStreamOnline(ILiveBotStream stream)
+        public async Task<bool> PublishStreamOnline(ILiveBotStream stream)
         {
             try
             {
                 await _bus.Publish(new TwitchStreamOnline { Stream = stream });
+                return true;
             }
             catch (Exception e)
             {
                 _logger.LogError(exception: e, message: "Error trying to publish {ServiceType} StreamOnline", ServiceType);
+                return false;
             }
         }
 
-        public async Task PublishStreamUpdate(ILiveBotStream stream)
+        public async Task<bool> PublishStreamUpdate(ILiveBotStream stream)
         {
             try
             {
                 await _bus.Publish(new TwitchStreamUpdate { Stream = stream });
+                return true;
             }
             catch (Exception e)
             {
                 _logger.LogError(exception: e, message: "Error trying to publish {ServiceType} StreamUpdate", ServiceType);
+                return false;
             }
         }
+
+        private static PublishedStreamState ToPublishedState(TwitchLibStreams.Stream stream) =>
+            new PublishedStreamState(stream.Id, stream.Title, stream.GameId);
 
         public async Task PublishStreamOffline(ILiveBotStream stream)
         {
