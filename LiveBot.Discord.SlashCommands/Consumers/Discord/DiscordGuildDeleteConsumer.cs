@@ -34,10 +34,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             foreach (var streamSubscription in streamSubscriptions)
             {
                 _logger.LogInformation("Removing Stream Subscription for {Username} on {ServiceType} because have left the Guild {GuildId} - {SubscriptionId}", streamSubscription.User.Username, streamSubscription.User.ServiceType, discordGuild.DiscordId, streamSubscription.Id);
-                var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == streamSubscription);
-                foreach (var roleToMention in rolesToMention)
-                    await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                await _work.SubscriptionRepository.RemoveAsync(streamSubscription.Id);
+                await _work.SubscriptionRepository.RemoveWithRolesAsync(streamSubscription.Id);
             }
 
             // Remove Discord Channels for this Guild

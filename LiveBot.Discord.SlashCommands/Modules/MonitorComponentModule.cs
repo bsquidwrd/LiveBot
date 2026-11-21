@@ -124,10 +124,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 {
                     try
                     {
-                        var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
-                        foreach (var roleToMention in rolesToMention)
-                            await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                        await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                        await _work.SubscriptionRepository.RemoveWithRolesAsync(subscription.Id);
 
                         _logger.LogInformation(
                             message: "Stream Subscription deleted for {ServiceType} {Username} ({UserId}) by {DiscordUsername} ({DiscordUserId}) in {GuildName} ({GuildId}))",
@@ -185,8 +182,11 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 var subscription = await _work.SubscriptionRepository.GetAsync(subscriptionId);
                 var roleMentions = subscription.RolesToMention;
 
-                foreach (var roleMention in roleMentions.Where(i => !roleIds.Contains(i.DiscordRoleId.ToString())))
-                    await _work.RoleToMentionRepository.RemoveAsync(roleMention.Id);
+                var roleMentionIdsToRemove = roleMentions
+                    .Where(i => !roleIds.Contains(i.DiscordRoleId.ToString()))
+                    .Select(i => i.Id)
+                    .ToList();
+                await _work.RoleToMentionRepository.RemoveRangeAsync(roleMentionIdsToRemove);
 
                 foreach (var roleId in roleIds.Where(i => !roleMentions.Select(r => r.DiscordRoleId.ToString()).Contains(i)))
                     await _work.RoleToMentionRepository.AddAsync(new RoleToMention()
@@ -195,7 +195,8 @@ namespace LiveBot.Discord.SlashCommands.Modules
                         DiscordRoleId = ulong.Parse(roleId),
                     });
 
-                if (subscription.RolesToMention.Any() && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
+                // The bulk delete leaves the removed rows in the already loaded collection.
+                if (subscription.RolesToMention.Any(i => !roleMentionIdsToRemove.Contains(i.Id)) && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
                     subscription.Message = String.Concat("{role} ", subscription.Message).Trim();
                 await _work.SubscriptionRepository.UpdateAsync(subscription);
 

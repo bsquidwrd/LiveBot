@@ -86,7 +86,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                 if (currentRolesToMention.Any())
                 {
                     var rolesToDelete = currentRolesToMention.Where(i => !roleIds.Contains(i.DiscordRoleId)).ToList();
-                    rolesToDelete.ForEach(async i => await work.RoleToMentionRepository.RemoveAsync(i.Id));
+                    await work.RoleToMentionRepository.RemoveRangeAsync(rolesToDelete.Select(i => i.Id).ToList());
                     RolesUpdated = true;
                 }
                 foreach (var roleId in roleIds)
