@@ -124,55 +124,90 @@ namespace LiveBot.Watcher.Twitch
             _logger.LogDebug("Monitor service successfully connected to Twitch! {ServiceType}", ServiceType);
         }
 
+        // Handler signatures are fixed as void by TwitchLib and System.Timers, and an exception escaping an async void
+        // method is rethrown on the thread pool where it terminates the process.
+        private async void FireAndLog(Func<Task> work, string operation)
+        {
+            try
+            {
+                await work();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error running {Operation} for {ServiceType}", operation, ServiceType);
+            }
+        }
+
         public async void Monitor_OnStreamOnline(object? sender, OnStreamOnlineArgs e)
         {
-            if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for online event", e.Stream.UserId);
-                return;
+                if (!IsWatcher) return;
+
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for online event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamOnline(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamOnline(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error handling {ServiceType} stream online for {UserId}", ServiceType, e.Stream?.UserId);
+            }
         }
 
         public async void Monitor_OnStreamUpdate(object? sender, OnStreamUpdateArgs e)
         {
-            if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for update event", e.Stream.UserId);
-                return;
+                if (!IsWatcher) return;
+
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for update event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamUpdate(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamUpdate(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error handling {ServiceType} stream update for {UserId}", ServiceType, e.Stream?.UserId);
+            }
         }
 
         public async void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs e)
         {
-            if (!IsWatcher) return;
-            
-            ILiveBotUser? user = await GetUserById(e.Stream.UserId);
-            if (user == null) 
+            try
             {
-                _logger.LogWarning("Could not find user {UserId} for offline event", e.Stream.UserId);
-                return;
+                if (!IsWatcher) return;
+
+                ILiveBotUser? user = await GetUserById(e.Stream.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Could not find user {UserId} for offline event", e.Stream.UserId);
+                    return;
+                }
+
+                ILiveBotGame game = await GetGame(e.Stream.GameId);
+                ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
+
+                await PublishStreamOffline(stream);
             }
-            
-            ILiveBotGame game = await GetGame(e.Stream.GameId);
-            ILiveBotStream stream = new TwitchStream(BaseURL, ServiceType, e.Stream, user, game);
-            
-            await PublishStreamOffline(stream);
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error handling {ServiceType} stream offline for {UserId}", ServiceType, e.Stream?.UserId);
+            }
         }
 
         #endregion Events
@@ -437,7 +472,7 @@ namespace LiveBot.Watcher.Twitch
             {
                 AutoReset = false
             };
-            RefreshAuthTimer.Elapsed += async (sender, e) => await UpdateAuth();
+            RefreshAuthTimer.Elapsed += (_, _) => FireAndLog(() => UpdateAuth(), nameof(UpdateAuth));
             RefreshAuthTimer.Start();
         }
 
@@ -529,7 +564,7 @@ namespace LiveBot.Watcher.Twitch
                 Enabled = true,
                 Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
             };
-            RefreshUsersTimer.Elapsed += async (sender, e) => await UpdateUsers();
+            RefreshUsersTimer.Elapsed += (_, _) => FireAndLog(UpdateUsers, nameof(UpdateUsers));
         }
 
         // One-shot so the hourly RefreshUsersTimer keeps its interval; a failed retry schedules the next one itself.
@@ -544,18 +579,25 @@ namespace LiveBot.Watcher.Twitch
             {
                 AutoReset = false
             };
-            retryTimer.Elapsed += async (sender, e) => await UpdateUsers();
+            retryTimer.Elapsed += (_, _) => FireAndLog(UpdateUsers, nameof(UpdateUsers));
             Interlocked.Exchange(ref _userRetryTimer, retryTimer)?.Dispose();
             retryTimer.Start();
         }
 
         public async void ClearCache(object? sender, ElapsedEventArgs? e)
         {
-            _userCache.Clear();
-            await _cache.DeleteListAsync(recordId: _userCacheName);
+            try
+            {
+                _userCache.Clear();
+                await _cache.DeleteListAsync(recordId: _userCacheName);
 
-            _gameCache.Clear();
-            await _cache.DeleteListAsync(recordId: _gameCacheName);
+                _gameCache.Clear();
+                await _cache.DeleteListAsync(recordId: _gameCacheName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error clearing {ServiceType} caches", ServiceType);
+            }
         }
 
         private void SetupCacheTimer()
@@ -592,7 +634,7 @@ namespace LiveBot.Watcher.Twitch
                 Enabled = true,
                 Interval = timeSpan.TotalMilliseconds
             };
-            RefreshMonitoredUsersTimer.Elapsed += async (sender, e) => await RefreshMonitoredUsers();
+            RefreshMonitoredUsersTimer.Elapsed += (_, _) => FireAndLog(RefreshMonitoredUsers, nameof(RefreshMonitoredUsers));
         }
 
         #endregion Misc Functions

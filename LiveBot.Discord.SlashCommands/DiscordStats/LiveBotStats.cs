@@ -39,11 +39,18 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
 
         public async void LogInformation(object? sender = null, ElapsedEventArgs? e = null)
         {
-            _logger.LogInformation(
-                "Current Stats: {GuildCount} {SubscriptionCount}",
-                _discordClient.Guilds.Count,
-                await _work.SubscriptionRepository.LongCountAsync()
-            );
+            try
+            {
+                _logger.LogInformation(
+                    "Current Stats: {GuildCount} {SubscriptionCount}",
+                    _discordClient.Guilds.Count,
+                    await _work.SubscriptionRepository.LongCountAsync()
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(exception: ex, message: "Error logging current stats");
+            }
         }
     }
 }
