@@ -15,7 +15,7 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
         }
 
         /// <inheritdoc/>
-        public override bool SetAuthorization(HttpClient httpClient, string apiKey) =>
-            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", apiKey);
+        public override bool SetAuthorization(HttpRequestMessage request, string apiKey) =>
+            request.Headers.TryAddWithoutValidation("Authorization", apiKey);
     }
 }

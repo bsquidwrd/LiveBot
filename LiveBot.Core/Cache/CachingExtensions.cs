@@ -113,10 +113,6 @@ namespace LiveBot.Core.Cache
             StackExchange.Redis.IDatabase cache = redis.GetDatabase();
             recordId = $"{redis.ClientName}:{recordId}".ToLower();
 
-            var recordExists = await cache.HashExistsAsync(key: recordId, hashField: fieldName);
-            if (!recordExists)
-                return default;
-
             var jsonData = await cache.HashGetAsync(key: recordId, hashField: fieldName);
 
             if (jsonData.IsNullOrEmpty || !jsonData.HasValue)
@@ -142,8 +138,7 @@ namespace LiveBot.Core.Cache
             StackExchange.Redis.IDatabase cache = redis.GetDatabase();
             recordId = $"{redis.ClientName}:{recordId}".ToLower();
 
-            var hashFields = await cache.HashKeysAsync(key: recordId);
-            return await cache.HashDeleteAsync(key: recordId, hashFields: hashFields);
+            return await cache.KeyDeleteAsync(key: recordId) ? 1 : 0;
         }
 
         /// <summary>

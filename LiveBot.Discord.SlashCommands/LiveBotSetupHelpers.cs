@@ -122,13 +122,22 @@ namespace LiveBot.Discord.SlashCommands
             return app;
         }
 
+        private static readonly Regex RateLimitTokenRegex = new(@"(interactions|webhooks)/(\d{16,20})/(?<token>[a-zA-Z0-9_-]{1,})(/|\?).*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex RateLimitSnowflakeRegex = new(@"\d{16,20}", RegexOptions.Compiled);
+
         private static Task LogRateLimitInfo(IRateLimitInfo info)
         {
             if (info != null)
             {
+                var level = info.IsGlobal || info.Remaining == 0
+                    ? Serilog.Events.LogEventLevel.Information
+                    : Serilog.Events.LogEventLevel.Debug;
+
+                if (!Log.Logger.IsEnabled(level))
+                    return Task.CompletedTask;
+
                 var endpoint = info.Endpoint;
-                var pattern = new Regex(@"(interactions|webhooks)/(\d{16,20})/(?<token>[a-zA-Z0-9_-]{1,})(/|\?).*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-                var matches = pattern.Match(endpoint);
+                var matches = RateLimitTokenRegex.Match(endpoint);
                 if (matches.Success)
                 {
                     var endpointToken = matches.Groups["token"].Value;
@@ -136,9 +145,10 @@ namespace LiveBot.Discord.SlashCommands
                         endpoint = endpoint.Replace(endpointToken, ":token");
                 }
 
-                endpoint = Regex.Replace(endpoint ?? "invalid", @"\d{16,20}", ":id");
+                endpoint = RateLimitSnowflakeRegex.Replace(endpoint ?? "invalid", ":id");
 
-                Log.Logger.Information(
+                Log.Logger.Write(
+                    level,
                     "Rate Limit Information: {IsGlobal} {Limit} {Remaining} {Reset} {ResetAfter} {Bucket} {Lag} {Endpoint}",
                     info.IsGlobal,
                     info.Limit,

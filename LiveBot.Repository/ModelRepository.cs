@@ -70,6 +70,22 @@ namespace LiveBot.Repository
             GetQueryable(predicate).LongCountAsync();
 
         /// <inheritdoc/>
+        public Task<Dictionary<TKey, long>> LongCountByAsync<TKey>(Expression<Func<TEntity, TKey>> keySelector) =>
+            DbSet
+                .Where(d => d.Deleted == false)
+                .GroupBy(keySelector)
+                .Select(g => new { g.Key, Count = g.LongCount() })
+                .ToDictionaryAsync(g => g.Key, g => g.Count);
+
+        /// <inheritdoc/>
+        public Task<long> LongDistinctCountAsync<TValue>(Expression<Func<TEntity, TValue>> selector) =>
+            DbSet
+                .Where(d => d.Deleted == false)
+                .Select(selector)
+                .Distinct()
+                .LongCountAsync();
+
+        /// <inheritdoc/>
         public Task<TEntity> GetAsync(long Id)
         {
             return DbSet
