@@ -190,29 +190,23 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 if (newStreamNotification.Success == true)
                     continue;
 
+                // Claimed before posting so a message retry after a successful post finds this row
+                // through the previous-notification check and skips it instead of posting again.
+                streamNotification.Success = true;
+                streamNotification.LogMessage = $"Sending at {DateTime.UtcNow:o}";
+                await _work.NotificationRepository.UpdateAsync(streamNotification);
+
+                IUserMessage discordMessage;
                 try
                 {
-                    var discordMessage = await channel.SendMessageAsync(text: liveMessage, embed: embed);
-                    streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
-                    streamNotification.Success = true;
-                    streamNotification.LogMessage = "From Discord Role Monitor";
-                    await _work.NotificationRepository.UpdateAsync(streamNotification);
-
-                    _logger.LogInformation(
-                        message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
-                        streamNotification.Id,
-                        streamNotification.ServiceType,
-                        streamNotification.User_Username,
-                        streamNotification.DiscordGuild_DiscordId.ToString(),
-                        streamNotification.DiscordChannel_DiscordId.ToString(),
-                        streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
-                        streamNotification.Message,
-                        true,
-                        (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
-                    );
+                    discordMessage = await channel.SendMessageAsync(text: liveMessage, embed: embed);
                 }
                 catch (Exception ex)
                 {
+                    streamNotification.Success = false;
+                    streamNotification.LogMessage = $"Error sending notification at {DateTime.UtcNow:o}: {ex.Message}";
+                    await _work.NotificationRepository.UpdateAsync(streamNotification);
+
                     if (ex is HttpException discordError)
                     {
                         // You lack permissions to perform that action
@@ -241,7 +235,26 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                             (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
                         );
                     }
+
+                    continue;
                 }
+
+                streamNotification.DiscordMessage_DiscordId = discordMessage.Id;
+                streamNotification.LogMessage = "From Discord Role Monitor";
+                await _work.NotificationRepository.UpdateAsync(streamNotification);
+
+                _logger.LogInformation(
+                    message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
+                    streamNotification.Id,
+                    streamNotification.ServiceType,
+                    streamNotification.User_Username,
+                    streamNotification.DiscordGuild_DiscordId.ToString(),
+                    streamNotification.DiscordChannel_DiscordId.ToString(),
+                    streamNotification.DiscordRole_DiscordId?.ToString().Split(","),
+                    streamNotification.Message,
+                    true,
+                    (DateTime.UtcNow - streamNotification.Stream_StartTime).TotalMilliseconds
+                );
             }
         }
     }
