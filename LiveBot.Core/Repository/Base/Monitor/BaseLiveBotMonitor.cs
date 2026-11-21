@@ -29,9 +29,20 @@ namespace LiveBot.Core.Repository.Base.Monitor
         public DateTime StartTime { get; set; }
         public bool IsEnabled { get; set; }
 
+        // URLPattern has a public setter, so the cache is validated against the pattern it was built from.
+        private Regex _urlRegex;
+
         public Regex GetURLRegex(string pattern)
         {
-            return new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            var cached = _urlRegex;
+            if (cached != null && cached.ToString() == pattern)
+                return cached;
+
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            if (pattern == URLPattern)
+                _urlRegex = regex;
+
+            return regex;
         }
 
         public abstract Task StartAsync(bool IsWatcher = false);

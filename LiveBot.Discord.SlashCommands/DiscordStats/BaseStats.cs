@@ -11,6 +11,12 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
     /// </summary>
     public abstract class BaseStats : IDiscordStats
     {
+        // Authorization is set per request, so this shared client's DefaultRequestHeaders must never be mutated.
+        private static readonly HttpClient SharedHttpClient = new()
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+
         internal readonly ILogger<BaseStats> _logger;
         internal readonly IConfiguration _configuration;
         internal readonly DiscordShardedClient _discordClient;
@@ -101,24 +107,22 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             if (apiKey == null)
                 return;
 
-            HttpClient httpClient = new()
-            {
-                Timeout = TimeSpan.FromSeconds(30)
-            };
-            SetAuthorization(httpClient, apiKey);
-
             var guilds = _discordClient.Guilds;
             var payload = new Dictionary<string, int>
             {
                 { GuildCountFieldName, guilds.Count }
             };
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
             var endpoint = UpdateUrl.Replace("{BotId}", _discordClient.CurrentUser.Id.ToString());
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            SetAuthorization(request, apiKey);
+
             try
             {
-                var response = await httpClient.PostAsync(requestUri: endpoint, content: content);
+                using var response = await SharedHttpClient.SendAsync(request);
                 try
                 {
                     response.EnsureSuccessStatusCode();
@@ -136,12 +140,8 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
             {
                 _logger.LogError(exception: ex, message: "Unable to post to {StatsSiteName}", SiteName);
             }
-            finally
-            {
-                httpClient.Dispose();
-            }
         }
 
-        public abstract bool SetAuthorization(HttpClient httpClient, string apiKey);
+        public abstract bool SetAuthorization(HttpRequestMessage request, string apiKey);
     }
 }

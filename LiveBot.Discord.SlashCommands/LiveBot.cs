@@ -2,7 +2,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Discord.SlashCommands.Helpers;
 
 namespace LiveBot.Discord.SlashCommands
@@ -13,7 +12,6 @@ namespace LiveBot.Discord.SlashCommands
         private readonly DiscordShardedClient _client;
         private readonly InteractionService _interactionService;
         private readonly InteractionHandler _interactionHandler;
-        private readonly IUnitOfWorkFactory _factory;
         private readonly IConfiguration _configuration;
         private readonly LiveBotDiscordEventHandlers _eventHandlers;
         private readonly IServiceProvider _services;
@@ -24,7 +22,6 @@ namespace LiveBot.Discord.SlashCommands
             DiscordShardedClient discordClient,
             InteractionService interactionService,
             InteractionHandler interactionHandler,
-            IUnitOfWorkFactory factory,
             IConfiguration configuration,
             LiveBotDiscordEventHandlers eventHandlers,
             IServiceProvider services
@@ -34,7 +31,6 @@ namespace LiveBot.Discord.SlashCommands
             _client = discordClient;
             _interactionService = interactionService;
             _interactionHandler = interactionHandler;
-            _factory = factory;
             _configuration = configuration;
             _eventHandlers = eventHandlers;
             _services = services;
@@ -44,8 +40,6 @@ namespace LiveBot.Discord.SlashCommands
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _factory.Migrate();
-
             // Register custome TYpe Converters
             _interactionService.AddTypeConverter<Uri>(new UriConverter());
 
