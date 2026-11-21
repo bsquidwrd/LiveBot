@@ -69,6 +69,7 @@ namespace LiveBot.Watcher.Twitch
         public System.Timers.Timer RefreshUsersTimer;
         public System.Timers.Timer ClearCacheTimer;
         public System.Timers.Timer RefreshMonitoredUsersTimer;
+        private System.Timers.Timer? _userRetryTimer;
 
         // My caches
         private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
@@ -501,7 +502,7 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupAuthTimer(TimeSpan timeSpan)
         {
-            RefreshAuthTimer?.Stop();
+            RefreshAuthTimer?.Dispose();
 
             if (timeSpan.TotalSeconds < 1800)
                 timeSpan = TimeSpan.FromSeconds(1800);
@@ -553,14 +554,18 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                SetupUserTimer(1);
+                ScheduleUserRetry();
                 _logger.LogError(exception: e, message: "Error updating {ServiceType} users", ServiceType);
+                return;
             }
+
+            // A successful run makes any pending retry redundant.
+            Interlocked.Exchange(ref _userRetryTimer, null)?.Dispose();
         }
 
         private void SetupUserTimer(double minutes = 60)
         {
-            RefreshUsersTimer?.Stop();
+            RefreshUsersTimer?.Dispose();
 
             RefreshUsersTimer = new System.Timers.Timer()
             {
@@ -569,6 +574,18 @@ namespace LiveBot.Watcher.Twitch
                 Interval = TimeSpan.FromMinutes(minutes).TotalMilliseconds
             };
             RefreshUsersTimer.Elapsed += async (sender, e) => await UpdateUsers();
+        }
+
+        // One-shot so the hourly RefreshUsersTimer keeps its interval; a failed retry schedules the next one itself.
+        private void ScheduleUserRetry()
+        {
+            var retryTimer = new System.Timers.Timer(TimeSpan.FromMinutes(1).TotalMilliseconds)
+            {
+                AutoReset = false
+            };
+            retryTimer.Elapsed += async (sender, e) => await UpdateUsers();
+            Interlocked.Exchange(ref _userRetryTimer, retryTimer)?.Dispose();
+            retryTimer.Start();
         }
 
         public async void ClearCache(object? sender, ElapsedEventArgs? e)
@@ -582,7 +599,7 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupCacheTimer()
         {
-            ClearCacheTimer?.Stop();
+            ClearCacheTimer?.Dispose();
             ClearCacheTimer = new System.Timers.Timer()
             {
                 AutoReset = true,
@@ -607,7 +624,7 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupRefreshMonitoredUsers(TimeSpan timeSpan)
         {
-            RefreshMonitoredUsersTimer?.Stop();
+            RefreshMonitoredUsersTimer?.Dispose();
             RefreshMonitoredUsersTimer = new System.Timers.Timer()
             {
                 AutoReset = true,
