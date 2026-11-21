@@ -211,7 +211,7 @@ namespace LiveBot.Watcher.Twitch
                 await WaitForAuthUnlockAsync();
                 var usernameList = new List<string> { username.ToLower() };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
-                return apiUser.Users.FirstOrDefault(i => i.Login == username);
+                return apiUser.Users.FirstOrDefault(i => string.Equals(i.Login, username, StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
             {
