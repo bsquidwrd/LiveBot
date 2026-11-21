@@ -199,7 +199,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                 if (ShouldUseEnhancedNotifications(discordGuild))
                 {
-                    await HandleEnhancedNotifications(stream, channel, previousNotifications, recentNotification, newStreamNotification, notificationMessage, embed);
+                    await HandleEnhancedNotifications(stream, channel, previousNotifications, recentNotification, newStreamNotification, notificationMessage, embed, RemoveSubscriptionAsync);
                 }
                 else
                 {
@@ -227,13 +227,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task HandleEnhancedNotifications(ILiveBotStream stream, SocketTextChannel channel,
             List<StreamNotification> previousNotifications, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             await HandleStaleNotifications(stream, channel, previousNotifications, recentNotification);
 
             if (recentNotification != null)
             {
-                await HandleExistingNotificationUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed);
+                await HandleExistingNotificationUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed, removeSubscriptionAsync);
             }
         }
 
@@ -342,11 +342,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task HandleExistingNotificationUpdate(SocketTextChannel channel, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             if (recentNotification.DiscordMessage_DiscordId.HasValue)
             {
-                await HandleExistingMessageUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed);
+                await HandleExistingMessageUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed, removeSubscriptionAsync);
             }
             else
             {
@@ -355,16 +355,16 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task HandleExistingMessageUpdate(SocketTextChannel channel, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
-            // The stored row mirrors what was last rendered, so it decides whether an edit is needed without a Discord fetch.
-            if (!HasNotificationChanged(recentNotification, newStreamNotification))
+            // The offline consumer re-renders the message as offline, so a row marked offline needs an edit even when unchanged.
+            if (!HasNotificationChanged(recentNotification, newStreamNotification) && recentNotification.OfflineAt == null)
             {
                 await FinalizeNotificationUpdate(recentNotification, newStreamNotification);
                 return;
             }
 
-            if (await TryUpdateExistingMessage(channel, recentNotification, notificationMessage, embed))
+            if (await TryUpdateExistingMessage(channel, recentNotification, notificationMessage, embed, removeSubscriptionAsync))
             {
                 await FinalizeNotificationUpdate(recentNotification, newStreamNotification);
             }
@@ -375,7 +375,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task<bool> TryUpdateExistingMessage(SocketTextChannel channel, StreamNotification recentNotification,
-            string notificationMessage, Embed embed)
+            string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             try
             {
@@ -393,7 +393,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                 if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
                 {
-                    await RemoveSubscriptionWithRoles(await GetSubscriptionFromNotification(recentNotification));
+                    await removeSubscriptionAsync();
                     throw new InvalidOperationException("Subscription removed due to insufficient permissions", ex);
                 }
 
@@ -601,13 +601,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             );
         }
 
-        private async Task<StreamSubscription> GetSubscriptionFromNotification(StreamNotification notification)
-        {
-            return await _work.SubscriptionRepository.SingleOrDefaultAsync(s =>
-                s.DiscordGuild.DiscordId == notification.DiscordGuild_DiscordId &&
-                s.DiscordChannel.DiscordId == notification.DiscordChannel_DiscordId);
-        }
-
+        // Keep in sync with HasStoredValuesChanged, which decides whether this copy is worth an UPDATE.
         private static void CopyNotificationValues(StreamNotification target, StreamNotification source)
         {
             target.ServiceType = source.ServiceType;
@@ -652,7 +646,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 !string.Equals(existing.User_ProfileURL ?? string.Empty, updated.User_ProfileURL ?? string.Empty, StringComparison.Ordinal);
         }
 
-        // Covers every field CopyNotificationValues writes, so skipping the UPDATE never drops a value.
+        // Keep in sync with CopyNotificationValues so skipping the UPDATE never drops a value.
         private static bool HasStoredValuesChanged(StreamNotification existing, StreamNotification updated)
         {
             return
