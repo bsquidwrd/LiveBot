@@ -556,7 +556,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             streamNotification.LogMessage = $"Sent at {DateTime.UtcNow:o}";
             await _work.NotificationRepository.UpdateAsync(streamNotification);
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
                 streamNotification.Id,
                 streamNotification.ServiceType,
