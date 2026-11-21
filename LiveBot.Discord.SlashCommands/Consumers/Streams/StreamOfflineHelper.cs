@@ -30,12 +30,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// <summary>
         /// Creates or updates the offline status field in an embed
         /// </summary>
-        public static EmbedBuilder UpdateEmbedWithOfflineStatus(IEmbed? originalEmbed)
+        public static EmbedBuilder UpdateEmbedWithOfflineStatus(IEmbed? originalEmbed, DateTime offlineAt)
         {
             var embedBuilder = originalEmbed?.ToEmbedBuilder() ?? new EmbedBuilder();
             embedBuilder.WithColor(Color.LightGrey);
 
-            var offlineAt = DateTime.UtcNow;
             var relativeTimestamp = TimestampTag.FromDateTime(offlineAt, TimestampTagStyles.Relative);
             var statusMessage = $"Offline {relativeTimestamp}";
 
@@ -57,9 +56,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// <summary>
         /// Creates a log message for successful offline marking
         /// </summary>
-        public static string CreateOfflineLogMessage()
+        public static string CreateOfflineLogMessage(DateTime offlineAt)
         {
-            return $"Marked offline at {DateTime.UtcNow:o}";
+            return $"Marked offline at {offlineAt:o}";
         }
 
         /// <summary>

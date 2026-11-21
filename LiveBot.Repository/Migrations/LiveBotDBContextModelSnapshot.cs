@@ -270,6 +270,9 @@ namespace LiveBot.Repository.Migrations
                     b.Property<string>("Message")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("OfflineAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ServiceType")
                         .HasColumnType("integer");
 
