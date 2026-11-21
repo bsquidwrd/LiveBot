@@ -614,8 +614,7 @@ namespace LiveBot.Watcher.Twitch
 
         private async Task RefreshMonitoredUsers()
         {
-            var streamsubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
-            var channelList = streamsubscriptions.Select(i => i.User.SourceID).Distinct().ToList();
+            var channelList = await _work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
 
             if (channelList.Count == 0)
                 // Add myself so startup doesn't fail if there's no users in the database
@@ -710,13 +709,9 @@ namespace LiveBot.Watcher.Twitch
                 _logger.LogInformation("Starting startup catch-up for {ServiceType}", ServiceType);
 
                 // Get all users that have subscriptions
-                var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User.ServiceType == ServiceType);
-                var distinctUsers = streamSubscriptions
-                    .Select(s => s.User)
-                    .DistinctBy(u => u.SourceID)
-                    .ToList();
+                var distinctSourceIds = await _work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
 
-                if (!distinctUsers.Any())
+                if (distinctSourceIds.Count == 0)
                 {
                     _logger.LogInformation("No users to catch up for {ServiceType}", ServiceType);
                     return;
@@ -724,11 +719,11 @@ namespace LiveBot.Watcher.Twitch
 
                 // Convert to ILiveBotUser objects
                 var liveBotUsers = new List<ILiveBotUser>();
-                foreach (var dbUser in distinctUsers)
+                foreach (var sourceId in distinctSourceIds)
                 {
                     try
                     {
-                        var liveBotUser = await GetUserById(dbUser.SourceID);
+                        var liveBotUser = await GetUserById(sourceId);
                         if (liveBotUser != null)
                         {
                             liveBotUsers.Add(liveBotUser);
@@ -736,7 +731,7 @@ namespace LiveBot.Watcher.Twitch
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to get user data for {UserId} during startup catch-up", dbUser.SourceID);
+                        _logger.LogWarning(ex, "Failed to get user data for {UserId} during startup catch-up", sourceId);
                     }
                 }
 
