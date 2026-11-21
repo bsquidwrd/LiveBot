@@ -130,16 +130,16 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 var embed = NotificationHelpers.GetStreamEmbed(discordStream, discordUser, discordGame);
                 var liveMessage = NotificationHelpers.GetNotificationMessage(guild: guild, stream: discordStream, config: guildConfig, user: discordUser, game: discordGame);
 
+                // Rows starting after LiveTime also match, same as the original in-memory check.
+                var previousCutoff = message.LiveTime.AddMinutes(-60);
                 Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
                         i.User_SourceID == guildUser.Id.ToString()
                         && i.DiscordGuild_DiscordId == guild.Id
                         && i.DiscordChannel_DiscordId == channel.Id
+                        && i.Success == true
+                        && i.Stream_StartTime >= previousCutoff
                     );
-                var previousNotifications = await _work.NotificationRepository.FindAsync(previousNotificationPredicate);
-                previousNotifications = previousNotifications.Where(i =>
-                        message.LiveTime.Subtract(i.Stream_StartTime).TotalMinutes <= 60 // If within an hour of their last start time
-                        && i.Success == true // Only pull Successful notifications
-                    );
+                var hasPreviousNotification = await _work.NotificationRepository.AnyAsync(previousNotificationPredicate);
 
                 var guildRole = guildConfig.MentionRoleDiscordId != null ? guild.GetRole((ulong)guildConfig.MentionRoleDiscordId) : null;
                 var newStreamNotification = new StreamNotification
@@ -180,7 +180,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
 
                 // If there is already 1 or more notifications that were successful in the past hour
                 // mark this current one as a success
-                if (previousNotifications.Any())
+                if (hasPreviousNotification)
                     newStreamNotification.Success = true;
 
                 await _work.NotificationRepository.AddOrUpdateAsync(newStreamNotification, notificationPredicate);

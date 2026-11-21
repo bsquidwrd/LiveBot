@@ -92,6 +92,32 @@ namespace LiveBot.Core.Repository.Interfaces
         Task<IEnumerable<TModel>> FindInOrderAsync(Expression<Func<TModel, bool>> predicate, Expression<Func<TModel, long>> order, int page, int pageSize);
 
         /// <summary>
+        /// Finds up to <paramref name="take"/> entities matching the predicate, ordered descending by the given key.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the ordering key.</typeparam>
+        /// <param name="predicate">The filter used to find the entities. Must be translatable to SQL.</param>
+        /// <param name="orderByDescending">The key to order by, newest/largest first.</param>
+        /// <param name="take">The maximum number of entities to return.</param>
+        /// <returns>The <see cref="Task"/>.</returns>
+        Task<List<TModel>> FindOrderedAsync<TKey>(Expression<Func<TModel, bool>> predicate, Expression<Func<TModel, TKey>> orderByDescending, int take);
+
+        /// <summary>
+        /// Finds the first entity matching the predicate when ordered descending by the given key, or default if none match.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the ordering key.</typeparam>
+        /// <param name="predicate">The filter used to find the entity. Must be translatable to SQL.</param>
+        /// <param name="orderByDescending">The key to order by, newest/largest first.</param>
+        /// <returns>The <see cref="Task"/>.</returns>
+        Task<TModel> FirstOrderedAsync<TKey>(Expression<Func<TModel, bool>> predicate, Expression<Func<TModel, TKey>> orderByDescending);
+
+        /// <summary>
+        /// Determines whether any non-deleted entity matches the predicate.
+        /// </summary>
+        /// <param name="predicate">The filter to check. Must be translatable to SQL.</param>
+        /// <returns>The <see cref="Task"/>.</returns>
+        Task<bool> AnyAsync(Expression<Func<TModel, bool>> predicate);
+
+        /// <summary>
         /// Given a number of entities per page returns how many pages of entities are in the database.
         /// </summary>
         /// <param name="predicate">The filter for finding entities.</param>

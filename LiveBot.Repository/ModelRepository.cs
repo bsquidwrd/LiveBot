@@ -149,6 +149,26 @@ namespace LiveBot.Repository
         }
 
         /// <inheritdoc/>
+        public Task<List<TEntity>> FindOrderedAsync<TKey>(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, TKey>> orderByDescending, int take) =>
+            GetQueryable(predicate)
+                .OrderByDescending(orderByDescending)
+                .Take(take)
+                .ToListAsync();
+
+        /// <inheritdoc/>
+        public Task<TEntity> FirstOrderedAsync<TKey>(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, TKey>> orderByDescending) =>
+            GetQueryable(predicate)
+                .OrderByDescending(orderByDescending)
+                .FirstOrDefaultAsync();
+
+        /// <inheritdoc/>
+        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate) =>
+            DbSet
+                .Where(d => d.Deleted == false)
+                .Where(predicate)
+                .AnyAsync();
+
+        /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="predicate">predicate</paramref> is null.
         /// </exception>

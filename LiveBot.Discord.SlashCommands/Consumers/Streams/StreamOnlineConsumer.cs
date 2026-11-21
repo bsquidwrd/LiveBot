@@ -17,6 +17,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
     public class StreamOnlineConsumer : BaseStreamConsumer, IConsumer<IStreamOnline>
     {
         private static readonly double NotificationCooldownMinutes = 60;
+        private const int PreviousNotificationLimit = 50;
 
         private readonly ConnectionMultiplexer _cache;
         private readonly ILogger<StreamOnlineConsumer> _streamOnlineLogger;
@@ -184,7 +185,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             try
             {
-                var previousNotifications = await GetPreviousNotifications(previousNotificationPredicate, stream);
+                var previousNotifications = await GetPreviousNotifications(previousNotificationPredicate);
                 var recentNotification = GetRecentNotification(previousNotifications, stream);
 
                 if (ShouldUseEnhancedNotifications(discordGuild))
@@ -278,10 +279,21 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 i.Game_SourceID == newStreamNotification.Game_SourceID
             );
 
+            // Cooldown matching needs rows within the cooldown of this start time, and stale cleanup
+            // only touches rows from the last 24 hours; nothing outside that window is ever used.
+            var cooldown = TimeSpan.FromMinutes(NotificationCooldownMinutes);
+            var cooldownLowerBound = newStreamNotification.Stream_StartTime - cooldown;
+            var staleLowerBound = DateTime.UtcNow.AddHours(-24);
+            var windowStart = cooldownLowerBound < staleLowerBound ? cooldownLowerBound : staleLowerBound;
+            var windowEnd = newStreamNotification.Stream_StartTime + cooldown;
+
             Expression<Func<StreamNotification, bool>> previousNotificationPredicate = (i =>
                 i.User_SourceID == streamUser.SourceID &&
                 i.DiscordGuild_DiscordId == discordGuild.DiscordId &&
-                i.DiscordChannel_DiscordId == discordChannel.DiscordId
+                i.DiscordChannel_DiscordId == discordChannel.DiscordId &&
+                i.Success == true &&
+                i.Stream_StartTime >= windowStart &&
+                i.Stream_StartTime < windowEnd
             );
 
             return (notificationPredicate, previousNotificationPredicate);
@@ -299,12 +311,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             return obtainedLock;
         }
 
-        private async Task<List<StreamNotification>> GetPreviousNotifications(Expression<Func<StreamNotification, bool>> previousNotificationPredicate, ILiveBotStream stream)
+        private Task<List<StreamNotification>> GetPreviousNotifications(Expression<Func<StreamNotification, bool>> previousNotificationPredicate)
         {
-            return (await _work.NotificationRepository.FindAsync(previousNotificationPredicate))
-                .Where(i => i.Success)
-                .OrderByDescending(i => i.Stream_StartTime)
-                .ToList();
+            return _work.NotificationRepository.FindOrderedAsync(previousNotificationPredicate, i => i.Stream_StartTime, PreviousNotificationLimit);
         }
 
         private StreamNotification GetRecentNotification(List<StreamNotification> previousNotifications, ILiveBotStream stream)
