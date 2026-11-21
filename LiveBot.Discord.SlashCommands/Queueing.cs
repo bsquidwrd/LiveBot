@@ -1,4 +1,6 @@
-﻿using LiveBot.Core.Repository.Static;
+﻿using System.Net;
+using Discord.Net;
+using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Consumers.Discord;
 using LiveBot.Discord.SlashCommands.Consumers.Streams;
 using MassTransit;
@@ -38,6 +40,9 @@ namespace LiveBot.Discord.SlashCommands
                     {
                         r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2));
                         r.Ignore<ArgumentNullException>();
+                        r.Ignore<UriFormatException>();
+                        // A Discord 4xx other than a rate limit fails the same way on every attempt.
+                        r.Ignore<HttpException>(ex => (int)ex.HttpCode >= 400 && (int)ex.HttpCode < 500 && ex.HttpCode != HttpStatusCode.TooManyRequests);
                     });
 
                     // Stream Events
