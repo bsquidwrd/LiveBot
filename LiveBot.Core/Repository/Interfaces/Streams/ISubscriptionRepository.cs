@@ -19,6 +19,14 @@ namespace LiveBot.Core.Repository.Interfaces.Streams
         Task<List<string>> GetMonitoredSourceIdsAsync(ServiceEnum serviceType);
 
         /// <summary>
+        /// Gets the subscriptions of a user with the roles to mention already loaded, so reading
+        /// them does not lazy load once per subscription.
+        /// </summary>
+        /// <param name="user">The user to get subscriptions for.</param>
+        /// <returns>The subscriptions with their user, guild, channel and roles to mention.</returns>
+        Task<List<StreamSubscription>> GetForUserWithRolesAsync(StreamUser user);
+
+        /// <summary>
         /// Permanently deletes a subscription and its roles to mention in a constant number of queries.
         /// Instances of the deleted rows already loaded in the context are detached.
         /// </summary>
