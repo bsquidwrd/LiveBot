@@ -199,7 +199,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
                 if (ShouldUseEnhancedNotifications(discordGuild))
                 {
-                    await HandleEnhancedNotifications(stream, channel, previousNotifications, recentNotification, newStreamNotification, notificationMessage, embed);
+                    await HandleEnhancedNotifications(stream, channel, previousNotifications, recentNotification, newStreamNotification, notificationMessage, embed, RemoveSubscriptionAsync);
                 }
                 else
                 {
@@ -227,13 +227,13 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task HandleEnhancedNotifications(ILiveBotStream stream, SocketTextChannel channel,
             List<StreamNotification> previousNotifications, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             await HandleStaleNotifications(stream, channel, previousNotifications, recentNotification);
 
             if (recentNotification != null)
             {
-                await HandleExistingNotificationUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed);
+                await HandleExistingNotificationUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed, removeSubscriptionAsync);
             }
         }
 
@@ -342,11 +342,11 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task HandleExistingNotificationUpdate(SocketTextChannel channel, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             if (recentNotification.DiscordMessage_DiscordId.HasValue)
             {
-                await HandleExistingMessageUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed);
+                await HandleExistingMessageUpdate(channel, recentNotification, newStreamNotification, notificationMessage, embed, removeSubscriptionAsync);
             }
             else
             {
@@ -355,13 +355,18 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         private async Task HandleExistingMessageUpdate(SocketTextChannel channel, StreamNotification recentNotification,
-            StreamNotification newStreamNotification, string notificationMessage, Embed embed)
+            StreamNotification newStreamNotification, string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
-            var existingMessage = await TryGetExistingMessage(channel, recentNotification);
-
-            if (existingMessage != null && existingMessage.Author.Id == _client.CurrentUser.Id)
+            // The offline consumer re-renders the message as offline, so a row marked offline needs an edit even when unchanged.
+            if (!HasNotificationChanged(recentNotification, newStreamNotification) && recentNotification.OfflineAt == null)
             {
-                await ProcessExistingMessageUpdate(channel, existingMessage, recentNotification, newStreamNotification, notificationMessage, embed);
+                await FinalizeNotificationUpdate(recentNotification, newStreamNotification);
+                return;
+            }
+
+            if (await TryUpdateExistingMessage(channel, recentNotification, notificationMessage, embed, removeSubscriptionAsync))
+            {
+                await FinalizeNotificationUpdate(recentNotification, newStreamNotification);
             }
             else
             {
@@ -369,57 +374,26 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
         }
 
-        private async Task<IUserMessage> TryGetExistingMessage(SocketTextChannel channel, StreamNotification recentNotification)
+        private async Task<bool> TryUpdateExistingMessage(SocketTextChannel channel, StreamNotification recentNotification,
+            string notificationMessage, Embed embed, Func<Task> removeSubscriptionAsync)
         {
             try
             {
-                var message = await GetMessageSafelyAsync(channel, recentNotification.DiscordMessage_DiscordId.Value);
-                return message as IUserMessage;
-            }
-            catch (InsufficientPermissionsException)
-            {
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _streamOnlineLogger.LogWarning(ex, "Unable to fetch existing notification message for {NotificationId}", recentNotification.Id);
-                return null;
-            }
-        }
-
-        private async Task ProcessExistingMessageUpdate(SocketTextChannel channel, IUserMessage existingMessage,
-            StreamNotification recentNotification, StreamNotification newStreamNotification, string notificationMessage, Embed embed)
-        {
-            var currentEmbed = existingMessage.Embeds.FirstOrDefault();
-            bool shouldUpdate = HasNotificationChanged(recentNotification, newStreamNotification)
-                || ShouldUpdateEmbed(currentEmbed, embed)
-                || !string.Equals(existingMessage.Content ?? string.Empty, notificationMessage, StringComparison.Ordinal);
-
-            if (shouldUpdate)
-            {
-                await UpdateExistingMessage(channel, existingMessage, recentNotification, notificationMessage, embed);
-            }
-
-            await FinalizeNotificationUpdate(recentNotification, newStreamNotification, existingMessage);
-        }
-
-        private async Task UpdateExistingMessage(SocketTextChannel channel, IUserMessage existingMessage,
-            StreamNotification recentNotification, string notificationMessage, Embed embed)
-        {
-            try
-            {
-                await channel.ModifyMessageAsync(existingMessage.Id, properties =>
+                await channel.ModifyMessageAsync(recentNotification.DiscordMessage_DiscordId!.Value, properties =>
                 {
                     properties.Content = notificationMessage;
                     properties.Embed = embed;
                 });
-
+                return true;
             }
             catch (HttpException ex)
             {
+                if (ex.DiscordCode == DiscordErrorCode.UnknownMessage || ex.DiscordCode == DiscordErrorCode.CannotEditOtherUsersMessage)
+                    return false;
+
                 if (ex.DiscordCode == DiscordErrorCode.MissingPermissions || ex.DiscordCode == DiscordErrorCode.InsufficientPermissions)
                 {
-                    await RemoveSubscriptionWithRoles(await GetSubscriptionFromNotification(recentNotification));
+                    await removeSubscriptionAsync();
                     throw new InvalidOperationException("Subscription removed due to insufficient permissions", ex);
                 }
 
@@ -430,10 +404,12 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
         }
 
-        private async Task FinalizeNotificationUpdate(StreamNotification recentNotification, StreamNotification newStreamNotification, IUserMessage existingMessage)
+        private async Task FinalizeNotificationUpdate(StreamNotification recentNotification, StreamNotification newStreamNotification)
         {
+            if (!HasStoredValuesChanged(recentNotification, newStreamNotification))
+                return;
+
             CopyNotificationValues(recentNotification, newStreamNotification);
-            recentNotification.DiscordMessage_DiscordId = existingMessage.Id;
             recentNotification.LogMessage = $"Updated at {DateTime.UtcNow:o}";
             recentNotification.Success = true;
             await _work.NotificationRepository.UpdateAsync(recentNotification);
@@ -500,6 +476,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
         private async Task HandleCooldownSuppression(StreamNotification recentNotification, StreamNotification newStreamNotification)
         {
+            if (!HasStoredValuesChanged(recentNotification, newStreamNotification))
+                return;
+
             CopyNotificationValues(recentNotification, newStreamNotification);
             recentNotification.Success = true;
             recentNotification.LogMessage = $"Cooldown active at {DateTime.UtcNow:o}. Suppressing duplicate notification.";
@@ -622,13 +601,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             );
         }
 
-        private async Task<StreamSubscription> GetSubscriptionFromNotification(StreamNotification notification)
-        {
-            return await _work.SubscriptionRepository.SingleOrDefaultAsync(s =>
-                s.DiscordGuild.DiscordId == notification.DiscordGuild_DiscordId &&
-                s.DiscordChannel.DiscordId == notification.DiscordChannel_DiscordId);
-        }
-
+        // Keep in sync with HasStoredValuesChanged, which decides whether this copy is worth an UPDATE.
         private static void CopyNotificationValues(StreamNotification target, StreamNotification source)
         {
             target.ServiceType = source.ServiceType;
@@ -673,62 +646,21 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 !string.Equals(existing.User_ProfileURL ?? string.Empty, updated.User_ProfileURL ?? string.Empty, StringComparison.Ordinal);
         }
 
-        private static bool ShouldUpdateEmbed(IEmbed? currentEmbed, Embed expectedEmbed)
+        // Keep in sync with CopyNotificationValues so skipping the UPDATE never drops a value.
+        private static bool HasStoredValuesChanged(StreamNotification existing, StreamNotification updated)
         {
-            if (currentEmbed == null)
-                return true;
-
-            if (currentEmbed.Color != expectedEmbed.Color)
-                return true;
-
-            if (!string.Equals(currentEmbed.Description ?? string.Empty, expectedEmbed.Description ?? string.Empty, StringComparison.Ordinal))
-                return true;
-
-            if (currentEmbed.Timestamp != expectedEmbed.Timestamp)
-                return true;
-
-            if (!string.Equals(currentEmbed.Url ?? string.Empty, expectedEmbed.Url ?? string.Empty, StringComparison.Ordinal))
-                return true;
-
-            var currentAuthor = currentEmbed.Author;
-            var expectedAuthor = expectedEmbed.Author;
-
-            if (!string.Equals(currentAuthor?.Name ?? string.Empty, expectedAuthor?.Name ?? string.Empty, StringComparison.Ordinal) ||
-                !string.Equals(currentAuthor?.Url ?? string.Empty, expectedAuthor?.Url ?? string.Empty, StringComparison.Ordinal) ||
-                !string.Equals(currentAuthor?.IconUrl ?? string.Empty, expectedAuthor?.IconUrl ?? string.Empty, StringComparison.Ordinal))
-            {
-                return true;
-            }
-
-            var currentFooter = currentEmbed.Footer;
-            var expectedFooter = expectedEmbed.Footer;
-
-            if (!string.Equals(currentFooter?.Text ?? string.Empty, expectedFooter?.Text ?? string.Empty, StringComparison.Ordinal))
-                return true;
-
-            if (!string.Equals(currentEmbed.Thumbnail?.Url ?? string.Empty, expectedEmbed.Thumbnail?.Url ?? string.Empty, StringComparison.Ordinal))
-                return true;
-
-            var currentFields = currentEmbed.Fields.ToList();
-            var expectedFields = expectedEmbed.Fields.ToList();
-
-            if (currentFields.Count != expectedFields.Count)
-                return true;
-
-            for (int index = 0; index < expectedFields.Count; index++)
-            {
-                var currentField = currentFields[index];
-                var expectedField = expectedFields[index];
-
-                if (!string.Equals(currentField.Name ?? string.Empty, expectedField.Name ?? string.Empty, StringComparison.Ordinal) ||
-                    !string.Equals(currentField.Value ?? string.Empty, expectedField.Value ?? string.Empty, StringComparison.Ordinal) ||
-                    currentField.Inline != expectedField.Inline)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return
+                HasNotificationChanged(existing, updated) ||
+                existing.ServiceType != updated.ServiceType ||
+                existing.OfflineAt != updated.OfflineAt ||
+                existing.DiscordGuild_DiscordId != updated.DiscordGuild_DiscordId ||
+                existing.DiscordChannel_DiscordId != updated.DiscordChannel_DiscordId ||
+                existing.DiscordRole_DiscordId != updated.DiscordRole_DiscordId ||
+                !string.Equals(existing.User_SourceID ?? string.Empty, updated.User_SourceID ?? string.Empty, StringComparison.Ordinal) ||
+                !string.Equals(existing.User_Username ?? string.Empty, updated.User_Username ?? string.Empty, StringComparison.Ordinal) ||
+                !string.Equals(existing.Stream_SourceID ?? string.Empty, updated.Stream_SourceID ?? string.Empty, StringComparison.Ordinal) ||
+                !string.Equals(existing.DiscordGuild_Name ?? string.Empty, updated.DiscordGuild_Name ?? string.Empty, StringComparison.Ordinal) ||
+                !string.Equals(existing.DiscordChannel_Name ?? string.Empty, updated.DiscordChannel_Name ?? string.Empty, StringComparison.Ordinal);
         }
     }
 }
