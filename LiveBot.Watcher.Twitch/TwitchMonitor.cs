@@ -70,6 +70,8 @@ namespace LiveBot.Watcher.Twitch
         public System.Timers.Timer ClearCacheTimer;
         public System.Timers.Timer RefreshMonitoredUsersTimer;
         private System.Timers.Timer? _userRetryTimer;
+        private int _userRetryAttempts;
+        private readonly SemaphoreSlim _userUpdateLock = new SemaphoreSlim(1, 1);
 
         // My caches
         private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
@@ -517,12 +519,21 @@ namespace LiveBot.Watcher.Twitch
 
         public async Task UpdateUsers()
         {
+            // Skip rather than queue: the hourly tick and a retry must not run side by side.
+            if (!await _userUpdateLock.WaitAsync(0)) return;
+
+            bool failed = false;
             try
             {
                 foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor, nSize: 100))
                 {
                     GetUsersResponse? users = await API_GetUsersById(userIds);
-                    if (users == null) continue;
+                    if (users == null)
+                    {
+                        failed = true;
+                        _logger.LogWarning(message: "No response updating a batch of {ServiceType} users", ServiceType);
+                        continue;
+                    }
                     foreach (User user in users.Users)
                     {
                         var twitchUser = new TwitchUser(BaseURL, ServiceType, user);
@@ -554,13 +565,34 @@ namespace LiveBot.Watcher.Twitch
             }
             catch (Exception e)
             {
-                ScheduleUserRetry();
+                failed = true;
                 _logger.LogError(exception: e, message: "Error updating {ServiceType} users", ServiceType);
-                return;
             }
-
-            // A successful run makes any pending retry redundant.
-            Interlocked.Exchange(ref _userRetryTimer, null)?.Dispose();
+            finally
+            {
+                // Retry state changes while the lock is held so overlapping runs cannot dispose or reschedule each other's timer.
+                try
+                {
+                    if (failed)
+                    {
+                        ScheduleUserRetry();
+                    }
+                    else
+                    {
+                        // A successful run makes any pending retry redundant.
+                        Interlocked.Exchange(ref _userRetryAttempts, 0);
+                        Interlocked.Exchange(ref _userRetryTimer, null)?.Dispose();
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(exception: e, message: "Error updating retry state for {ServiceType} users", ServiceType);
+                }
+                finally
+                {
+                    _userUpdateLock.Release();
+                }
+            }
         }
 
         private void SetupUserTimer(double minutes = 60)
@@ -579,7 +611,12 @@ namespace LiveBot.Watcher.Twitch
         // One-shot so the hourly RefreshUsersTimer keeps its interval; a failed retry schedules the next one itself.
         private void ScheduleUserRetry()
         {
-            var retryTimer = new System.Timers.Timer(TimeSpan.FromMinutes(1).TotalMilliseconds)
+            // No attempt limit so recovery is picked up during long outages; the 30 minute cap bounds the wait.
+            int attempt = Interlocked.Increment(ref _userRetryAttempts);
+            int backoffMinutes = Math.Min(1 << Math.Min(attempt - 1, 5), 30);
+            TimeSpan delay = TimeSpan.FromMinutes(backoffMinutes) + TimeSpan.FromSeconds(Random.Shared.Next(0, 11));
+
+            var retryTimer = new System.Timers.Timer(delay.TotalMilliseconds)
             {
                 AutoReset = false
             };
