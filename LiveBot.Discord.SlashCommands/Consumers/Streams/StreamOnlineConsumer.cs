@@ -468,7 +468,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             recentNotification.LogMessage = $"Existing notification message missing or inaccessible at {DateTime.UtcNow:o}. Cooldown active.";
             await _work.NotificationRepository.UpdateAsync(recentNotification);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
                 recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                 recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
@@ -484,7 +484,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             recentNotification.LogMessage = $"Cooldown active at {DateTime.UtcNow:o}. Suppressing duplicate notification.";
             await _work.NotificationRepository.UpdateAsync(recentNotification);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Skipping new notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} due to active cooldown window.",
                 recentNotification.Id, recentNotification.ServiceType, recentNotification.User_Username,
                 recentNotification.DiscordGuild_DiscordId, recentNotification.DiscordChannel_DiscordId);
@@ -556,7 +556,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             streamNotification.LogMessage = $"Sent at {DateTime.UtcNow:o}";
             await _work.NotificationRepository.UpdateAsync(streamNotification);
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
                 streamNotification.Id,
                 streamNotification.ServiceType,

@@ -243,7 +243,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
                 streamNotification.LogMessage = "From Discord Role Monitor";
                 await _work.NotificationRepository.UpdateAsync(streamNotification);
 
-                _logger.LogInformation(
+                _logger.LogDebug(
                     message: "Sent notification for {NotificationId} {ServiceType} {Username} {GuildId} {ChannelId} {@RoleIds}, {Message} {IsFromRole}, {MillisecondsToPost}",
                     streamNotification.Id,
                     streamNotification.ServiceType,
