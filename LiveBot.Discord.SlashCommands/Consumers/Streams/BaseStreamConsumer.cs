@@ -133,16 +133,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         }
 
         /// <summary>
-        /// Updates a notification with success information
-        /// </summary>
-        protected async Task UpdateNotificationWithSuccessAsync(StreamNotification notification, string successMessage)
-        {
-            notification.Success = true;
-            notification.LogMessage = $"{successMessage} at {DateTime.UtcNow:o}";
-            await _work.NotificationRepository.UpdateAsync(notification);
-        }
-
-        /// <summary>
         /// Determines if a subscription should be removed due to permission issues
         /// </summary>
         protected bool ShouldRemoveSubscriptionForException(HttpException ex)

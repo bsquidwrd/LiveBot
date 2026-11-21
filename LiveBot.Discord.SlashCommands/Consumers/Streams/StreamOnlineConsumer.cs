@@ -629,6 +629,8 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             target.User_AvatarURL = source.User_AvatarURL;
             target.User_ProfileURL = source.User_ProfileURL;
             target.Stream_SourceID = source.Stream_SourceID;
+            // A reused row is live again, so the next offline event has to be allowed to mark it.
+            target.OfflineAt = source.OfflineAt;
             target.Stream_Title = source.Stream_Title;
             target.Stream_StartTime = source.Stream_StartTime;
             target.Stream_ThumbnailURL = source.Stream_ThumbnailURL;

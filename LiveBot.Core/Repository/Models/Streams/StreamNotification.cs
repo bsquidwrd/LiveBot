@@ -12,6 +12,9 @@ namespace LiveBot.Core.Repository.Models.Streams
         public ulong? DiscordMessage_DiscordId { get; set; }
         public string LogMessage { get; set; }
 
+        // Null while the message still shows the stream as live; startup catch-up only acts on null rows.
+        public DateTime? OfflineAt { get; set; }
+
         public string User_SourceID { get; set; }
         public string User_Username { get; set; }
         public string User_DisplayName { get; set; }

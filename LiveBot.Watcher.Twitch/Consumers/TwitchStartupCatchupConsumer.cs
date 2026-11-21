@@ -71,7 +71,10 @@ namespace LiveBot.Watcher.Twitch.Consumers
 
         private async Task ProcessUserCatchup(Core.Repository.Interfaces.Monitor.ILiveBotUser user, bool isCurrentlyLive, IUnitOfWork work)
         {
-            // Get the user's current stream state from the database
+            // The regular monitor picks up streams that are live now, so only the offline case matters here.
+            if (isCurrentlyLive)
+                return;
+
             var dbUser = await work.UserRepository.SingleOrDefaultAsync(u =>
                 u.ServiceType == _monitor.ServiceType && u.SourceID == user.Id);
 
@@ -81,70 +84,68 @@ namespace LiveBot.Watcher.Twitch.Consumers
                 return;
             }
 
-            // Check if the user was marked as live in the database
-            var wasLive = await WasUserLiveBeforeShutdown(dbUser, work);
+            var lastNotification = await GetUnmarkedLatestStreamNotification(dbUser, work);
 
-            _logger.LogDebug("Catch-up for {Username}: WasLive={WasLive}, CurrentlyLive={CurrentlyLive}",
-                user.Username, wasLive, isCurrentlyLive);
+            _logger.LogDebug("Catch-up for {Username}: WasLive={WasLive}",
+                user.Username, lastNotification != null);
 
-            // If the user was live but is now offline, fire the offline event
-            if (wasLive && !isCurrentlyLive)
+            if (lastNotification == null)
+                return;
+
+            _logger.LogInformation("Detected offline transition for {Username} during startup catch-up", user.Username);
+
+            var offlineStream = await CreateStreamFromLastNotification(lastNotification, user);
+            if (offlineStream != null)
             {
-                _logger.LogInformation("Detected offline transition for {Username} during startup catch-up", user.Username);
-
-                // Create a synthetic stream object for the offline event
-                // We need to get the last known stream info from the database
-                var lastNotification = await GetLastStreamNotification(dbUser, work);
-                if (lastNotification != null)
-                {
-                    var offlineStream = await CreateStreamFromLastNotification(lastNotification, user);
-                    if (offlineStream != null)
-                    {
-                        await _monitor.PublishStreamOffline(offlineStream);
-                        _logger.LogInformation("Published offline event for {Username} during startup catch-up", user.Username);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to create stream object for offline event for {Username}", user.Username);
-                    }
-                }
-                else
-                {
-                    _logger.LogDebug("No last notification found for {Username}, skipping offline event", user.Username);
-                }
+                await _monitor.PublishStreamOffline(offlineStream);
+                _logger.LogInformation("Published offline event for {Username} during startup catch-up", user.Username);
             }
-            // Note: We don't need to handle the online case here because the regular monitor will pick that up
+            else
+            {
+                _logger.LogWarning("Failed to create stream object for offline event for {Username}", user.Username);
+            }
         }
 
         /// <summary>
-        /// Determines if a user was live before the watcher shutdown by checking recent notifications
+        /// Gets the newest notification of the user's most recent stream, or null when every message for
+        /// that stream that still has a subscription has already been marked offline
         /// </summary>
-        private async Task<bool> WasUserLiveBeforeShutdown(StreamUser dbUser, IUnitOfWork work)
+        private async Task<StreamNotification?> GetUnmarkedLatestStreamNotification(StreamUser dbUser, IUnitOfWork work)
         {
-            // Look for recent stream notifications (within the last 24 hours)
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
-
-            // We assume the user was live if there's a recent successful notification
-            // and no corresponding offline notification after it
-            // This is a heuristic - in a more sophisticated system, you might track
-            // the actual live state more explicitly
-            return await work.NotificationRepository.AnyAsync(n =>
+            // Ordered by Stream_StartTime because a row reused for a restarted stream keeps its old TimeStamp.
+            var latest = await work.NotificationRepository.FirstOrderedAsync(n =>
                 n.ServiceType == dbUser.ServiceType &&
                 n.User_SourceID == dbUser.SourceID &&
-                n.TimeStamp >= cutoffTime &&
-                n.Success == true);
-        }
+                n.Success == true &&
+                n.DiscordMessage_DiscordId != null,
+                n => n.Stream_StartTime);
 
-        /// <summary>
-        /// Gets the last stream notification for a user
-        /// </summary>
-        private async Task<StreamNotification?> GetLastStreamNotification(StreamUser dbUser, IUnitOfWork work)
-        {
-            return await work.NotificationRepository.FirstOrderedAsync(n =>
+            if (latest == null)
+                return null;
+
+            // Filtering on OfflineAt in the first query could pick an older stream's leftover row instead.
+            var unmarked = await work.NotificationRepository.FindAsync(n =>
                 n.ServiceType == dbUser.ServiceType &&
                 n.User_SourceID == dbUser.SourceID &&
-                n.Success == true,
-                n => n.TimeStamp);
+                n.Stream_SourceID == latest.Stream_SourceID &&
+                n.Success == true &&
+                n.DiscordMessage_DiscordId != null &&
+                n.OfflineAt == null);
+
+            // The offline consumer never marks a row whose subscription is gone, so such a row would
+            // otherwise trigger an offline event on every restart.
+            foreach (var notification in unmarked)
+            {
+                var hasSubscription = await work.SubscriptionRepository.AnyAsync(s =>
+                    s.User.Id == dbUser.Id &&
+                    s.DiscordGuild.DiscordId == notification.DiscordGuild_DiscordId &&
+                    s.DiscordChannel.DiscordId == notification.DiscordChannel_DiscordId);
+
+                if (hasSubscription)
+                    return latest;
+            }
+
+            return null;
         }
 
         /// <summary>

@@ -74,6 +74,14 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
                 return;
             }
 
+            // A repeated offline event would move the embed's offline time to now.
+            if (lastNotification.OfflineAt != null)
+            {
+                _streamOfflineLogger.LogDebug("Notification for subscription {SubscriptionId} was already marked offline at {OfflineAt}",
+                    subscription.Id, lastNotification.OfflineAt);
+                return;
+            }
+
             var guild = await GetGuildSafelyAsync(subscription.DiscordGuild.DiscordId);
             if (guild == null)
             {
@@ -147,16 +155,19 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         {
             try
             {
+                var offlineAt = DateTime.UtcNow;
                 var embed = message.Embeds.FirstOrDefault();
-                var embedBuilder = StreamOfflineHelper.UpdateEmbedWithOfflineStatus(embed);
+                var embedBuilder = StreamOfflineHelper.UpdateEmbedWithOfflineStatus(embed, offlineAt);
 
                 await ModifyMessageSafelyAsync(channel, message.Id, properties =>
                 {
                     properties.Embed = embedBuilder.Build();
                 });
 
-                await UpdateNotificationWithSuccessAsync(lastNotification,
-                    StreamOfflineHelper.CreateOfflineLogMessage().Replace($" at {DateTime.UtcNow:o}", ""));
+                lastNotification.OfflineAt = offlineAt;
+                lastNotification.Success = true;
+                lastNotification.LogMessage = StreamOfflineHelper.CreateOfflineLogMessage(offlineAt);
+                await _work.NotificationRepository.UpdateAsync(lastNotification);
             }
             catch (Exception ex)
             {
