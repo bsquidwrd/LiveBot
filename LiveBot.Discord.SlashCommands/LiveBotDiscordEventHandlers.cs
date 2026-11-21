@@ -11,7 +11,7 @@ namespace LiveBot.Discord.SlashCommands
         private readonly IBus _bus;
         private readonly ILogger<LiveBotDiscordEventHandlers> _logger;
         private readonly System.Timers.Timer emptyPresenceQueuedCacheTimer;
-        private ConcurrentBag<ulong> presenceQueuedCache = new();
+        private ConcurrentDictionary<ulong, byte> presenceQueuedCache = new();
 
         public LiveBotDiscordEventHandlers(IBus bus, ILogger<LiveBotDiscordEventHandlers> logger)
         {
@@ -205,10 +205,8 @@ namespace LiveBot.Discord.SlashCommands
 
             // If the user was previously queued, skip
             // otherwise add them to queued cache
-            if (presenceQueuedCache.Contains(user.Id))
+            if (!presenceQueuedCache.TryAdd(user.Id, 0))
                 return;
-            else
-                presenceQueuedCache.Add(user.Id);
 
             // Publish a Member Live Event for processing
             await _bus.Publish(new DiscordMemberLive
