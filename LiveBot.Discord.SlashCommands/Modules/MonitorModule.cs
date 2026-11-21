@@ -233,10 +233,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 var resultMessage = "Unkown error occurred";
                 try
                 {
-                    var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
-                    foreach (var roleToMention in rolesToMention)
-                        await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-                    await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+                    await _work.SubscriptionRepository.RemoveWithRolesAsync(subscription.Id);
 
                     _logger.LogInformation(
                         message: "Stream Subscription deleted for {ServiceType} {Username} ({UserId}) by {DiscordUsername} ({DiscordUserId}) in {GuildName} ({GuildId}))",

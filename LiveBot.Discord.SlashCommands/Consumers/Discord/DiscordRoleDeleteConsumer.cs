@@ -20,8 +20,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
             var message = context.Message;
 
             var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.DiscordRoleId == message.RoleId);
-            foreach (var roleToMention in rolesToMention)
-                await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
+            await _work.RoleToMentionRepository.RemoveRangeAsync(rolesToMention.Select(i => i.Id).ToList());
 
             var guildConfig = await _work.GuildConfigRepository.SingleOrDefaultAsync(i => i.DiscordGuild.DiscordId == message.GuildId);
             if (guildConfig != null)

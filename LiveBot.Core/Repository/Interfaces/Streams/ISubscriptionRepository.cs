@@ -17,5 +17,12 @@ namespace LiveBot.Core.Repository.Interfaces.Streams
         /// <param name="serviceType">The service to get monitored users for.</param>
         /// <returns>The distinct source ids.</returns>
         Task<List<string>> GetMonitoredSourceIdsAsync(ServiceEnum serviceType);
+
+        /// <summary>
+        /// Permanently deletes a subscription and its roles to mention in a constant number of queries.
+        /// Instances of the deleted rows already loaded in the context are detached.
+        /// </summary>
+        /// <param name="subscriptionId">The id of the subscription to delete.</param>
+        Task RemoveWithRolesAsync(long subscriptionId);
     }
 }

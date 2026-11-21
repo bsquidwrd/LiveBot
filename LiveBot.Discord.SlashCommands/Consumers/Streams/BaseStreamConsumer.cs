@@ -115,14 +115,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         /// </summary>
         protected async Task RemoveSubscriptionWithRolesAsync(StreamSubscription subscription, string reason = "")
         {
-            var rolesToMention = await _work.RoleToMentionRepository.FindAsync(i => i.StreamSubscription == subscription);
-
-            foreach (var roleToMention in rolesToMention)
-            {
-                await _work.RoleToMentionRepository.RemoveAsync(roleToMention.Id);
-            }
-
-            await _work.SubscriptionRepository.RemoveAsync(subscription.Id);
+            await _work.SubscriptionRepository.RemoveWithRolesAsync(subscription.Id);
 
             _logger.LogInformation("Removed subscription {SubscriptionId}: {Reason}",
                 subscription.Id, reason);

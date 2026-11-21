@@ -24,5 +24,30 @@ namespace LiveBot.Repository.Streams
                 .Select(s => s.User.SourceID)
                 .Distinct()
                 .ToListAsync();
+
+        /// <inheritdoc/>
+        public async Task RemoveWithRolesAsync(long subscriptionId)
+        {
+            await using (var transaction = await Context.Database.BeginTransactionAsync().ConfigureAwait(false))
+            {
+                await Context.Set<RoleToMention>().Where(r => r.StreamSubscription.Id == subscriptionId).ExecuteDeleteAsync().ConfigureAwait(false);
+                await DbSet.Where(s => s.Id == subscriptionId).ExecuteDeleteAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+
+            // A stale tracked row would be written again by a later save (FK nulled or row deleted) and fail on zero rows affected.
+            // The foreign key shadow property is read because touching the navigation would lazy load it.
+            var staleRoles = Context.ChangeTracker.Entries<RoleToMention>()
+                .Where(e => e.Property<long?>("StreamSubscriptionId").CurrentValue == subscriptionId)
+                .ToList();
+            foreach (var entry in staleRoles)
+                entry.State = EntityState.Detached;
+
+            var staleSubscriptions = Context.ChangeTracker.Entries<StreamSubscription>()
+                .Where(e => e.Entity.Id == subscriptionId)
+                .ToList();
+            foreach (var entry in staleSubscriptions)
+                entry.State = EntityState.Detached;
+        }
     }
 }
