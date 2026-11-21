@@ -309,8 +309,12 @@ namespace LiveBot.Watcher.Twitch
 
         private Task<User?> API_GetUserByURL(string url)
         {
-            string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
-            return API_GetUserByLogin(username: username);
+            return API_GetUserByLogin(username: GetLoginFromURL(url));
+        }
+
+        private string GetLoginFromURL(string url)
+        {
+            return GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
         }
 
         private Task<TwitchLibStreams.GetStreamsResponse?> API_GetStreamsByUserIds(List<string> userIdList)
@@ -954,29 +958,35 @@ namespace LiveBot.Watcher.Twitch
         {
             User? apiUser;
 
-            if (username == null && userId == null && profileURL == null)
+            if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(userId) && string.IsNullOrWhiteSpace(profileURL))
                 return null;
 
-            if (!string.IsNullOrWhiteSpace(userId) && _userCache.TryGetValue(userId, out var cachedById))
-                return cachedById;
+            // An id is authoritative; falling back to username or URL could return a different user than the one requested.
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                if (_userCache.TryGetValue(userId, out var cachedById))
+                    return cachedById;
+                var userById = await GetUserById(userId: userId);
+                if (userById != null)
+                    _userCache.TryAdd(userById.Id, userById);
+                return userById;
+            }
+
+            // Callers pass user-typed URLs (www., http, trailing slash) that never equal the built ProfileURL, so match on the login instead.
+            string? urlLogin = string.IsNullOrWhiteSpace(profileURL) ? null : GetLoginFromURL(profileURL);
 
             // Only compare fields the caller supplied; otherwise a null argument matches a cached user whose field is also null.
             var cachedUser = _userCache.Values.FirstOrDefault(i =>
-                (!string.IsNullOrWhiteSpace(userId) && i.Id == userId) ||
                 (!string.IsNullOrWhiteSpace(username) && string.Equals(i.Username, username, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrWhiteSpace(profileURL) && string.Equals(i.ProfileURL, profileURL, StringComparison.OrdinalIgnoreCase)));
+                (!string.IsNullOrWhiteSpace(urlLogin) && string.Equals(i.Username, urlLogin, StringComparison.OrdinalIgnoreCase)));
             if (cachedUser != null)
                 return cachedUser;
 
-            if (!string.IsNullOrEmpty(username))
+            if (!string.IsNullOrWhiteSpace(username))
             {
                 apiUser = await API_GetUserByLogin(username: username);
             }
-            else if (!string.IsNullOrEmpty(userId))
-            {
-                return await GetUserById(userId: userId);
-            }
-            else if (!string.IsNullOrEmpty(profileURL))
+            else if (!string.IsNullOrWhiteSpace(profileURL))
             {
                 apiUser = await API_GetUserByURL(url: profileURL);
             }
