@@ -181,7 +181,16 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             string recordId = $"subscription:{stream.ServiceType}:{user.Id}:{guild.Id}";
             Guid lockGuid = Guid.NewGuid();
 
-            bool obtainedLock = await ObtainLock(recordId, lockGuid, lockTimeout);
+            // The holder's lock expires after lockTimeout, so waiting that long covers a crashed holder.
+            bool obtainedLock = await _cache.AcquireLockAsync(recordId: recordId, identifier: lockGuid, lockExpiry: lockTimeout, waitTimeout: lockTimeout);
+
+            if (!obtainedLock)
+            {
+                // Proceeding without the lock could post a duplicate notification.
+                _logger.LogWarning("Timed out waiting for notification lock for {Username} on {ServiceType} in {GuildId} - {SubscriptionId}, skipping",
+                    streamUser.Username, stream.ServiceType, guild.Id, streamSubscription.Id);
+                return;
+            }
 
             try
             {
@@ -205,8 +214,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             }
             finally
             {
-                if (obtainedLock)
-                    await _cache.ReleaseLockAsync(recordId, identifier: lockGuid);
+                await _cache.ReleaseLockAsync(recordId, identifier: lockGuid);
             }
         }
 
@@ -297,18 +305,6 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
             );
 
             return (notificationPredicate, previousNotificationPredicate);
-        }
-
-        private async Task<bool> ObtainLock(string recordId, Guid lockGuid, TimeSpan lockTimeout)
-        {
-            bool obtainedLock;
-            do
-            {
-                obtainedLock = await _cache.ObtainLockAsync(recordId: recordId, identifier: lockGuid, expiryTime: lockTimeout);
-            }
-            while (!obtainedLock);
-
-            return obtainedLock;
         }
 
         private Task<List<StreamNotification>> GetPreviousNotifications(Expression<Func<StreamNotification, bool>> previousNotificationPredicate)

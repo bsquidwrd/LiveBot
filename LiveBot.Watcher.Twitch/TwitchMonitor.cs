@@ -317,12 +317,12 @@ namespace LiveBot.Watcher.Twitch
         /// <returns></returns>
         private async Task WaitForAuthUnlockAsync()
         {
-            bool authLocked;
-            do
+            // The auth lock expires after 30 seconds, so a longer wait means refreshes are queuing back to back.
+            // Proceeding lets the API call fail on credentials and go through the normal refresh path.
+            if (!await _cache.WaitForUnlockAsync(recordId: _authCacheName, waitTimeout: TimeSpan.FromSeconds(30)))
             {
-                authLocked = await _cache.CheckForLockAsync(recordId: _authCacheName);
+                _logger.LogWarning("Timed out waiting for the {ServiceType} auth lock to be released, proceeding", ServiceType);
             }
-            while (authLocked);
         }
 
         private static IEnumerable<List<T>> SplitList<T>(List<T> locations, int nSize = 30)
@@ -410,13 +410,18 @@ namespace LiveBot.Watcher.Twitch
 
                 if (oldAuth.Expired || oldAuth.ExpiresAt <= DateTime.UtcNow || force)
                 {
-                    do
+                    // Hold the lock for a maximum of 30 seconds, and wait at most as long for another refresh to finish.
+                    obtainedLock = await _cache.AcquireLockAsync(recordId: _authCacheName, identifier: lockGuid, lockExpiry: TimeSpan.FromSeconds(30), waitTimeout: TimeSpan.FromSeconds(30));
+                    if (!obtainedLock)
                     {
-                        // Obtain a lock for a maximum of 30 seconds
-                        obtainedLock = await _cache.ObtainLockAsync(recordId: _authCacheName, identifier: lockGuid, expiryTime: TimeSpan.FromSeconds(30));
+                        // Another refresh, in this or another process, holds the lock; the token it stores is picked up
+                        // by GetAndSetActiveAuth below.
+                        _logger.LogWarning("Timed out waiting for the {ServiceType} auth lock, skipping refresh", ServiceType);
                     }
-                    while (!obtainedLock);
+                }
 
+                if (obtainedLock)
+                {
                     try
                     {
                         oldAuth = await GetAuthAsync();

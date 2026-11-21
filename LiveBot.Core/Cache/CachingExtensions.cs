@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -171,6 +173,60 @@ namespace LiveBot.Core.Cache
             string lockRecordId = $"lock:{redis.ClientName}:{recordId}".ToLower();
 
             return await cache.LockTakeAsync(key: lockRecordId, value: identifier.ToString(), expiry: expiryTime);
+        }
+
+        /// <summary>
+        /// Try to obtain a lock for a record, retrying with a jittered backoff until <paramref name="waitTimeout"/> elapses
+        /// </summary>
+        /// <returns>true if the lock was obtained, false if the wait timed out</returns>
+        public static async Task<bool> AcquireLockAsync(this ConnectionMultiplexer redis, string recordId, Guid identifier, TimeSpan lockExpiry, TimeSpan waitTimeout, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            for (int attempt = 0; ; attempt++)
+            {
+                if (await redis.ObtainLockAsync(recordId: recordId, identifier: identifier, expiryTime: lockExpiry))
+                    return true;
+
+                if (!await BackoffAsync(attempt, stopwatch, waitTimeout, cancellationToken))
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Wait for the lock on a record to be released, polling with a jittered backoff until <paramref name="waitTimeout"/> elapses
+        /// </summary>
+        /// <returns>true if no lock is in place, false if the wait timed out</returns>
+        public static async Task<bool> WaitForUnlockAsync(this ConnectionMultiplexer redis, string recordId, TimeSpan waitTimeout, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            for (int attempt = 0; ; attempt++)
+            {
+                if (!await redis.CheckForLockAsync(recordId: recordId))
+                    return true;
+
+                if (!await BackoffAsync(attempt, stopwatch, waitTimeout, cancellationToken))
+                    return false;
+            }
+        }
+
+        private static readonly TimeSpan LockRetryInitialDelay = TimeSpan.FromMilliseconds(50);
+        private static readonly TimeSpan LockRetryMaxDelay = TimeSpan.FromMilliseconds(500);
+
+        /// <summary>
+        /// Delays before the next lock attempt, never sleeping past the deadline. Returns false when no time is left to wait.
+        /// </summary>
+        private static async Task<bool> BackoffAsync(int attempt, Stopwatch stopwatch, TimeSpan waitTimeout, CancellationToken cancellationToken)
+        {
+            TimeSpan remaining = waitTimeout - stopwatch.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                return false;
+
+            // The shift is capped so a long wait cannot overflow before Math.Min clamps to the max delay.
+            TimeSpan backoff = TimeSpan.FromTicks(Math.Min(LockRetryMaxDelay.Ticks, LockRetryInitialDelay.Ticks << Math.Min(attempt, 10)));
+            TimeSpan jittered = backoff * (0.5 + (Random.Shared.NextDouble() * 0.5));
+
+            await Task.Delay(jittered < remaining ? jittered : remaining, cancellationToken);
+            return true;
         }
 
         /// <summary>
