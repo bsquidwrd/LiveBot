@@ -27,12 +27,21 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         public async Task Consume(ConsumeContext<IStreamUpdate> context)
         {
             ILiveBotStream stream = context.Message.Stream;
-            ILiveBotMonitor? monitor = _monitors.Where(i => i.ServiceType == stream.ServiceType).FirstOrDefault();
+            ILiveBotUser? user = stream.User;
 
-            if (monitor == null)
+            // Monitors are only registered here when RunWatchersInDiscord is true.
+            if (user == null)
+            {
+                ILiveBotMonitor? monitor = _monitors.FirstOrDefault(i => i.ServiceType == stream.ServiceType);
+                if (monitor != null)
+                    user = await monitor.GetUserById(stream.UserId);
+            }
+
+            if (user == null)
+            {
+                _logger.LogWarning("Skipping stream update for {UserId} on {ServiceType}: message has no user and no monitor could resolve one", stream.UserId, stream.ServiceType);
                 return;
-
-            ILiveBotUser user = stream.User ?? await monitor.GetUserById(stream.UserId);
+            }
 
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
             var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
