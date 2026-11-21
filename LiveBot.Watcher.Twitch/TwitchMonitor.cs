@@ -814,9 +814,8 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotStream?> GetStream(ILiveBotUser user)
         {
-            if (!Monitor.LiveStreams.ContainsKey(user.Id))
+            if (!Monitor.LiveStreams.TryGetValue(user.Id, out TwitchLibStreams.Stream? stream))
                 return null;
-            TwitchLibStreams.Stream stream = Monitor.LiveStreams[user.Id];
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
         }
@@ -824,9 +823,8 @@ namespace LiveBot.Watcher.Twitch
         /// <inheritdoc/>
         public override async Task<ILiveBotStream?> GetStream(string userId)
         {
-            if (!Monitor.LiveStreams.ContainsKey(userId))
+            if (!Monitor.LiveStreams.TryGetValue(userId, out TwitchLibStreams.Stream? stream))
                 return null;
-            TwitchLibStreams.Stream stream = Monitor.LiveStreams[userId];
             ILiveBotUser? user = await GetUser(userId: userId);
             ILiveBotGame? game = await GetGame(stream.GameId);
             if (user != null && game != null)
@@ -839,9 +837,7 @@ namespace LiveBot.Watcher.Twitch
         public override async Task<ILiveBotStream?> GetStream_Force(ILiveBotUser user)
         {
             TwitchLibStreams.Stream? stream;
-            if (Monitor.LiveStreams.ContainsKey(user.Id))
-                stream = Monitor.LiveStreams[user.Id];
-            else
+            if (!Monitor.LiveStreams.TryGetValue(user.Id, out stream))
                 stream = await API_GetStream(user);
             if (stream == null) return null;
             ILiveBotGame game = await GetGame(stream.GameId);
