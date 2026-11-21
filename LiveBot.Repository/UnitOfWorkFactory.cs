@@ -28,6 +28,9 @@ namespace LiveBot.Repository
         {
             using (var context = GetDbContext())
             {
+                // Index builds on StreamNotification run for minutes; the 30s default would cancel
+                // them partway and leave an invalid index behind.
+                context.Database.SetCommandTimeout(TimeSpan.FromHours(1));
                 context.Database.Migrate();
             }
         }
