@@ -74,7 +74,17 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
                 {
                     AutoReset = true
                 };
-                timer.Elapsed += async (sender, e) => await UpdateStats();
+                timer.Elapsed += async (sender, e) =>
+                {
+                    try
+                    {
+                        await UpdateStats();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(exception: ex, message: "Error updating stats for {StatsSiteName}", SiteName);
+                    }
+                };
                 _timer = timer;
                 _timer.Start();
             }
