@@ -179,173 +179,97 @@ namespace LiveBot.Watcher.Twitch
 
         #region API Calls
 
-        private async Task<Game?> API_GetGame(string gameId, int retryCount = 0)
+        /// <summary>
+        /// Runs a Twitch API call, retrying transient (5xx) and auth failures within one shared attempt budget.
+        /// Returns null once <see cref="ApiRetryCount"/> attempts have failed.
+        /// </summary>
+        private async Task<T?> CallTwitchAsync<T>(Func<Task<T?>> call, string operation) where T : class
         {
-            try
+            for (int attempt = 1; attempt <= ApiRetryCount; attempt++)
             {
-                await WaitForAuthUnlockAsync();
+                bool refreshAuth = false;
+                try
+                {
+                    await WaitForAuthUnlockAsync();
+                    return await call();
+                }
+                catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
+                {
+                    _logger.LogError(exception: e, message: "Error getting {ServiceType} {Operation}", ServiceType, operation);
+                }
+                catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
+                {
+                    _logger.LogError(exception: e, message: "Error getting {ServiceType} {Operation}", ServiceType, operation);
+                    refreshAuth = true;
+                }
+
+                // No point refreshing credentials or sleeping when there is no attempt left to use them.
+                if (attempt == ApiRetryCount) break;
+
+                if (refreshAuth)
+                {
+                    await UpdateAuth(force: true);
+                }
+                await Task.Delay(RetryDelay);
+            }
+            return null;
+        }
+
+        private Task<Game?> API_GetGame(string gameId)
+        {
+            return CallTwitchAsync<Game>(async () =>
+            {
                 var gameIDs = new List<string> { gameId };
                 GetGamesResponse games = await API.Helix.Games.GetGamesAsync(gameIds: gameIDs).ConfigureAwait(false);
                 return games.Games.FirstOrDefault(i => i.Id == gameId);
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetGame(gameId, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Game", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetGame(gameId);
-            }
+            }, "Game");
         }
 
-        private async Task<User?> API_GetUserByLogin(string username, int retryCount = 0)
+        private Task<User?> API_GetUserByLogin(string username)
         {
-            try
+            return CallTwitchAsync<User>(async () =>
             {
-                await WaitForAuthUnlockAsync();
                 var usernameList = new List<string> { username.ToLower() };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(logins: usernameList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => string.Equals(i.Login, username, StringComparison.OrdinalIgnoreCase));
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetUserByLogin(username, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Login", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByLogin(username);
-            }
+            }, "User by Login");
         }
 
-        private async Task<User?> API_GetUserById(string userId, int retryCount = 0)
+        private Task<User?> API_GetUserById(string userId)
         {
-            try
+            return CallTwitchAsync<User>(async () =>
             {
-                await WaitForAuthUnlockAsync();
                 var userIdList = new List<string> { userId };
                 GetUsersResponse apiUser = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
                 return apiUser.Users.FirstOrDefault(i => i.Id == userId);
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetUserById(userId, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by Id", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserById(userId);
-            }
+            }, "User by Id");
         }
 
-        private async Task<GetUsersResponse?> API_GetUsersById(List<string> userIdList, int retryCount = 0)
+        private Task<GetUsersResponse?> API_GetUsersById(List<string> userIdList)
         {
-            try
+            return CallTwitchAsync<GetUsersResponse>(async () =>
             {
-                await WaitForAuthUnlockAsync();
-                GetUsersResponse apiUsers = await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
-                return apiUsers;
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetUsersById(userIdList, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Users by Id", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUsersById(userIdList);
-            }
+                return await API.Helix.Users.GetUsersAsync(ids: userIdList).ConfigureAwait(false);
+            }, "Users by Id");
         }
 
-        private async Task<User?> API_GetUserByURL(string url, int retryCount = 0)
+        private Task<User?> API_GetUserByURL(string url)
         {
-            try
-            {
-                await WaitForAuthUnlockAsync();
-                string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
-                return await API_GetUserByLogin(username: username);
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetUserByURL(url, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} User by URL", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetUserByURL(url);
-            }
+            string username = GetURLRegex(URLPattern).Match(url).Groups["username"].ToString().ToLower();
+            return API_GetUserByLogin(username: username);
         }
 
-        private async Task<TwitchLibStreams.Stream?> API_GetStream(ILiveBotUser user, int retryCount = 0)
+        private Task<TwitchLibStreams.Stream?> API_GetStream(ILiveBotUser user)
         {
-            try
+            return CallTwitchAsync<TwitchLibStreams.Stream>(async () =>
             {
-                await WaitForAuthUnlockAsync();
                 var userIds = new List<string>
                 {
                     user.Id
                 };
                 var streams = await API.Helix.Streams.GetStreamsAsync(type: "live", userIds: userIds);
                 return streams.Streams.Where(i => i.UserId == user.Id).FirstOrDefault();
-            }
-            catch (Exception e) when (e is BadGatewayException || e is InternalServerErrorException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
-                if (retryCount <= ApiRetryCount)
-                {
-                    await Task.Delay(RetryDelay);
-                    return await API_GetStream(user, retryCount + 1);
-                }
-                return null;
-            }
-            catch (Exception e) when (e is InvalidCredentialException || e is BadScopeException)
-            {
-                _logger.LogError(exception: e, message: "Error getting {ServiceType} Stream", ServiceType);
-                await UpdateAuth(force: true);
-                await Task.Delay(RetryDelay);
-                return await API_GetStream(user);
-            }
+            }, "Stream");
         }
 
         #endregion API Calls
