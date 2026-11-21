@@ -294,6 +294,14 @@ namespace LiveBot.Watcher.Twitch
             return API_GetUserByLogin(username: username);
         }
 
+        private Task<TwitchLibStreams.GetStreamsResponse?> API_GetStreamsByUserIds(List<string> userIdList)
+        {
+            return CallTwitchAsync<TwitchLibStreams.GetStreamsResponse>(async () =>
+            {
+                return await API.Helix.Streams.GetStreamsAsync(first: 100, userIds: userIdList, type: "live").ConfigureAwait(false);
+            }, "Streams by User Ids");
+        }
+
         private Task<TwitchLibStreams.Stream?> API_GetStream(ILiveBotUser user)
         {
             return CallTwitchAsync<TwitchLibStreams.Stream>(async () =>
@@ -717,23 +725,7 @@ namespace LiveBot.Watcher.Twitch
                     return;
                 }
 
-                // Convert to ILiveBotUser objects
-                var liveBotUsers = new List<ILiveBotUser>();
-                foreach (var sourceId in distinctSourceIds)
-                {
-                    try
-                    {
-                        var liveBotUser = await GetUserById(sourceId);
-                        if (liveBotUser != null)
-                        {
-                            liveBotUsers.Add(liveBotUser);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to get user data for {UserId} during startup catch-up", sourceId);
-                    }
-                }
+                var liveBotUsers = await GetUsersByIds(distinctSourceIds);
 
                 if (liveBotUsers.Any())
                 {
@@ -807,6 +799,96 @@ namespace LiveBot.Watcher.Twitch
             if (stream == null) return null;
             ILiveBotGame game = await GetGame(stream.GameId);
             return new TwitchStream(BaseURL, ServiceType, stream, user, game);
+        }
+
+        /// <summary>
+        /// Finds which of <paramref name="userIds"/> are live with one request per 100 ids, instead of one per user.
+        /// </summary>
+        /// <returns>
+        /// The live streams keyed by user id, and the ids whose lookup failed so callers do not treat them as offline.
+        /// </returns>
+        public async Task<(Dictionary<string, TwitchLibStreams.Stream> Live, HashSet<string> Failed)> GetLiveStreamsByUserIds(IReadOnlyCollection<string> userIds)
+        {
+            var live = new Dictionary<string, TwitchLibStreams.Stream>();
+            var failed = new HashSet<string>();
+            var toFetch = new List<string>();
+
+            foreach (string userId in userIds)
+            {
+                if (Monitor.LiveStreams.TryGetValue(userId, out TwitchLibStreams.Stream? known))
+                    live[userId] = known;
+                else
+                    toFetch.Add(userId);
+            }
+
+            foreach (List<string> chunk in SplitList(toFetch, nSize: 100))
+            {
+                TwitchLibStreams.GetStreamsResponse? response = null;
+                try
+                {
+                    response = await API_GetStreamsByUserIds(chunk);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(exception: e, message: "Error getting a batch of {ServiceType} streams", ServiceType);
+                }
+
+                if (response == null)
+                {
+                    failed.UnionWith(chunk);
+                    continue;
+                }
+
+                foreach (TwitchLibStreams.Stream stream in response.Streams)
+                {
+                    live[stream.UserId] = stream;
+                }
+            }
+
+            return (live, failed);
+        }
+
+        /// <summary>
+        /// Gets users for <paramref name="userIds"/> from the Redis cache, fetching the misses from the API 100 at a time.
+        /// Ids that Twitch does not return are omitted.
+        /// </summary>
+        private async Task<List<ILiveBotUser>> GetUsersByIds(IReadOnlyCollection<string> userIds)
+        {
+            Dictionary<string, TwitchUser> users = await _cache.GetListItemsAsync<TwitchUser>(recordId: _userCacheName, fieldNames: userIds);
+
+            var fetched = new List<TwitchUser>();
+            foreach (List<string> chunk in SplitList(userIds.Where(id => !users.ContainsKey(id)).ToList(), nSize: 100))
+            {
+                try
+                {
+                    GetUsersResponse? response = await API_GetUsersById(chunk);
+                    if (response == null)
+                    {
+                        _logger.LogWarning("No response getting a batch of {ServiceType} users", ServiceType);
+                        continue;
+                    }
+
+                    foreach (User apiUser in response.Users)
+                    {
+                        var twitchUser = new TwitchUser(BaseURL, ServiceType, apiUser);
+                        users[twitchUser.Id] = twitchUser;
+                        fetched.Add(twitchUser);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(exception: e, message: "Error getting a batch of {ServiceType} users", ServiceType);
+                }
+            }
+
+            await _cache.SetListItemsAsync<TwitchUser>(
+                recordId: _userCacheName,
+                items: fetched.Select(u => new KeyValuePair<string, TwitchUser>(u.Id, u)));
+
+            return userIds
+                .Where(users.ContainsKey)
+                .Select(id => (ILiveBotUser)users[id])
+                .ToList();
         }
 
         /// <inheritdoc/>

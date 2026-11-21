@@ -34,11 +34,24 @@ namespace LiveBot.Watcher.Twitch.Consumers
 
                 var work = _workFactory.Create();
 
-                foreach (var user in context.Message.StreamUsers)
+                var users = context.Message.StreamUsers.ToList();
+                var (liveStreams, failedLookups) = await _monitor.GetLiveStreamsByUserIds(users.Select(u => u.Id).ToList());
+
+                if (failedLookups.Count > 0)
                 {
+                    _logger.LogWarning("Skipping catch-up for {FailedCount} users on {ServiceType} because their stream lookup failed",
+                        failedLookups.Count, context.Message.ServiceType);
+                }
+
+                foreach (var user in users)
+                {
+                    // An unanswered lookup says nothing about the stream, so it must not read as offline.
+                    if (failedLookups.Contains(user.Id))
+                        continue;
+
                     try
                     {
-                        await ProcessUserCatchup(user, work);
+                        await ProcessUserCatchup(user, liveStreams.ContainsKey(user.Id), work);
                     }
                     catch (Exception ex)
                     {
@@ -56,7 +69,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
             }
         }
 
-        private async Task ProcessUserCatchup(Core.Repository.Interfaces.Monitor.ILiveBotUser user, IUnitOfWork work)
+        private async Task ProcessUserCatchup(Core.Repository.Interfaces.Monitor.ILiveBotUser user, bool isCurrentlyLive, IUnitOfWork work)
         {
             // Get the user's current stream state from the database
             var dbUser = await work.UserRepository.SingleOrDefaultAsync(u =>
@@ -70,10 +83,6 @@ namespace LiveBot.Watcher.Twitch.Consumers
 
             // Check if the user was marked as live in the database
             var wasLive = await WasUserLiveBeforeShutdown(dbUser, work);
-
-            // Check the current live state from Twitch API
-            var currentStream = await _monitor.GetStream_Force(user);
-            var isCurrentlyLive = currentStream != null;
 
             _logger.LogDebug("Catch-up for {Username}: WasLive={WasLive}, CurrentlyLive={CurrentlyLive}",
                 user.Username, wasLive, isCurrentlyLive);

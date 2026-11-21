@@ -151,6 +151,48 @@ namespace LiveBot.Core.Cache
             }
         }
 
+        /// <summary>
+        /// Get several items from a list in Redis with a single round trip
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="redis"></param>
+        /// <param name="recordId"></param>
+        /// <param name="fieldNames"></param>
+        /// <returns>The items that were found, keyed by field name; missing fields are omitted</returns>
+        public static async Task<Dictionary<string, T>> GetListItemsAsync<T>(this ConnectionMultiplexer redis, string recordId, IReadOnlyCollection<string> fieldNames)
+        {
+            var items = new Dictionary<string, T>();
+            if (fieldNames.Count == 0)
+                return items;
+
+            StackExchange.Redis.IDatabase cache = redis.GetDatabase();
+            recordId = $"{redis.ClientName}:{recordId}".ToLower();
+
+            RedisValue[] fields = fieldNames.Select(f => (RedisValue)f).ToArray();
+            RedisValue[] values = await cache.HashGetAsync(key: recordId, hashFields: fields);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (values[i].IsNullOrEmpty)
+                    continue;
+
+                // One unreadable entry is a cache miss, not a reason to fail the whole batch.
+                T item;
+                try
+                {
+                    item = JsonSerializer.Deserialize<T>(json: values[i].ToString(), options: jsonSerializerOptions);
+                }
+                catch (JsonException)
+                {
+                    continue;
+                }
+
+                if (item != null)
+                    items[fields[i].ToString()] = item;
+            }
+            return items;
+        }
+
         public static async Task<bool> DeleteListItemAsync(this ConnectionMultiplexer redis, string recordId, string fieldName)
         {
             StackExchange.Redis.IDatabase cache = redis.GetDatabase();
