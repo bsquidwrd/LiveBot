@@ -115,25 +115,15 @@ namespace LiveBot.Watcher.Twitch.Consumers
             // Look for recent stream notifications (within the last 24 hours)
             var cutoffTime = DateTime.UtcNow.AddHours(-24);
 
-            var recentNotifications = await work.NotificationRepository.FindAsync(n =>
-                n.ServiceType == dbUser.ServiceType &&
-                n.User_SourceID == dbUser.SourceID &&
-                n.TimeStamp >= cutoffTime &&
-                n.Success == true);
-
-            // If there are recent notifications, check if the most recent one was a "stream online" type
-            var lastNotification = recentNotifications
-                .OrderByDescending(n => n.TimeStamp)
-                .FirstOrDefault();
-
-            if (lastNotification == null)
-                return false;
-
             // We assume the user was live if there's a recent successful notification
             // and no corresponding offline notification after it
             // This is a heuristic - in a more sophisticated system, you might track
             // the actual live state more explicitly
-            return true;
+            return await work.NotificationRepository.AnyAsync(n =>
+                n.ServiceType == dbUser.ServiceType &&
+                n.User_SourceID == dbUser.SourceID &&
+                n.TimeStamp >= cutoffTime &&
+                n.Success == true);
         }
 
         /// <summary>
@@ -141,14 +131,11 @@ namespace LiveBot.Watcher.Twitch.Consumers
         /// </summary>
         private async Task<StreamNotification?> GetLastStreamNotification(StreamUser dbUser, IUnitOfWork work)
         {
-            var notifications = await work.NotificationRepository.FindAsync(n =>
+            return await work.NotificationRepository.FirstOrderedAsync(n =>
                 n.ServiceType == dbUser.ServiceType &&
                 n.User_SourceID == dbUser.SourceID &&
-                n.Success == true);
-
-            return notifications
-                .OrderByDescending(n => n.TimeStamp)
-                .FirstOrDefault();
+                n.Success == true,
+                n => n.TimeStamp);
         }
 
         /// <summary>
