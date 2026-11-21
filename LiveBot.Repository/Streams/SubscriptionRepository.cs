@@ -26,6 +26,18 @@ namespace LiveBot.Repository.Streams
                 .ToListAsync();
 
         /// <inheritdoc/>
+        public Task<List<StreamSubscription>> GetForUserWithRolesAsync(StreamUser user) =>
+            DbSet
+                .Where(s => s.Deleted == false)
+                .Where(s => s.User == user)
+                .Include(s => s.User)
+                .Include(s => s.DiscordGuild)
+                .Include(s => s.DiscordChannel)
+                .Include(s => s.RolesToMention)
+                .AsSplitQuery()
+                .ToListAsync();
+
+        /// <inheritdoc/>
         public async Task RemoveWithRolesAsync(long subscriptionId)
         {
             await using (var transaction = await Context.Database.BeginTransactionAsync().ConfigureAwait(false))

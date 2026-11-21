@@ -37,7 +37,7 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             var streamGame = await GetOrCreateStreamGame(stream, game);
             var streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == stream.ServiceType && i.SourceID == user.Id);
-            var streamSubscriptions = await _work.SubscriptionRepository.FindAsync(i => i.User == streamUser);
+            var streamSubscriptions = await _work.SubscriptionRepository.GetForUserWithRolesAsync(streamUser);
 
             if (!streamSubscriptions.Any())
                 return;
