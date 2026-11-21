@@ -136,7 +136,7 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
                 try
                 {
                     response.EnsureSuccessStatusCode();
-                    _logger.LogInformation(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
+                    _logger.LogDebug(message: "Updated Guild Count for {StatsSiteName}: {GuildCount}", SiteName, guilds.Count);
                 }
                 catch (Exception ex)
                 {
