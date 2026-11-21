@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Models;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace LiveBot.Repository
 {
@@ -260,20 +261,35 @@ namespace LiveBot.Repository
         public virtual async Task AddOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> predicate)
         {
             await syncLock.WaitAsync().ConfigureAwait(false);
-            var exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
-            if (exists == null) // No entry in database, just save it now.
+            try
             {
-                syncLock.Release(); // Was creating a deadlock here.
-                await AddAsync(entity).ConfigureAwait(false);
-                return;
-            }
-            else // Update the db entry from the entity and save.
-            {
+                var exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
+                if (exists == null)
+                {
+                    DbSet.Add(entity);
+                    try
+                    {
+                        await Context.SaveChangesAsync().ConfigureAwait(false);
+                        return;
+                    }
+                    catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+                    {
+                        // Another consumer inserted the same row between the read and the insert.
+                        Context.Entry(entity).State = EntityState.Detached;
+                        exists = await SingleOrDefaultAsync(predicate).ConfigureAwait(false);
+                        if (exists == null)
+                            throw;
+                    }
+                }
+
                 entity.Id = exists.Id;
                 Context.Entry(exists).CurrentValues.SetValues(entity);
                 await Context.SaveChangesAsync().ConfigureAwait(false);
             }
-            syncLock.Release();
+            finally
+            {
+                syncLock.Release();
+            }
         }
 
         /// <inheritdoc/>

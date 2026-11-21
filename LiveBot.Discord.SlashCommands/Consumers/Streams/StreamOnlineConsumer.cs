@@ -524,15 +524,25 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
 
             var notificationDelay = CalculateNotificationDelay(streamNotification, streamSubscription);
 
+            // Claimed before posting so a message retry after a successful post finds this row
+            // through the cooldown check and suppresses it instead of posting again.
+            streamNotification.Success = true;
+            streamNotification.LogMessage = $"Sending at {DateTime.UtcNow:o}";
+            await _work.NotificationRepository.UpdateAsync(streamNotification);
+
+            IUserMessage discordMessage;
             try
             {
-                var discordMessage = await SendDiscordMessage(channel, notificationMessage, embed, lockTimeout);
-                await UpdateSuccessfulNotification(streamNotification, discordMessage, notificationDelay);
+                discordMessage = await SendDiscordMessage(channel, notificationMessage, embed, lockTimeout);
             }
             catch (Exception ex)
             {
+                streamNotification.Success = false;
                 await HandleNotificationError(streamNotification, streamSubscription, ex, notificationDelay, removeSubscriptionAsync);
+                return;
             }
+
+            await UpdateSuccessfulNotification(streamNotification, discordMessage, notificationDelay);
         }
 
         private double CalculateNotificationDelay(StreamNotification streamNotification, StreamSubscription streamSubscription)

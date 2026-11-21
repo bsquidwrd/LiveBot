@@ -21,6 +21,13 @@ namespace LiveBot.Watcher.Twitch
                     });
                     cfg.PrefetchCount = Queues.PrefetchCount;
 
+                    // Applies to every receive endpoint; each attempt resolves a fresh consumer scope.
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2));
+                        r.Ignore<ArgumentNullException>();
+                    });
+
                     // Request/Response endpoint for on-demand checks (service-specific queue)
                     cfg.ReceiveEndpoint(Queues.GetStreamCheckQueueName(LiveBot.Core.Repository.Static.ServiceEnum.Twitch), ep => ep.Consumer<Consumers.TwitchStreamCheckConsumer>(context));
                     

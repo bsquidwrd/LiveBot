@@ -33,6 +33,13 @@ namespace LiveBot.Discord.SlashCommands
                     });
                     cfg.PrefetchCount = Queues.PrefetchCount;
 
+                    // Applies to every receive endpoint; each attempt resolves a fresh consumer scope.
+                    cfg.UseMessageRetry(r =>
+                    {
+                        r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2));
+                        r.Ignore<ArgumentNullException>();
+                    });
+
                     // Stream Events
                     cfg.ReceiveEndpoint(Queues.StreamOnlineQueueName, ep => ep.Consumer<StreamOnlineConsumer>(context));
                     cfg.ReceiveEndpoint(Queues.StreamUpdateQueueName, ep => ep.Consumer<StreamUpdateConsumer>(context));
