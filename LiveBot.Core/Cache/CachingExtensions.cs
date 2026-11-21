@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -100,6 +102,28 @@ namespace LiveBot.Core.Cache
 
             var jsonData = JsonSerializer.Serialize(value: data, options: jsonSerializerOptions);
             await cache.HashSetAsync(key: recordId, hashField: fieldName, value: jsonData);
+        }
+
+        /// <summary>
+        /// Set several items in a list in Redis with a single round trip
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="redis"></param>
+        /// <param name="recordId"></param>
+        /// <param name="items">Items to store, keyed by field name</param>
+        /// <returns></returns>
+        public static async Task SetListItemsAsync<T>(this ConnectionMultiplexer redis, string recordId, IEnumerable<KeyValuePair<string, T>> items)
+        {
+            HashEntry[] entries = items
+                .Select(i => new HashEntry(i.Key, JsonSerializer.Serialize(value: i.Value, options: jsonSerializerOptions)))
+                .ToArray();
+            if (entries.Length == 0)
+                return;
+
+            StackExchange.Redis.IDatabase cache = redis.GetDatabase();
+            recordId = $"{redis.ClientName}:{recordId}".ToLower();
+
+            await cache.HashSetAsync(key: recordId, hashFields: entries);
         }
 
         /// <summary>

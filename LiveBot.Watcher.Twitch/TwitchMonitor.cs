@@ -489,6 +489,8 @@ namespace LiveBot.Watcher.Twitch
             bool failed = false;
             try
             {
+                // A single unit of work for the whole run, since _work creates a new context on every access.
+                var work = _work;
                 foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor, nSize: 100))
                 {
                     GetUsersResponse? users = await API_GetUsersById(userIds);
@@ -498,32 +500,25 @@ namespace LiveBot.Watcher.Twitch
                         _logger.LogWarning(message: "No response updating a batch of {ServiceType} users", ServiceType);
                         continue;
                     }
+                    var twitchUsers = new List<TwitchUser>();
                     foreach (User user in users.Users)
                     {
                         var twitchUser = new TwitchUser(BaseURL, ServiceType, user);
-                        if (_userCache.ContainsKey(user.Id))
-                        {
-                            _userCache[user.Id] = twitchUser;
-                        }
-                        else
-                        {
-                            _userCache.TryAdd(user.Id, twitchUser);
-                        }
-                        await _cache.SetListItemAsync<TwitchUser>(recordId: _userCacheName, fieldName: twitchUser.Id, data: twitchUser);
-                        try
-                        {
-                            StreamUser streamUser = await _work.UserRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.SourceID == user.Id);
-                            streamUser.Username = twitchUser.Username;
-                            streamUser.DisplayName = twitchUser.DisplayName;
-                            streamUser.AvatarURL = twitchUser.AvatarURL;
-                            streamUser.ProfileURL = twitchUser.ProfileURL;
+                        _userCache[user.Id] = twitchUser;
+                        twitchUsers.Add(twitchUser);
+                    }
 
-                            await _work.UserRepository.AddOrUpdateAsync(streamUser, (i => i.ServiceType == streamUser.ServiceType && i.SourceID == streamUser.SourceID));
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError(exception: e, message: "Error updating user {ServiceType} {Username}", ServiceType, twitchUser.Username);
-                        }
+                    await _cache.SetListItemsAsync<TwitchUser>(
+                        recordId: _userCacheName,
+                        items: twitchUsers.Select(u => new KeyValuePair<string, TwitchUser>(u.Id, u)));
+
+                    try
+                    {
+                        await work.UserRepository.UpdateProfilesAsync(ServiceType, twitchUsers);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(exception: e, message: "Error updating a batch of {ServiceType} users", ServiceType);
                     }
                 }
             }
