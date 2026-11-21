@@ -770,7 +770,11 @@ namespace LiveBot.Watcher.Twitch
                 game = await API_GetGame(gameId);
             }
             var twitchGame = new TwitchGame(BaseURL, ServiceType, game);
-            await _cache.SetListItemAsync<TwitchGame>(recordId: _gameCacheName, fieldName: gameId, data: twitchGame);
+            // API_GetGame returns null after exhausting retries, so caching a null result would pin a placeholder until ClearCache.
+            if (game is not null || string.IsNullOrWhiteSpace(gameId))
+            {
+                await _cache.SetListItemAsync<TwitchGame>(recordId: _gameCacheName, fieldName: gameId, data: twitchGame);
+            }
             return twitchGame;
         }
 
