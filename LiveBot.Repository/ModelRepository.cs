@@ -235,8 +235,13 @@ namespace LiveBot.Repository
             try
             {
                 await syncLock.WaitAsync().ConfigureAwait(false);
-                DbSet.Attach(entity);
-                Context.Entry(entity).State = EntityState.Modified;
+                if (Context.Entry(entity).State == EntityState.Detached)
+                {
+                    // A detached entity has no snapshot to diff against, so every column has to be written.
+                    DbSet.Attach(entity);
+                    Context.Entry(entity).State = EntityState.Modified;
+                }
+
                 await Context.SaveChangesAsync().ConfigureAwait(false);
             }
             finally
@@ -260,12 +265,6 @@ namespace LiveBot.Repository
             {
                 syncLock.Release(); // Was creating a deadlock here.
                 await AddAsync(entity).ConfigureAwait(false);
-                return;
-            }
-            else if (exists == entity)
-            {
-                // Both the provided entity and the db entity are the same.
-                syncLock.Release();
                 return;
             }
             else // Update the db entry from the entity and save.

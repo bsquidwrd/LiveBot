@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace LiveBot.Core.Repository.Models
 {
@@ -47,80 +46,33 @@ namespace LiveBot.Core.Repository.Models
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            if (obj == null)
-                return false;
-            T other = obj as T;
-            return Equals(other);
+            return Equals(obj as T);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Two models are equal when they are the same instance or represent the same persisted row.
+        /// Typed as <typeparamref name="T"/> rather than compared by <c>GetType()</c> so a lazy loading
+        /// proxy and the plain entity it derives from are equal.
+        /// </summary>
+        /// <param name="other">The model to compare with.</param>
+        /// <returns>Whether both sides are the same row.</returns>
         public virtual bool Equals(T other)
         {
-            if (other == null)
+            if (other is null)
                 return false;
 
-            Type t = GetType();
-            Type otherType = other.GetType();
+            if (ReferenceEquals(this, other))
+                return true;
 
-            if (t != otherType)
-                return false;
-
-            IEnumerable<FieldInfo> fields = this.GetFields();
-            foreach (FieldInfo field in fields)
-            {
-                if (field.Name == nameof(this.TimeStamp))
-                    continue;
-
-                object value1 = field.GetValue(other);
-                object value2 = field.GetValue(this);
-
-                if (value1 == null)
-                {
-                    if (value2 != null)
-                        return false;
-                }
-                else if (!value1.Equals(value2))
-                    return false;
-            }
-
-            return true;
+            return Id != 0 && Id == other.Id;
         }
 
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            IEnumerable<FieldInfo> fields = GetFields();
-
-            const int StartValue = 17;
-            const int Multiplier = 59;
-
-            int hashCode = StartValue;
-            foreach (FieldInfo field in fields)
-            {
-                object value = field.GetValue(this);
-                if (value != null)
-                    hashCode = (hashCode * Multiplier) + value.GetHashCode();
-            }
-
-            return hashCode;
-        }
-
-        /// <summary>
-        /// Gets all instanced, non public, and public fields on this model.
-        /// </summary>
-        /// <returns>The collection of fields.</returns>
-        private IEnumerable<FieldInfo> GetFields()
-        {
-            Type t = GetType();
-            List<FieldInfo> fields = new List<FieldInfo>();
-
-            while (t != typeof(object))
-            {
-                fields.AddRange(t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public));
-                t = t.BaseType;
-            }
-
-            return fields;
+            // Unsaved models share Id 0, so they fall back to reference identity. The hash changes once
+            // the database assigns an Id, so do not hold an unsaved model in a hash collection across a save.
+            return Id != 0 ? Id.GetHashCode() : RuntimeHelpers.GetHashCode(this);
         }
     }
 }
