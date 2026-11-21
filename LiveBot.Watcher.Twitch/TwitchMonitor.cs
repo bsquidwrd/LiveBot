@@ -869,7 +869,14 @@ namespace LiveBot.Watcher.Twitch
             if (username == null && userId == null && profileURL == null)
                 return null;
 
-            var cachedUser = _userCache.Values.Where(i => i.Id == userId || i.Username?.ToLower() == username?.ToLower() || i.ProfileURL?.ToLower() == profileURL?.ToLower()).FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(userId) && _userCache.TryGetValue(userId, out var cachedById))
+                return cachedById;
+
+            // Only compare fields the caller supplied; otherwise a null argument matches a cached user whose field is also null.
+            var cachedUser = _userCache.Values.FirstOrDefault(i =>
+                (!string.IsNullOrWhiteSpace(userId) && i.Id == userId) ||
+                (!string.IsNullOrWhiteSpace(username) && string.Equals(i.Username, username, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(profileURL) && string.Equals(i.ProfileURL, profileURL, StringComparison.OrdinalIgnoreCase)));
             if (cachedUser != null)
                 return cachedUser;
 
