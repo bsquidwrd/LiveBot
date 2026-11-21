@@ -36,6 +36,8 @@ namespace LiveBot.Discord.SlashCommands
             builder.Host.UseSerilog((ctx, lc) =>
                 lc
                     .MinimumLevel.Is(IsDebug ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
+                    // Applied after the IsDebug default so a Serilog__MinimumLevel__* environment variable can raise or lower one component on a deployed service.
+                    .ReadFrom.Configuration(ctx.Configuration)
                     .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                     .WriteTo.DatadogLogs(apiKey: apiKey, source: source, service: service, host: hostname, tags: tags)
                     .Enrich.FromLogContext()
