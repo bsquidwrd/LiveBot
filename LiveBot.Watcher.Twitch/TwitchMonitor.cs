@@ -34,6 +34,7 @@ namespace LiveBot.Watcher.Twitch
         private readonly ConnectionMultiplexer _cache;
         private readonly int RetryDelay = 1000 * 5; // 5 seconds
         private readonly int ApiRetryCount = 5; // How many times to retry API requests
+        private readonly TimeSpan AuthRetryDelay = TimeSpan.FromMinutes(1);
         private readonly string _authCacheName = "twitch:auth";
         private readonly string _gameCacheName = "twitch:games";
         private readonly string _userCacheName = "twitch:users";
@@ -262,7 +263,15 @@ namespace LiveBot.Watcher.Twitch
 
                 if (refreshAuth)
                 {
-                    await UpdateAuth(force: true);
+                    try
+                    {
+                        await UpdateAuth(force: true);
+                    }
+                    catch (Exception e)
+                    {
+                        // Callers only handle a null result, so a failed refresh spends the attempt instead of escaping.
+                        _logger.LogError(exception: e, message: "Unable to refresh {ServiceType} auth while getting {Operation}", ServiceType, operation);
+                    }
                 }
                 await Task.Delay(RetryDelay);
             }
@@ -370,12 +379,12 @@ namespace LiveBot.Watcher.Twitch
             if (auth is null || auth.Expired || auth.ExpiresAt <= DateTime.UtcNow)
             {
                 await using var work = _factory.Create();
-                var tempAuth = await work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+                // A refresh adds the new row before expiring the old one, so two active rows can briefly coexist.
+                var tempAuth = await work.AuthRepository.FirstOrderedAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false, i => i.ExpiresAt);
 
                 // Refreshing needs the refresh token from an existing row, so a missing row cannot be recovered here.
                 if (tempAuth is null)
                 {
-                    _logger.LogError("No active auth found for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
                     throw new InvalidOperationException($"No active auth found for {ServiceType} with Client Id {ClientId}");
                 }
 
@@ -437,7 +446,8 @@ namespace LiveBot.Watcher.Twitch
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(exception: ex, message: "Unable to update AccessToken for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
+                    _logger.LogError(exception: ex, message: "Unable to update AccessToken for {ServiceType} with Client Id {ClientId}, retrying in {RetryDelay}", ServiceType, ClientId, AuthRetryDelay);
+                    StartAuthTimer(AuthRetryDelay);
                 }
             }
             else
@@ -510,17 +520,36 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupAuthTimer(TimeSpan timeSpan)
         {
-            RefreshAuthTimer?.Dispose();
-
             if (timeSpan.TotalSeconds < 1800)
                 timeSpan = TimeSpan.FromSeconds(1800);
+
+            StartAuthTimer(timeSpan);
+        }
+
+        private void StartAuthTimer(TimeSpan timeSpan)
+        {
+            RefreshAuthTimer?.Dispose();
 
             RefreshAuthTimer = new System.Timers.Timer(timeSpan.Duration().TotalMilliseconds)
             {
                 AutoReset = false
             };
-            RefreshAuthTimer.Elapsed += (_, _) => FireAndLog(() => UpdateAuth(), nameof(UpdateAuth));
+            RefreshAuthTimer.Elapsed += (_, _) => FireAndLog(RefreshAuthFromTimer, nameof(UpdateAuth));
             RefreshAuthTimer.Start();
+        }
+
+        private async Task RefreshAuthFromTimer()
+        {
+            try
+            {
+                await UpdateAuth();
+            }
+            catch (Exception ex)
+            {
+                // A failed refresh never reaches SetupAuthTimer, so without this nothing would try again.
+                _logger.LogError(exception: ex, message: "Unable to refresh {ServiceType} auth, retrying in {RetryDelay}", ServiceType, AuthRetryDelay);
+                StartAuthTimer(AuthRetryDelay);
+            }
         }
 
         public async Task UpdateUsers()
@@ -744,7 +773,15 @@ namespace LiveBot.Watcher.Twitch
         public override async Task StartAsync(bool IsWatcher = false)
         {
             this.IsWatcher = IsWatcher;
-            await UpdateAuth();
+            try
+            {
+                await UpdateAuth();
+            }
+            catch (Exception ex) when (IsWatcher)
+            {
+                _logger.LogCritical(exception: ex, message: "The {ServiceType} watcher requires an active auth token for Client Id {ClientId} and cannot start without one", ServiceType, ClientId);
+                throw;
+            }
             if (IsWatcher)
             {
                 await RefreshMonitoredUsers();
