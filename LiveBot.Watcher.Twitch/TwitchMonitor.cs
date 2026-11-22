@@ -372,6 +372,13 @@ namespace LiveBot.Watcher.Twitch
                 await using var work = _factory.Create();
                 var tempAuth = await work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
 
+                // Refreshing needs the refresh token from an existing row, so a missing row cannot be recovered here.
+                if (tempAuth is null)
+                {
+                    _logger.LogError("No active auth found for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
+                    throw new InvalidOperationException($"No active auth found for {ServiceType} with Client Id {ClientId}");
+                }
+
                 auth = new TwitchAuth
                 {
                     Id = tempAuth.Id,

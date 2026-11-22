@@ -22,7 +22,7 @@ namespace LiveBot.Discord.SlashCommands.Attributes
 
             await using var work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
             var guildConfig = await work.GuildConfigRepository.SingleOrDefaultAsync(x => x.DiscordGuild.DiscordId == context.Guild.Id);
-            ulong? adminRoleId = guildConfig.AdminRoleDiscordId;
+            ulong? adminRoleId = guildConfig?.AdminRoleDiscordId;
             if (adminRoleId != null)
             {
                 ulong? roleId = guilduser.RoleIds.Where(i => i == adminRoleId).FirstOrDefault();
