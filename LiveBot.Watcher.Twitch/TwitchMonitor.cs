@@ -553,8 +553,10 @@ namespace LiveBot.Watcher.Twitch
 
         private void SetupAuthTimer(TimeSpan timeSpan)
         {
-            if (timeSpan.TotalSeconds < 1800)
-                timeSpan = TimeSpan.FromSeconds(1800);
+            // A refresh only happens once the token has expired, so a longer floor would leave the monitor polling
+            // with a dead token. A refreshed token lives at least 30 minutes, so this cannot spin.
+            if (timeSpan < AuthRetryDelay)
+                timeSpan = AuthRetryDelay;
 
             StartAuthTimer(timeSpan);
         }
