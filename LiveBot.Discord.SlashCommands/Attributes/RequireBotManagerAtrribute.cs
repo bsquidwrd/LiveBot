@@ -22,13 +22,9 @@ namespace LiveBot.Discord.SlashCommands.Attributes
 
             await using var work = services.GetRequiredService<IUnitOfWorkFactory>().Create();
             var guildConfig = await work.GuildConfigRepository.SingleOrDefaultAsync(x => x.DiscordGuild.DiscordId == context.Guild.Id);
-            ulong? adminRoleId = guildConfig.AdminRoleDiscordId;
-            if (adminRoleId != null)
-            {
-                ulong? roleId = guilduser.RoleIds.Where(i => i == adminRoleId).FirstOrDefault();
-                if (roleId == adminRoleId)
-                    return PreconditionResult.FromSuccess();
-            }
+            ulong? adminRoleId = guildConfig?.AdminRoleDiscordId;
+            if (adminRoleId != null && guilduser.RoleIds.Contains(adminRoleId.Value))
+                return PreconditionResult.FromSuccess();
 
             return PreconditionResult.FromError("You are not allowed to run this command");
         }
