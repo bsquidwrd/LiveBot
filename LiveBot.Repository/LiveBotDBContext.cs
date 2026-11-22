@@ -8,18 +8,8 @@ namespace LiveBot.Repository
     /// <inheritdoc/>
     public class LiveBotDBContext : DbContext
     {
-        private readonly string _connectionstring;
-
-        public LiveBotDBContext(string connectionstring) : base()
+        public LiveBotDBContext(DbContextOptions<LiveBotDBContext> options) : base(options)
         {
-            _connectionstring = connectionstring;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder
-                .UseLazyLoadingProxies()
-                .UseNpgsql(_connectionstring);
         }
 
         public DbSet<DiscordGuild> DiscordGuild { get; set; }

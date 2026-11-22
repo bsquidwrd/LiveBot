@@ -32,7 +32,7 @@ namespace LiveBot.Watcher.Twitch.Consumers
                 _logger.LogInformation("Processing startup catch-up for {UserCount} users on {ServiceType}",
                     context.Message.StreamUsers.Count(), context.Message.ServiceType);
 
-                var work = _workFactory.Create();
+                await using var work = _workFactory.Create();
 
                 var users = context.Message.StreamUsers.ToList();
                 var (liveStreams, failedLookups) = await _monitor.GetLiveStreamsByUserIds(users.Select(u => u.Id).ToList());

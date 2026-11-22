@@ -369,7 +369,8 @@ namespace LiveBot.Watcher.Twitch
             var auth = await _cache.GetRecordAsync<TwitchAuth>(recordId: _authCacheName);
             if (auth is null || auth.Expired || auth.ExpiresAt <= DateTime.UtcNow)
             {
-                var tempAuth = await _work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
+                await using var work = _factory.Create();
+                var tempAuth = await work.AuthRepository.SingleOrDefaultAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false);
 
                 auth = new TwitchAuth
                 {
@@ -388,7 +389,9 @@ namespace LiveBot.Watcher.Twitch
                 {
                     // if it's already expired, or is not set add 1 minutes (probably refreshing anyways)
                     auth.ExpiresAt = DateTime.UtcNow.AddMinutes(1);
-                    await _work.AuthRepository.UpdateAsync(auth);
+                    // tempAuth is tracked by this unit of work, so attaching the auth copy with the same key would throw.
+                    tempAuth.ExpiresAt = auth.ExpiresAt;
+                    await work.AuthRepository.UpdateAsync(tempAuth);
                 }
 
                 if (auth.ExpiresAt > DateTime.UtcNow)
@@ -466,23 +469,24 @@ namespace LiveBot.Watcher.Twitch
                                 newAuth.ExpiresAt = DateTime.UtcNow.AddSeconds(1800);
                             }
 
-                            await _work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
+                            await using var work = _factory.Create();
+                            await work.AuthRepository.AddOrUpdateAsync(newAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == newAuth.AccessToken);
 
                             var timeToExpire = newAuth.ExpiresAt - DateTime.UtcNow;
                             await _cache.SetRecordAsync<TwitchAuth>(recordId: _authCacheName, data: newAuth, expiryTime: timeToExpire.Duration());
 
                             oldAuth.Expired = true;
-                            await _work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
+                            await work.AuthRepository.AddOrUpdateAsync(oldAuth, i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.AccessToken == oldAuth.AccessToken);
                             AccessToken = newAuth.AccessToken;
 
                             _logger.LogDebug("{ServiceType} Expiration time: {ExpirationSeconds}", ServiceType, refreshResponse.ExpiresIn < 1800 ? 1800 : refreshResponse.ExpiresIn);
 
                             // Force all other tokens to be expired
-                            var oldAuths = await _work.AuthRepository.FindAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false && i.AccessToken != newAuth.AccessToken);
+                            var oldAuths = await work.AuthRepository.FindAsync(i => i.ServiceType == ServiceType && i.ClientId == ClientId && i.Expired == false && i.AccessToken != newAuth.AccessToken);
                             foreach (var auth in oldAuths)
                             {
                                 auth.Expired = true;
-                                await _work.AuthRepository.UpdateAsync(auth);
+                                await work.AuthRepository.UpdateAsync(auth);
                             }
                         }
                     }
@@ -520,8 +524,7 @@ namespace LiveBot.Watcher.Twitch
             bool failed = false;
             try
             {
-                // A single unit of work for the whole run, since _work creates a new context on every access.
-                var work = _work;
+                await using var work = _factory.Create();
                 foreach (List<string> userIds in SplitList(Monitor.ChannelsToMonitor, nSize: 100))
                 {
                     GetUsersResponse? users = await API_GetUsersById(userIds);
@@ -645,7 +648,11 @@ namespace LiveBot.Watcher.Twitch
 
         private async Task RefreshMonitoredUsers()
         {
-            var channelList = await _work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
+            List<string> channelList;
+            await using (var work = _factory.Create())
+            {
+                channelList = await work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
+            }
 
             if (channelList.Count == 0)
                 // Add myself so startup doesn't fail if there's no users in the database
@@ -755,7 +762,11 @@ namespace LiveBot.Watcher.Twitch
                 _logger.LogInformation("Starting startup catch-up for {ServiceType}", ServiceType);
 
                 // Get all users that have subscriptions
-                var distinctSourceIds = await _work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
+                List<string> distinctSourceIds;
+                await using (var work = _factory.Create())
+                {
+                    distinctSourceIds = await work.SubscriptionRepository.GetMonitoredSourceIdsAsync(ServiceType);
+                }
 
                 if (distinctSourceIds.Count == 0)
                 {

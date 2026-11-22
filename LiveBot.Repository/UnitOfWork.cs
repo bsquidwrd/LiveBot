@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Discord;
 using LiveBot.Core.Repository.Interfaces.Streams;
@@ -37,5 +38,12 @@ namespace LiveBot.Repository
 
         public LiveBotDBContext GetContext() =>
             _context;
+
+        // Disposing a pooled context returns it to the pool rather than closing it.
+        public void Dispose() =>
+            _context.Dispose();
+
+        public ValueTask DisposeAsync() =>
+            _context.DisposeAsync();
     }
 }

@@ -20,10 +20,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly IEnumerable<ILiveBotMonitor> _monitors;
         private readonly ILogger<DiscordMemberLiveConsumer> _logger;
 
-        public DiscordMemberLiveConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors, ILogger<DiscordMemberLiveConsumer> logger)
+        public DiscordMemberLiveConsumer(DiscordShardedClient client, IUnitOfWork work, IEnumerable<ILiveBotMonitor> monitors, ILogger<DiscordMemberLiveConsumer> logger)
         {
             _client = client;
-            _work = factory.Create();
+            _work = work;
             _monitors = monitors;
             _logger = logger;
         }

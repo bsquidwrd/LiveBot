@@ -11,9 +11,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly IUnitOfWork _work;
         private readonly ILogger<DiscordGuildUpdateConsumer> _logger;
 
-        public DiscordGuildUpdateConsumer(IUnitOfWorkFactory factory, ILogger<DiscordGuildUpdateConsumer> logger)
+        public DiscordGuildUpdateConsumer(IUnitOfWork work, ILogger<DiscordGuildUpdateConsumer> logger)
         {
-            _work = factory.Create();
+            _work = work;
             _logger = logger;
         }
 

@@ -11,7 +11,6 @@ namespace LiveBot.Core.Repository.Interfaces.Monitor
     {
         public string URLPattern { get; set; }
         public IUnitOfWorkFactory _factory { get; set; }
-        public IUnitOfWork _work { get; }
         public DateTime StartTime { get; set; }
         public bool IsEnabled { get; set; }
 

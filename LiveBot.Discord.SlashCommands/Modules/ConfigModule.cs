@@ -12,10 +12,10 @@ namespace LiveBot.Discord.SlashCommands.Modules
         private readonly ILogger<ConfigModule> _logger;
         private readonly IUnitOfWork _work;
 
-        public ConfigModule(ILogger<ConfigModule> logger, IUnitOfWorkFactory factory)
+        public ConfigModule(ILogger<ConfigModule> logger, IUnitOfWork work)
         {
             _logger = logger;
-            _work = factory.Create();
+            _work = work;
         }
 
         #region Config command

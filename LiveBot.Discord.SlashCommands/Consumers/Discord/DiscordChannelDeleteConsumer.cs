@@ -9,9 +9,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly IUnitOfWork _work;
         private readonly ILogger<DiscordChannelDeleteConsumer> _logger;
 
-        public DiscordChannelDeleteConsumer(IUnitOfWorkFactory factory, ILogger<DiscordChannelDeleteConsumer> logger)
+        public DiscordChannelDeleteConsumer(IUnitOfWork work, ILogger<DiscordChannelDeleteConsumer> logger)
         {
-            _work = factory.Create();
+            _work = work;
             _logger = logger;
         }
 

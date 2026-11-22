@@ -1,5 +1,4 @@
-﻿using LiveBot.Core.Repository.Interfaces;
-using LiveBot.Repository;
+﻿using LiveBot.Repository;
 using Serilog;
 
 namespace LiveBot.Watcher.Twitch
@@ -33,7 +32,7 @@ namespace LiveBot.Watcher.Twitch
                     .Enrich.FromLogContext()
             );
 
-            builder.Services.AddSingleton<IUnitOfWorkFactory>(new UnitOfWorkFactory(builder.Configuration));
+            builder.Services.AddLiveBotDatabase(builder.Configuration);
 
             // Setup MassTransit
             builder.Services.AddLiveBotQueueing();

@@ -14,10 +14,10 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Streams
         private readonly IBus _bus;
         private readonly ILogger<StreamUpdateConsumer> _logger;
 
-        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWorkFactory factory, IBus bus, ILogger<StreamUpdateConsumer> logger)
+        public StreamUpdateConsumer(DiscordShardedClient client, IUnitOfWork work, IBus bus, ILogger<StreamUpdateConsumer> logger)
         {
             _client = client;
-            _work = factory.Create();
+            _work = work;
             _bus = bus;
             _logger = logger;
         }

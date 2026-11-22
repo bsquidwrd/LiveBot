@@ -9,9 +9,9 @@ namespace LiveBot.Discord.SlashCommands.Consumers.Discord
         private readonly IUnitOfWork _work;
         private readonly ILogger<DiscordRoleDeleteConsumer> _logger;
 
-        public DiscordRoleDeleteConsumer(IUnitOfWorkFactory factory, ILogger<DiscordRoleDeleteConsumer> logger)
+        public DiscordRoleDeleteConsumer(IUnitOfWork work, ILogger<DiscordRoleDeleteConsumer> logger)
         {
-            _work = factory.Create();
+            _work = work;
             _logger = logger;
         }
 

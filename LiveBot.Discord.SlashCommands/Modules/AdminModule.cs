@@ -21,12 +21,12 @@ namespace LiveBot.Discord.SlashCommands.Modules
         private readonly IUnitOfWork work;
         private readonly IEnumerable<ILiveBotMonitor> monitors;
 
-        public AdminModule(ILogger<AdminModule> logger, IConfiguration configuration, InteractionService commands, IUnitOfWorkFactory factory, IEnumerable<ILiveBotMonitor> monitors)
+        public AdminModule(ILogger<AdminModule> logger, IConfiguration configuration, InteractionService commands, IUnitOfWork work, IEnumerable<ILiveBotMonitor> monitors)
         {
             this.logger = logger;
             this.configuration = configuration;
             this.commands = commands;
-            this.work = factory.Create();
+            this.work = work;
             this.monitors = monitors;
         }
 

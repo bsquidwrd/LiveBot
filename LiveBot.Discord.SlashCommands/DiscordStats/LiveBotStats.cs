@@ -8,14 +8,14 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
     {
         internal readonly ILogger<LiveBotStats> _logger;
         internal readonly DiscordShardedClient _discordClient;
-        internal readonly IUnitOfWork _work;
+        internal readonly IUnitOfWorkFactory _factory;
         internal System.Timers.Timer _timer;
 
         public LiveBotStats(ILogger<LiveBotStats> logger, DiscordShardedClient discordClient, IUnitOfWorkFactory factory)
         {
             _logger = logger;
             _discordClient = discordClient;
-            _work = factory.Create();
+            _factory = factory;
 
             TimeSpan timeSpan = TimeSpan.FromMinutes(5);
             _timer = new System.Timers.Timer(timeSpan.Duration().TotalMilliseconds)
@@ -41,10 +41,11 @@ namespace LiveBot.Discord.SlashCommands.DiscordStats
         {
             try
             {
+                await using var work = _factory.Create();
                 _logger.LogInformation(
                     "Current Stats: {GuildCount} {SubscriptionCount}",
                     _discordClient.Guilds.Count,
-                    await _work.SubscriptionRepository.LongCountAsync()
+                    await work.SubscriptionRepository.LongCountAsync()
                 );
             }
             catch (Exception ex)
