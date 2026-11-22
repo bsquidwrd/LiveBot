@@ -25,7 +25,11 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
 
         public Task ShardDisconnected(Exception exception, DiscordSocketClient shard)
         {
-            _disconnectedAt[shard.ShardId] = DateTime.UtcNow;
+            // Failed reconnect attempts raise Disconnected again, so only the first one counts; a shard that never
+            // connected keeps counting from StartedAt.
+            if (_hasConnected.ContainsKey(shard.ShardId))
+                _disconnectedAt.TryAdd(shard.ShardId, DateTime.UtcNow);
+
             return Task.CompletedTask;
         }
 

@@ -85,12 +85,21 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
                     name = e.Key,
                     status = e.Value.Status.ToString(),
                     // A thrown exception's message can carry connection details, so only its type is shown.
-                    description = e.Value.Exception is null ? e.Value.Description : $"Check threw {e.Value.Exception.GetType().Name}",
+                    description = Describe(e.Key, e.Value),
                     durationMs = Math.Round(e.Value.Duration.TotalMilliseconds),
                 }),
             };
 
             return context.Response.WriteAsync(JsonSerializer.Serialize(body, JsonOptions));
+        }
+
+        // MassTransit's Degraded description lists endpoint addresses, which include the RabbitMQ host.
+        private static string? Describe(string name, HealthReportEntry entry)
+        {
+            if (entry.Exception is not null)
+                return $"Check threw {entry.Exception.GetType().Name}";
+
+            return name == "masstransit-bus" ? null : entry.Description;
         }
     }
 }
