@@ -61,6 +61,7 @@ namespace LiveBot.Discord.SlashCommands
             _client.Log += _interactionHandler.LogAsync;
             _client.ShardReady += _eventHandlers.OnReady; // This is everything else
             _client.ShardReady += _interactionHandler.ReadyAsync; // This handles admin command loading
+            _client.ShardConnected += _gatewayState.ShardConnected;
             _client.ShardDisconnected += _gatewayState.ShardDisconnected;
             _interactionService.Log += _interactionHandler.LogAsync;
 

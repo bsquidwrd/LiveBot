@@ -11,9 +11,17 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
     public class DiscordGatewayState
     {
         private readonly ConcurrentDictionary<int, DateTime> _disconnectedAt = new();
+        private readonly ConcurrentDictionary<int, bool> _hasConnected = new();
 
         // A shard that has never connected has been down since the bot began starting it.
         public DateTime StartedAt { get; } = DateTime.UtcNow;
+
+        public Task ShardConnected(DiscordSocketClient shard)
+        {
+            _hasConnected[shard.ShardId] = true;
+            _disconnectedAt.TryRemove(shard.ShardId, out _);
+            return Task.CompletedTask;
+        }
 
         public Task ShardDisconnected(Exception exception, DiscordSocketClient shard)
         {
@@ -21,7 +29,19 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
             return Task.CompletedTask;
         }
 
-        public DateTime DownSince(int shardId) => _disconnectedAt.TryGetValue(shardId, out var at) ? at : StartedAt;
+        // Discord.Net raises Disconnected only after the websocket finishes closing, so a shard can be seen
+        // Disconnecting with no entry yet; its downtime starts at the first such sighting.
+        public DateTime DownSince(int shardId)
+        {
+            if (_disconnectedAt.TryGetValue(shardId, out var at))
+                return at;
+
+            return _hasConnected.ContainsKey(shardId) ? _disconnectedAt.GetOrAdd(shardId, DateTime.UtcNow) : StartedAt;
+        }
+
+        // A check can record a sighting just after ShardConnected cleared the entry, which would otherwise date
+        // the next outage from that stale sighting.
+        public void ShardUp(int shardId) => _disconnectedAt.TryRemove(shardId, out _);
     }
 
     /// <summary>
@@ -42,6 +62,9 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
                     ? HealthCheckResult.Unhealthy($"No shards started after {waited.TotalSeconds:F0}s")
                     : HealthCheckResult.Healthy($"Waiting for login ({waited.TotalSeconds:F0}s)"));
             }
+
+            foreach (var shard in shards.Where(s => s.ConnectionState == ConnectionState.Connected))
+                state.ShardUp(shard.ShardId);
 
             var down = shards
                 .Where(s => s.ConnectionState != ConnectionState.Connected)

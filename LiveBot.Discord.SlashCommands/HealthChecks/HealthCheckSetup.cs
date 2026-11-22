@@ -19,9 +19,9 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
             services.AddSingleton<DiscordGatewayState>();
 
             var checks = services.AddHealthChecks()
-                // Readiness reports a gateway outage after two minutes; liveness waits ten so routine reconnects never trigger a restart.
                 .AddTypeActivatedCheck<DiscordGatewayHealthCheck>("discord-gateway", failureStatus: null, tags: [ReadyTag], args: TimeSpan.FromMinutes(2))
-                .AddTypeActivatedCheck<DiscordGatewayHealthCheck>("discord-gateway-live", failureStatus: null, tags: [LiveTag], args: TimeSpan.FromMinutes(10))
+                // Discord.Net retries forever, so restarting during a Discord-side outage only spends the daily IDENTIFY budget.
+                .AddTypeActivatedCheck<DiscordGatewayHealthCheck>("discord-gateway-live", failureStatus: null, tags: [LiveTag], args: TimeSpan.FromMinutes(30))
                 .AddCheck<PostgresHealthCheck>("postgres", tags: [ReadyTag], timeout: DependencyTimeout)
                 .AddCheck<RedisHealthCheck>("redis", tags: [ReadyTag], timeout: DependencyTimeout);
 
@@ -57,10 +57,15 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
                 },
             };
 
-            app.MapHealthChecks("/healthz/live", live);
-            app.MapHealthChecks("/healthz/ready", ready);
+            // The app is published through a public reverse proxy, which forwards the public Host header, and the
+            // reports expose shard counts and token expiry, so only probes from inside the container are answered.
+            // Host matching cannot parse an IPv6 literal, so [::1] is left out; the probe calls localhost.
+            string[] loopback = ["localhost", "127.0.0.1"];
+
+            app.MapHealthChecks("/healthz/live", live).RequireHost(loopback);
+            app.MapHealthChecks("/healthz/ready", ready).RequireHost(loopback);
             // Existing container and Coolify configuration probes this path.
-            app.MapHealthChecks("/healthcheck", live);
+            app.MapHealthChecks("/healthcheck", live).RequireHost(loopback);
 
             return app;
         }
