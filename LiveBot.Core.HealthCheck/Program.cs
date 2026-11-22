@@ -22,13 +22,17 @@ namespace LiveBot.Core.HealthCheck
                     {
                         using var request = new HttpRequestMessage(HttpMethod.Get, url);
                         using var response = await client.SendAsync(request);
+                        // Docker keeps this output in the container's health log, so the per-check report shows up in docker inspect.
+                        var body = await response.Content.ReadAsStringAsync();
                         if (response.IsSuccessStatusCode)
                         {
                             Console.WriteLine($"Healthcheck OK: {url} -> {(int)response.StatusCode}");
+                            Console.WriteLine(body);
                             Environment.Exit(0);
                         }
 
                         Console.WriteLine($"Attempted {url}, got {(int)response.StatusCode}. Trying next...");
+                        Console.WriteLine(body);
                     }
                     catch (HttpRequestException hre)
                     {

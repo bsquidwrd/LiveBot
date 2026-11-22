@@ -6,6 +6,7 @@ using LiveBot.Core.Cache;
 using LiveBot.Core.Repository.Interfaces;
 using LiveBot.Core.Repository.Interfaces.Monitor;
 using LiveBot.Discord.SlashCommands.DiscordStats;
+using LiveBot.Discord.SlashCommands.HealthChecks;
 using LiveBot.Repository;
 using LiveBot.Watcher.Twitch;
 using Serilog;
@@ -89,8 +90,12 @@ namespace LiveBot.Discord.SlashCommands
             var runWatchersInDiscord = Convert.ToBoolean(builder.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
             if (runWatchersInDiscord)
             {
-                builder.Services.AddSingleton<ILiveBotMonitor, TwitchMonitor>();
+                // The health checks read the concrete monitor, so both registrations share one instance.
+                builder.Services.AddSingleton<TwitchMonitor>();
+                builder.Services.AddSingleton<ILiveBotMonitor>(services => services.GetRequiredService<TwitchMonitor>());
             }
+
+            builder.Services.AddLiveBotHealthChecks(runWatchersInDiscord);
 
             // Add Discord Stats
             builder.Services.AddHostedService<BotsForDiscord>();

@@ -26,7 +26,7 @@ namespace LiveBot.Watcher.Twitch
     public class TwitchMonitor : BaseLiveBotMonitor
     {
         private readonly ILogger<TwitchMonitor> _logger;
-        public LiveStreamMonitorService Monitor;
+        public TrackedLiveStreamMonitorService Monitor;
         public TwitchAPI API;
         public IBus _bus;
         public bool IsWatcher = false;
@@ -74,6 +74,21 @@ namespace LiveBot.Watcher.Twitch
         private int _userRetryAttempts;
         private readonly SemaphoreSlim _userUpdateLock = new SemaphoreSlim(1, 1);
 
+        private long _authExpiresAtTicks;
+        private int _consecutiveAuthFailures;
+        private long _monitorStartedAtTicks;
+
+        /// <summary>Expiry of the access token currently in use, or null before the first successful auth update</summary>
+        public DateTime? AuthExpiresAt => FromTicks(Interlocked.Read(ref _authExpiresAtTicks));
+
+        /// <summary>Auth updates that have failed since the last successful one</summary>
+        public int ConsecutiveAuthFailures => Volatile.Read(ref _consecutiveAuthFailures);
+
+        /// <summary>When the live stream monitor was started, or null if it has not been</summary>
+        public DateTime? MonitorStartedAt => FromTicks(Interlocked.Read(ref _monitorStartedAtTicks));
+
+        private static DateTime? FromTicks(long ticks) => ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+
         // My caches
         private ConcurrentDictionary<string, ILiveBotGame> _gameCache = new ConcurrentDictionary<string, ILiveBotGame>();
 
@@ -110,7 +125,7 @@ namespace LiveBot.Watcher.Twitch
 
             var rateLimiter = TimeLimiter.GetFromMaxCountByInterval(800, TimeSpan.FromMinutes(1));
             API = new TwitchAPI(rateLimiter: rateLimiter);
-            Monitor = new LiveStreamMonitorService(api: API, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
+            Monitor = new TrackedLiveStreamMonitorService(api: API, logger: logger, checkIntervalInSeconds: 60, maxStreamRequestCountPerRequest: 100);
 
             ClientId = _configuration.GetValue<string>("TwitchClientId") ?? "";
             ClientSecret = _configuration.GetValue<string>("TwitchClientSecret") ?? "";
@@ -427,10 +442,24 @@ namespace LiveBot.Watcher.Twitch
             var activeAuth = await GetAuthAsync();
             if (AccessToken != activeAuth.AccessToken)
                 AccessToken = activeAuth.AccessToken;
+            Interlocked.Exchange(ref _authExpiresAtTicks, activeAuth.ExpiresAt.Ticks);
             return activeAuth;
         }
 
         public async Task UpdateAuth(bool force = false)
+        {
+            try
+            {
+                await UpdateAuthCore(force);
+            }
+            catch
+            {
+                Interlocked.Increment(ref _consecutiveAuthFailures);
+                throw;
+            }
+        }
+
+        private async Task UpdateAuthCore(bool force)
         {
             _logger.LogDebug(message: "Updating Auth for {ServiceType} with Client Id {ClientId}", ServiceType, ClientId);
             if (!IsWatcher)
@@ -443,9 +472,12 @@ namespace LiveBot.Watcher.Twitch
                     // Trigger it 5 minutes before expiration time to be safe
                     var timeToExpire = activeAuth.ExpiresAt - DateTime.UtcNow;
                     SetupAuthTimer(timeToExpire);
+                    Interlocked.Exchange(ref _consecutiveAuthFailures, 0);
                 }
                 catch (Exception ex)
                 {
+                    // This branch swallows the failure, so the UpdateAuth wrapper never sees it to count it.
+                    Interlocked.Increment(ref _consecutiveAuthFailures);
                     _logger.LogError(exception: ex, message: "Unable to update AccessToken for {ServiceType} with Client Id {ClientId}, retrying in {RetryDelay}", ServiceType, ClientId, AuthRetryDelay);
                     StartAuthTimer(AuthRetryDelay);
                 }
@@ -515,6 +547,7 @@ namespace LiveBot.Watcher.Twitch
                 var tempAuth = await GetAndSetActiveAuth();
                 // Trigger it at expiration time to be safe
                 SetupAuthTimer(tempAuth.ExpiresAt - DateTime.UtcNow);
+                Interlocked.Exchange(ref _consecutiveAuthFailures, 0);
             }
         }
 
@@ -793,6 +826,7 @@ namespace LiveBot.Watcher.Twitch
                 await PerformStartupCatchup();
 
                 await Task.Run(Monitor.Start);
+                Interlocked.Exchange(ref _monitorStartedAtTicks, DateTime.UtcNow.Ticks);
             }
         }
 

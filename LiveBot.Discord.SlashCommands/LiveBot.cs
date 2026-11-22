@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using LiveBot.Discord.SlashCommands.HealthChecks;
 using LiveBot.Discord.SlashCommands.Helpers;
 
 namespace LiveBot.Discord.SlashCommands
@@ -15,6 +16,7 @@ namespace LiveBot.Discord.SlashCommands
         private readonly IConfiguration _configuration;
         private readonly LiveBotDiscordEventHandlers _eventHandlers;
         private readonly IServiceProvider _services;
+        private readonly DiscordGatewayState _gatewayState;
         private readonly bool IsDebug;
 
         public LiveBot(
@@ -24,7 +26,8 @@ namespace LiveBot.Discord.SlashCommands
             InteractionHandler interactionHandler,
             IConfiguration configuration,
             LiveBotDiscordEventHandlers eventHandlers,
-            IServiceProvider services
+            IServiceProvider services,
+            DiscordGatewayState gatewayState
         )
         {
             _logger = logger;
@@ -34,6 +37,7 @@ namespace LiveBot.Discord.SlashCommands
             _configuration = configuration;
             _eventHandlers = eventHandlers;
             _services = services;
+            _gatewayState = gatewayState;
 
             IsDebug = Convert.ToBoolean(_configuration.GetValue<string>("IsDebug") ?? "false");
         }
@@ -57,6 +61,7 @@ namespace LiveBot.Discord.SlashCommands
             _client.Log += _interactionHandler.LogAsync;
             _client.ShardReady += _eventHandlers.OnReady; // This is everything else
             _client.ShardReady += _interactionHandler.ReadyAsync; // This handles admin command loading
+            _client.ShardDisconnected += _gatewayState.ShardDisconnected;
             _interactionService.Log += _interactionHandler.LogAsync;
 
             // Guild Events

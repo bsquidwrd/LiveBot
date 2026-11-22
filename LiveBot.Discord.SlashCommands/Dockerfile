@@ -24,7 +24,7 @@ ENV LiveBot_DiscordBots_API=""
 ENV LiveBot_TopGG_API=""
 ENV Redis_connectionstring=""
 ENV RunWatchersInDiscord="false"
-ENV HEALTHCHECK_PATH="/healthcheck"
+ENV HEALTHCHECK_PATH="/healthz/live"
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -48,6 +48,7 @@ COPY --from=publish /app/publish .
 # Include healthcheck app (folder and root-level files for compatibility)
 COPY --from=publish /app/healthcheck-publish /app/healthcheck
 COPY --from=publish /app/healthcheck-publish/LiveBot.Core.HealthCheck.* /app/
-# Built-in container healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
+# Probes liveness, not readiness, so an outage outside the container cannot mark it unhealthy. The start period covers
+# migrations and the Twitch startup catch-up, which run before the HTTP server listens.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 CMD ["dotnet", "/app/healthcheck/LiveBot.Core.HealthCheck.dll"]
 ENTRYPOINT ["dotnet", "LiveBot.Discord.SlashCommands.dll"]

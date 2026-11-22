@@ -1,4 +1,5 @@
 using LiveBot.Discord.SlashCommands;
+using LiveBot.Discord.SlashCommands.HealthChecks;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,10 +13,6 @@ app.UseSerilogRequestLogging();
 await app.RegisterLiveBot();
 
 app.MapGet("/", () => "Up");
-app.MapGet("/healthcheck", () =>
-{
-    app.Logger.LogDebug("Healthcheck Success");
-    return "OK";
-});
+app.MapLiveBotHealthChecks();
 
 app.Run();
