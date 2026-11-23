@@ -32,6 +32,7 @@ namespace LiveBot.Repository.Streams
                 .Where(s => s.User == user)
                 .Include(s => s.User)
                 .Include(s => s.DiscordGuild)
+                    .ThenInclude(g => g.Config)
                 .Include(s => s.DiscordChannel)
                 .Include(s => s.RolesToMention)
                 .AsSplitQuery()

@@ -15,8 +15,20 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             return Format.Sanitize(input);
         }
 
-        public static string FormatNotificationMessage(string message, IEnumerable<IRole> roles, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
+        /// <summary>
+        /// Returns the guild's configured notification message, or <see cref="Defaults.NotificationMessage"/> when it has none
+        /// </summary>
+        public static string GetGuildDefaultMessage(DiscordGuild? guild)
         {
+            var message = guild?.Config?.Message;
+            return String.IsNullOrWhiteSpace(message) ? Defaults.NotificationMessage : message;
+        }
+
+        public static string FormatNotificationMessage(string? message, IEnumerable<IRole> roles, ILiveBotStream stream, ILiveBotUser user, ILiveBotGame game)
+        {
+            if (String.IsNullOrWhiteSpace(message))
+                message = Defaults.NotificationMessage;
+
             var roleStrings = new List<string>();
             if (roles.Any(i => !String.IsNullOrWhiteSpace(i.Name)))
             {
@@ -69,7 +81,9 @@ namespace LiveBot.Discord.SlashCommands.Helpers
             var tempUser = user ?? stream.User;
             var tempGame = game ?? stream.Game;
 
-            return FormatNotificationMessage(message: subscription.Message, roles: RoleMentions, stream: stream, user: tempUser, game: tempGame);
+            var message = String.IsNullOrWhiteSpace(subscription.Message) ? GetGuildDefaultMessage(subscription.DiscordGuild) : subscription.Message;
+
+            return FormatNotificationMessage(message: message, roles: RoleMentions, stream: stream, user: tempUser, game: tempGame);
         }
 
         /// <summary>
@@ -90,7 +104,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                     RoleMentions.Add(role);
             }
 
-            return FormatNotificationMessage(message: config.Message ?? Defaults.NotificationMessage, roles: RoleMentions, stream: stream, user: user, game: game);
+            return FormatNotificationMessage(message: String.IsNullOrWhiteSpace(config.Message) ? Defaults.NotificationMessage : config.Message, roles: RoleMentions, stream: stream, user: user, game: game);
         }
 
         /// <summary>

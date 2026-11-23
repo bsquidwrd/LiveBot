@@ -97,7 +97,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
                 LiveMessage = LiveMessage.Trim();
                 if (String.IsNullOrWhiteSpace(LiveMessage)) LiveMessage = "default";
                 if (String.Equals(LiveMessage, "default", StringComparison.InvariantCultureIgnoreCase))
-                    LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
+                    LiveMessage = NotificationHelpers.GetGuildDefaultMessage(guild);
 
                 var subscription = await EditStreamSubscriptionAsync(monitor: monitor, uri: ProfileURL, message: LiveMessage, guild: Context.Guild, channel: WhereToPost);
                 await MonitorUtils.ConsolidateRoleMentions(work: _work, subscription: subscription, role1, role2, role3, role4, role5);
@@ -190,7 +190,7 @@ namespace LiveBot.Discord.SlashCommands.Modules
             if (!String.IsNullOrWhiteSpace(LiveMessage))
             {
                 if (LiveMessage.Equals("default", StringComparison.InvariantCultureIgnoreCase))
-                    LiveMessage = (guild?.Config?.Message ?? Defaults.NotificationMessage);
+                    LiveMessage = NotificationHelpers.GetGuildDefaultMessage(guild);
                 ResponseMessage += $"Updated message to {Format.Code(LiveMessage)}. ";
             }
 
@@ -667,8 +667,11 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
 
             if (discordChannel != null)
                 subscription.DiscordChannel = discordChannel;
-            if (message != null)
+            if (!String.IsNullOrWhiteSpace(message))
                 subscription.Message = message;
+            // An edit without a message can create a brand new subscription, which would otherwise be saved with no message.
+            if (String.IsNullOrWhiteSpace(subscription.Message))
+                subscription.Message = NotificationHelpers.GetGuildDefaultMessage(discordGuild);
 
             if (subscription.RolesToMention != null)
                 if (subscription.RolesToMention.Any() && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
