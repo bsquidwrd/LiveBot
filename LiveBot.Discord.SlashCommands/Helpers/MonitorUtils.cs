@@ -65,7 +65,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
 
                 .AddField(name: "Profile", value: subscription.User.ProfileURL, inline: true)
                 .AddField(name: "Channel", value: MentionUtils.MentionChannel(subscription.DiscordChannel.DiscordId), inline: true)
-                .AddField(name: "Message", value: subscription.Message, inline: false)
+                .AddField(name: "Message", value: String.IsNullOrWhiteSpace(subscription.Message) ? NotificationHelpers.GetGuildDefaultMessage(subscription.DiscordGuild) : subscription.Message, inline: false)
                 .AddField(name: "Roles", value: !subscription.RolesToMention.Any() ? "none" : String.Join(", ", roleStrings), inline: false)
 
                 .WithFooter(text: $"Page {currentSpot + 1}/{subscriptionCount}")

@@ -104,7 +104,7 @@ namespace LiveBot.Discord.SlashCommands.Helpers
                     RoleMentions.Add(role);
             }
 
-            return FormatNotificationMessage(message: String.IsNullOrWhiteSpace(config.Message) ? Defaults.NotificationMessage : config.Message, roles: RoleMentions, stream: stream, user: user, game: game);
+            return FormatNotificationMessage(message: config.Message, roles: RoleMentions, stream: stream, user: user, game: game);
         }
 
         /// <summary>

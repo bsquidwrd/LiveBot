@@ -659,7 +659,8 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 var newSubscription = new StreamSubscription()
                 {
                     User = streamUser,
-                    DiscordGuild = discordGuild
+                    DiscordGuild = discordGuild,
+                    Message = NotificationHelpers.GetGuildDefaultMessage(discordGuild)
                 };
                 await _work.SubscriptionRepository.AddAsync(newSubscription);
                 subscription = await _work.SubscriptionRepository.SingleOrDefaultAsync(streamSubscriptionPredicate);
@@ -669,7 +670,7 @@ You can find a full guide here: {Format.EscapeUrl("https://bsquidwrd.gitbook.io/
                 subscription.DiscordChannel = discordChannel;
             if (!String.IsNullOrWhiteSpace(message))
                 subscription.Message = message;
-            // An edit without a message can create a brand new subscription, which would otherwise be saved with no message.
+            // Rows saved before #108 can still have no message.
             if (String.IsNullOrWhiteSpace(subscription.Message))
                 subscription.Message = NotificationHelpers.GetGuildDefaultMessage(discordGuild);
 

@@ -195,6 +195,9 @@ namespace LiveBot.Discord.SlashCommands.Modules
                         DiscordRoleId = ulong.Parse(roleId),
                     });
 
+                if (String.IsNullOrWhiteSpace(subscription.Message))
+                    subscription.Message = NotificationHelpers.GetGuildDefaultMessage(subscription.DiscordGuild);
+
                 // The bulk delete leaves the removed rows in the already loaded collection.
                 if (subscription.RolesToMention.Any(i => !roleMentionIdsToRemove.Contains(i.Id)) && !subscription.Message.Contains("{role}", StringComparison.InvariantCultureIgnoreCase))
                     subscription.Message = String.Concat("{role} ", subscription.Message).Trim();
