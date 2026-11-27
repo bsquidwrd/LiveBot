@@ -3,6 +3,7 @@ using Discord.Net;
 using LiveBot.Core.Repository.Static;
 using LiveBot.Discord.SlashCommands.Consumers.Discord;
 using LiveBot.Discord.SlashCommands.Consumers.Streams;
+using LiveBot.Watcher.Twitch.Consumers;
 using MassTransit;
 
 namespace LiveBot.Discord.SlashCommands
@@ -25,6 +26,8 @@ namespace LiveBot.Discord.SlashCommands
                 x.AddConsumer<DiscordChannelDeleteConsumer>();
                 x.AddConsumer<DiscordRoleDeleteConsumer>();
                 x.AddConsumer<DiscordMemberLiveConsumer>();
+
+                x.AddConsumer<TwitchStartupCatchupConsumer>();
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -58,6 +61,9 @@ namespace LiveBot.Discord.SlashCommands
                     cfg.ReceiveEndpoint(Queues.DiscordChannelDelete, ep => ep.Consumer<DiscordChannelDeleteConsumer>(context));
                     cfg.ReceiveEndpoint(Queues.DiscordRoleDelete, ep => ep.Consumer<DiscordRoleDeleteConsumer>(context));
                     cfg.ReceiveEndpoint(Queues.DiscordMemberLive, ep => ep.Consumer<DiscordMemberLiveConsumer>(context));
+
+                    // Watcher Events
+                    cfg.ReceiveEndpoint(Queues.TwitchStartupCatchup, ep => ep.Consumer<TwitchStartupCatchupConsumer>(context));
                 });
             });
             return services;

@@ -45,6 +45,11 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
         public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
             var startedAt = monitor.MonitorStartedAt;
+
+            // Startup retries until Twitch auth and the database are reachable, which a restart cannot speed up.
+            if (startedAt is null && !requireSuccess)
+                return Task.FromResult(HealthCheckResult.Degraded("Live stream monitor has not started yet"));
+
             if (startedAt is null || !monitor.Monitor.Enabled)
                 return Task.FromResult(HealthCheckResult.Unhealthy("Live stream monitor is not running"));
 

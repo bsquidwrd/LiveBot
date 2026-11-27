@@ -30,14 +30,6 @@ namespace LiveBot.Core.Repository.Static
         public static readonly string StreamUpdateQueueName = "streamupdate";
         public static readonly string StreamOfflineQueueName = "streamoffline";
 
-        // Request/Response: on-demand stream status checks per service
-        public static string GetStreamCheckQueueName(ServiceEnum service)
-            => service switch
-            {
-                ServiceEnum.Twitch => "streamcheck.twitch",
-                ServiceEnum.YouTube => "streamcheck.youtube",
-                ServiceEnum.Trovo => "streamcheck.trovo",
-                _ => "streamcheck.unknown"
-            };
+        public static readonly string TwitchStartupCatchup = "twitch-startup-catchup";
     }
 }

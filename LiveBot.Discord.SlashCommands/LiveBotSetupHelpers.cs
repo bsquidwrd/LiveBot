@@ -86,16 +86,12 @@ namespace LiveBot.Discord.SlashCommands
             // Setup MassTransit
             builder.Services.AddLiveBotQueueing();
 
-            // Add Monitors (optional: allow running Watchers separately)
-            var runWatchersInDiscord = Convert.ToBoolean(builder.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
-            if (runWatchersInDiscord)
-            {
-                // The health checks read the concrete monitor, so both registrations share one instance.
-                builder.Services.AddSingleton<TwitchMonitor>();
-                builder.Services.AddSingleton<ILiveBotMonitor>(services => services.GetRequiredService<TwitchMonitor>());
-            }
+            // The health checks read the concrete monitor, so both registrations share one instance.
+            builder.Services.AddSingleton<TwitchMonitor>();
+            builder.Services.AddSingleton<ILiveBotMonitor>(services => services.GetRequiredService<TwitchMonitor>());
+            builder.Services.AddHostedService<MonitorStartupService>();
 
-            builder.Services.AddLiveBotHealthChecks(runWatchersInDiscord);
+            builder.Services.AddLiveBotHealthChecks();
 
             // Add Discord Stats
             builder.Services.AddHostedService<BotsForDiscord>();
@@ -112,24 +108,14 @@ namespace LiveBot.Discord.SlashCommands
         }
 
         /// <summary>
-        /// Starts the monitors
+        /// Applies database migrations
         /// </summary>
         /// <param name="app"></param>
         /// <returns></returns>
-        public static async Task<WebApplication> RegisterLiveBot(this WebApplication app)
+        public static WebApplication RegisterLiveBot(this WebApplication app)
         {
             // The context factory only exists once the container is built, and hosted services start after this.
             app.Services.GetRequiredService<IUnitOfWorkFactory>().Migrate();
-
-            var runWatchersInDiscord = Convert.ToBoolean(app.Configuration.GetValue<string>("RunWatchersInDiscord") ?? "false");
-            if (runWatchersInDiscord)
-            {
-                foreach (var monitor in app.Services.GetServices<ILiveBotMonitor>())
-                {
-                    await monitor.StartAsync(IsWatcher: true);
-                    app.Logger.LogInformation("Started {monitor} monitor", monitor.ServiceType);
-                }
-            }
 
             return app;
         }
