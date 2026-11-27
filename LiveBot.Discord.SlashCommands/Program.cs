@@ -10,7 +10,7 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
-await app.RegisterLiveBot();
+app.RegisterLiveBot();
 
 app.MapGet("/", () => "Up");
 app.MapLiveBotHealthChecks();

@@ -14,24 +14,19 @@ namespace LiveBot.Discord.SlashCommands.HealthChecks
 
         private static readonly TimeSpan DependencyTimeout = TimeSpan.FromSeconds(5);
 
-        public static IServiceCollection AddLiveBotHealthChecks(this IServiceCollection services, bool runWatchersInDiscord)
+        public static IServiceCollection AddLiveBotHealthChecks(this IServiceCollection services)
         {
             services.AddSingleton<DiscordGatewayState>();
 
-            var checks = services.AddHealthChecks()
+            services.AddHealthChecks()
                 .AddTypeActivatedCheck<DiscordGatewayHealthCheck>("discord-gateway", failureStatus: null, tags: [ReadyTag], args: TimeSpan.FromMinutes(2))
                 // Discord.Net retries forever, so restarting during a Discord-side outage only spends the daily IDENTIFY budget.
                 .AddTypeActivatedCheck<DiscordGatewayHealthCheck>("discord-gateway-live", failureStatus: null, tags: [LiveTag], args: TimeSpan.FromMinutes(30))
                 .AddCheck<PostgresHealthCheck>("postgres", tags: [ReadyTag], timeout: DependencyTimeout)
-                .AddCheck<RedisHealthCheck>("redis", tags: [ReadyTag], timeout: DependencyTimeout);
-
-            if (runWatchersInDiscord)
-            {
-                checks
-                    .AddCheck<TwitchAuthHealthCheck>("twitch-auth", tags: [ReadyTag])
-                    .AddTypeActivatedCheck<TwitchMonitorHealthCheck>("twitch-monitor", failureStatus: null, tags: [ReadyTag], args: true)
-                    .AddTypeActivatedCheck<TwitchMonitorHealthCheck>("twitch-monitor-live", failureStatus: null, tags: [LiveTag], args: false);
-            }
+                .AddCheck<RedisHealthCheck>("redis", tags: [ReadyTag], timeout: DependencyTimeout)
+                .AddCheck<TwitchAuthHealthCheck>("twitch-auth", tags: [ReadyTag])
+                .AddTypeActivatedCheck<TwitchMonitorHealthCheck>("twitch-monitor", failureStatus: null, tags: [ReadyTag], args: true)
+                .AddTypeActivatedCheck<TwitchMonitorHealthCheck>("twitch-monitor-live", failureStatus: null, tags: [LiveTag], args: false);
 
             return services;
         }
